@@ -1,0 +1,1 @@
+docker stop postgres_db_communicator_1

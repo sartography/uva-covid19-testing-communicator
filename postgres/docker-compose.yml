@@ -1,0 +1,14 @@
+version: "3.7"
+services:
+  db_communicator:
+    image: sartography/cr-connect-db
+    volumes:
+      - $HOME/docker/volumes/postgres_db_communicator:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
+    environment:
+      - DB_USER=communicator_user
+        DB_PASS=communicator_pass
+      - POSTGRES_USER=communicator_user
+      - POSTGRES_PASSWORD=communicator_pass
+      - POSTGRES_MULTIPLE_DATABASES=communicator_dev,communicator_test
