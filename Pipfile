@@ -1,0 +1,34 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pytest = "*"
+pbr = "*"
+coverage = "*"
+
+[packages]
+alembic = "*"
+connexion = {extras = ["swagger-ui"],version = "*"}
+coverage = "*"
+docxtpl = "*"
+flask = "*"
+flask-admin = "*"
+flask-bcrypt = "*"
+flask-cors = "*"
+flask-mail = "*"
+flask-marshmallow = "*"
+flask-migrate = "*"
+flask-restful = "*"
+marshmallow = "*"
+marshmallow-enum = "*"
+marshmallow-sqlalchemy = "*"
+sentry-sdk = {extras = ["flask"],version = "==0.14.4"}
+swagger-ui-bundle = "*"
+spiffworkflow = {git = "https://github.com/sartography/SpiffWorkflow.git",ref = "master"}
+webtest = "*"
+python-box = "*"
+psycopg2-binary = "*"
+[requires]
+python_version = "3.8"

@@ -1,0 +1,30 @@
+openapi: "3.0.2"
+info:
+  version: 1.0.0
+  title: Workflow Microservice
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:5000/v1.0
+security:
+  - jwt: ['secret']
+paths:
+  /status:
+    get:
+      operationId: communicator.api.admin.status
+      summary: provides a basic status endpoint, just get things off the ground.
+      security: []  # Disable security for this endpoint only.
+      responses:
+        '200':
+          description: Status indicator that the app is up and alive.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+
+components:
+  schemas:
+    Status:
+      properties:
+        status:
+          type: string
