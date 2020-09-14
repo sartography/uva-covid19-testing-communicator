@@ -30,5 +30,6 @@ spiffworkflow = {git = "https://github.com/sartography/SpiffWorkflow.git",ref = 
 webtest = "*"
 python-box = "*"
 psycopg2-binary = "*"
+google-cloud-firestore = "*"
 [requires]
 python_version = "3.8"

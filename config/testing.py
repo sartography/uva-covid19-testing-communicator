@@ -14,9 +14,9 @@ SECRET_KEY = "Shhhh!!! This is secret!  And better darn well not show up in prod
 # locally, and we don't over-write the database.  Did you read this far? Have a cookie!
 DB_HOST = environ.get('DB_HOST', default="localhost")
 DB_PORT = environ.get('DB_PORT', default="5433")
-DB_NAME = environ.get('DB_NAME', default="_test")
-DB_USER = environ.get('DB_USER', default="crc_user")
-DB_PASSWORD = environ.get('DB_PASSWORD', default="crc_pass")
+DB_NAME = environ.get('DB_NAME', default="communicator_test")
+DB_USER = environ.get('DB_USER', default="communicator_user")
+DB_PASSWORD = environ.get('DB_PASSWORD', default="communicator_pass")
 SQLALCHEMY_DATABASE_URI = environ.get(
     'SQLALCHEMY_DATABASE_URI',
     default="postgresql://%s:%s@%s:%s/%s" % (DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
