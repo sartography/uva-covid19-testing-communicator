@@ -47,3 +47,14 @@ MAIL_USE_SSL = environ.get('MAIL_USE_SSL', default=False)
 MAIL_USE_TLS = environ.get('MAIL_USE_TLS', default=False)
 MAIL_USERNAME = environ.get('MAIL_USERNAME', default='')
 MAIL_PASSWORD = environ.get('MAIL_PASSWORD', default='')
+
+# Firebase connection
+FIREBASE = {
+  "apiKey": "AIzaSyCZHvaAQJKGiU1McxqgbrH-_KPV92JofUA",
+  "authDomain": "uva-covid19-testing-kiosk.firebaseapp.com",
+  "databaseURL": "https://uva-covid19-testing-kiosk.firebaseio.com",
+  "storageBucket": "uva-covid19-testing-kiosk.appspot.com",
+  "projectId": "uva-covid19-testing-kiosk",
+  "messagingSenderId": "452622162774",
+  "appId": "1:452622162774:web:f2b513f3c1765fc9b954f7"
+}
