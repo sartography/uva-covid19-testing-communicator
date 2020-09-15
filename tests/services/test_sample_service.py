@@ -1,10 +1,11 @@
 import json
+import os
 import unittest
 
 from dateutil import parser
 
 from tests.base_test import BaseTest
-from communicator import db
+from communicator import db, app
 from communicator.models.sample import Sample
 from communicator.services.ivy_service import IvyService
 from communicator.services.sample_service import SampleService
@@ -14,8 +15,7 @@ class IvyServiceTest(BaseTest):
 
 
     def get_firebase_records(self):
-        file_name = '../data/firebase_data.json'
-        with open(file_name, 'r') as fb_file:
+        with open(self.firebase_file, 'r') as fb_file:
             raw_data = json.load(fb_file)
             samples = []
             for d in raw_data:
@@ -40,7 +40,7 @@ class IvyServiceTest(BaseTest):
 
         self.assertEquals(4, len(db.session.query(Sample).all()))
 
-        ivy_samples = IvyService.samples_from_ivy_file('../data/results.csv')
+        ivy_samples = IvyService.samples_from_ivy_file(self.ivy_file)
         service.add_or_update_records(ivy_samples)
 
         # There are 6 records in ivy, but three records that should match up, giving seven total
@@ -56,7 +56,7 @@ class IvyServiceTest(BaseTest):
 
         self.assertEquals(0, len(db.session.query(Sample).all()))
 
-        ivy_samples = IvyService.samples_from_ivy_file('../data/results.csv')
+        ivy_samples = IvyService.samples_from_ivy_file(self.ivy_file)
         service.add_or_update_records(ivy_samples)
         self.assertEquals(6, len(db.session.query(Sample).all()))
 

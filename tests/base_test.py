@@ -4,8 +4,11 @@ import os
 import unittest
 os.environ["TESTING"] = "true"
 
+from communicator.models import Sample
+
+
 from communicator import app, db
-# UNCOMMENT THIS FOR DEBUGGING SQL ALCHEMY QUERIES
+
 import logging
 logging.basicConfig()
 
@@ -14,6 +17,10 @@ class BaseTest(unittest.TestCase):
     """ Great class to inherit from, as it sets up and tears down classes
         efficiently when we have a database in place.
     """
+
+    firebase_file = os.path.join(app.instance_path, '..', 'tests', 'data', 'firebase_data.json')
+    ivy_file = os.path.join(app.instance_path, '..', 'tests', 'data', 'results.csv')
+
 
     if not app.config['TESTING']:
         raise (Exception("INVALID TEST CONFIGURATION. This is almost always in import order issue."
@@ -33,3 +40,10 @@ class BaseTest(unittest.TestCase):
         cls.ctx.pop()
         db.drop_all()
         pass
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        db.session.query(Sample).delete()
+        db.session.commit()
