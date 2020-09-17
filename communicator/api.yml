@@ -21,6 +21,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Status"
+  /update_data:
+    get:
+      operationId: communicator.api.admin.update_data
+      summary: Checks the local file system and firecloud for data and loads it into the db.
+      security: []  # Disable security for this endpoint only.
+      responses:
+        '200':
+          description: Status indicator that the app is up and alive.
+          content:
+            text/plain:
+              schema:
+                type: string
+  /notify_by_email:
+    get:
+      operationId: communicator.api.admin.notify_by_email
+      summary: when called, reviews all samples, and sends out any pending notifications.
+      security: []  # Disable security for this endpoint only.
+      responses:
+        '200':
+          description: Just returns a 200 if it was successful.
+          content:
+            text/plain:
+              schema:
+                type: string
 
 components:
   schemas:
