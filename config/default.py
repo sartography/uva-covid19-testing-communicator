@@ -28,6 +28,7 @@ SQLALCHEMY_DATABASE_URI = environ.get(
     'SQLALCHEMY_DATABASE_URI',
     default="postgresql://%s:%s@%s:%s/%s" % (DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
 )
+SQLALCHEMY_TRACK_MODIFICATIONS=False
 TOKEN_AUTH_TTL_HOURS = float(environ.get('TOKEN_AUTH_TTL_HOURS', default=24))
 SECRET_KEY = environ.get('SECRET_KEY', default="Shhhh!!! This is secret!  And better darn well not show up in prod.")
 SWAGGER_AUTH_KEY = environ.get('SWAGGER_AUTH_KEY', default="SWAGGER")

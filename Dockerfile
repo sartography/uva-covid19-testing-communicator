@@ -1,10 +1,16 @@
-FROM sartography/cr-connect-python-base
+FROM python:3.8-slim
 
 WORKDIR /app
 COPY Pipfile Pipfile.lock /app/
 
 RUN set -xe \
-  && pipenv install --dev \
+  && pip install pipenv \
+  && apt-get update -q \
+  && apt-get install -y -q \
+        gcc python3-dev libssl-dev \
+        curl postgresql-client git-core \
+        gunicorn3 postgresql-client \
+  && pipenv install --dev
   && apt-get remove -y gcc python3-dev libssl-dev \
   && apt-get autoremove -y \
   && apt-get clean -y \
