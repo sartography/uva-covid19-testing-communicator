@@ -1,6 +1,9 @@
 # Set environment variable to testing before loading.
 # IMPORTANT - Environment must be loaded before app, models, etc....
+import base64
 import os
+import quopri
+import re
 import unittest
 os.environ["TESTING"] = "true"
 
@@ -47,3 +50,19 @@ class BaseTest(unittest.TestCase):
     def tearDown(self):
         db.session.query(Sample).delete()
         db.session.commit()
+
+    def decode(self, encoded_words):
+        """
+        Useful for checking the content of email messages
+        (which we store in an array for testing)
+        """
+        encoded_word_regex = r'=\?{1}(.+)\?{1}([b|q])\?{1}(.+)\?{1}='
+        charset, encoding, encoded_text = re.match(encoded_word_regex,
+                                                   encoded_words).groups()
+        if encoding == 'b':
+            byte_string = base64.b64decode(encoded_text)
+        elif encoding == 'q':
+            byte_string = quopri.decodestring(encoded_text)
+        text = byte_string.decode(charset)
+        text = text.replace("_", " ")
+        return text
