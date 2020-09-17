@@ -1,0 +1,23 @@
+{% extends "base_email.html" %}
+{% block content %}
+    <p style="font-family: sans-serif; font-size: 24px; font-weight: bold; margin: 0; Margin-bottom: 15px;">
+        You have a new notification from UVA BE SAFE.
+    </p>
+
+    <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">
+        We have some information for you, please check the following URL (You will need to connect with NetBadge)
+        <a href="{{ link }}">here.</a>
+    </p>
+
+    <table border="0" cellpadding="0" cellspacing="0">
+        <tbody>
+             <tr>
+             <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; background-color: #002359; border-radius: 5px; text-align: center;">
+                 <a href="{{ link }}" target="_blank" style="display: inline-block; width: 180px; color: #ffffff; background-color: #002359; border: solid 1px #002359; border-radius: 5px; box-sizing: border-box; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize; border-color: #002359;">
+                     <span style="font-size: 1.4em; font-weight: bold">UVA BE SAFE</span></a>
+             </td>
+             </tr>
+        </tbody>
+    </table>
+        <p></p>
+{% endblock %}

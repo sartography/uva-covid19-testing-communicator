@@ -16,7 +16,10 @@ class FirebaseService(object):
 
     def get_samples(self):
         # Then query for documents
-        samples = self.db.collection(u'samples')
+        fb_samples = self.db.collection(u'samples')
+        samples = []
+        for s in fb_samples.stream():
+            samples.append(FirebaseService.record_to_sample(s))
         return samples
 
     @staticmethod

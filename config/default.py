@@ -38,8 +38,6 @@ GITHUB_REPO = environ.get('GITHUB_REPO', None)
 TARGET_BRANCH = environ.get('TARGET_BRANCH', None)
 
 # Email configuration
-DEFAULT_SENDER = 'askresearch@virginia.edu'
-FALLBACK_EMAILS = ['askresearch@virginia.edu', 'sartographysupport@googlegroups.com']
 MAIL_DEBUG = environ.get('MAIL_DEBUG', default=True)
 MAIL_SERVER = environ.get('MAIL_SERVER', default='smtp.mailtrap.io')
 MAIL_PORT = environ.get('MAIL_PORT', default=2525)
@@ -47,14 +45,8 @@ MAIL_USE_SSL = environ.get('MAIL_USE_SSL', default=False)
 MAIL_USE_TLS = environ.get('MAIL_USE_TLS', default=False)
 MAIL_USERNAME = environ.get('MAIL_USERNAME', default='')
 MAIL_PASSWORD = environ.get('MAIL_PASSWORD', default='')
+MAIL_SENDER = 'askresearch@virginia.edu'
 
-# Firebase connection
-FIREBASE = {
-  "apiKey": "AIzaSyCZHvaAQJKGiU1McxqgbrH-_KPV92JofUA",
-  "authDomain": "uva-covid19-testing-kiosk.firebaseapp.com",
-  "databaseURL": "https://uva-covid19-testing-kiosk.firebaseio.com",
-  "storageBucket": "uva-covid19-testing-kiosk.appspot.com",
-  "projectId": "uva-covid19-testing-kiosk",
-  "messagingSenderId": "452622162774",
-  "appId": "1:452622162774:web:f2b513f3c1765fc9b954f7"
-}
+# Ivy Directory
+IVY_IMPORT_DIR = os.path.join(basedir, '..', 'example_ivy_data')
+

@@ -8,6 +8,4 @@ class FirebaseServiceTest(BaseTest):
     def test_get_samples(self):
         service = FirebaseService()
         samples = service.get_samples()
-        for sample in samples.stream():
-            print(u'{} => {}'.format(sample.id, sample.to_dict()))
 
