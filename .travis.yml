@@ -13,7 +13,7 @@ addons:
     organization: "sartography"
 
 before_install:
-  - psql -c 'create database communicator-test;' -U postgres
+  - psql -c 'create database communicator_test;' -U postgres
 
 install:
   - pipenv install --dev
