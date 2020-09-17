@@ -2,12 +2,25 @@ import csv
 
 from dateutil import parser
 
+from communicator import app
 from communicator.errors import CommError
 from communicator.models.sample import Sample
+from os import listdir
+from os.path import isfile, join
 
 
 class IvyService(object):
     """Opens files uploaded to the server from IVY and imports them into the database. """
+
+    def __init__(self):
+        self.path = app.config['IVY_IMPORT_DIR']
+
+    def load_directory(self):
+        onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
+        samples = []
+        for file in onlyfiles:
+            samples.extend(IvyService.samples_from_ivy_file(join(self.path, file)))
+        return samples
 
     @staticmethod
     def samples_from_ivy_file(file_name):
