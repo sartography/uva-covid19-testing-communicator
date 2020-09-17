@@ -34,38 +34,38 @@ class IvyServiceTest(BaseTest):
         # Load firebase records
         service = SampleService()
         fb_samples = self.get_firebase_records()
-        self.assertEquals(0, len(db.session.query(Sample).all()))
+        self.assertEqual(0, len(db.session.query(Sample).all()))
 
         service.add_or_update_records(fb_samples)
 
-        self.assertEquals(4, len(db.session.query(Sample).all()))
+        self.assertEqual(4, len(db.session.query(Sample).all()))
 
         ivy_samples = IvyService.samples_from_ivy_file(self.ivy_file)
         service.add_or_update_records(ivy_samples)
 
         # There are 6 records in ivy, but three records that should match up, giving seven total
-        self.assertEquals(6, len(db.session.query(Sample).filter(Sample.in_ivy == True).all()))
-        self.assertEquals(4, len(db.session.query(Sample).filter(Sample.in_firebase == True).all()))
-        self.assertEquals(3, len(db.session.query(Sample).filter(Sample.in_firebase == True)
+        self.assertEqual(6, len(db.session.query(Sample).filter(Sample.in_ivy == True).all()))
+        self.assertEqual(4, len(db.session.query(Sample).filter(Sample.in_firebase == True).all()))
+        self.assertEqual(3, len(db.session.query(Sample).filter(Sample.in_firebase == True)
                                  .filter(Sample.in_ivy == True).all()))
-        self.assertEquals(7, len(db.session.query(Sample).all()))
+        self.assertEqual(7, len(db.session.query(Sample).all()))
 
 
     def test_correlate_samples_ivy_first(self):
         service = SampleService()
 
-        self.assertEquals(0, len(db.session.query(Sample).all()))
+        self.assertEqual(0, len(db.session.query(Sample).all()))
 
         ivy_samples = IvyService.samples_from_ivy_file(self.ivy_file)
         service.add_or_update_records(ivy_samples)
-        self.assertEquals(6, len(db.session.query(Sample).all()))
+        self.assertEqual(6, len(db.session.query(Sample).all()))
 
         fb_samples = self.get_firebase_records()
         service.add_or_update_records(fb_samples)
 
-        self.assertEquals(6, len(db.session.query(Sample).filter(Sample.in_ivy == True).all()))
-        self.assertEquals(4, len(db.session.query(Sample).filter(Sample.in_firebase == True).all()))
-        self.assertEquals(3, len(db.session.query(Sample).filter(Sample.in_firebase == True)
+        self.assertEqual(6, len(db.session.query(Sample).filter(Sample.in_ivy == True).all()))
+        self.assertEqual(4, len(db.session.query(Sample).filter(Sample.in_firebase == True).all()))
+        self.assertEqual(3, len(db.session.query(Sample).filter(Sample.in_firebase == True)
                                  .filter(Sample.in_ivy == True).all()))
-        self.assertEquals(7, len(db.session.query(Sample).all()))
+        self.assertEqual(7, len(db.session.query(Sample).all()))
 
