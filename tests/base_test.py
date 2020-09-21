@@ -21,8 +21,8 @@ class BaseTest(unittest.TestCase):
         efficiently when we have a database in place.
     """
 
-    firebase_file = os.path.join(app.root_path, 'tests', 'data', 'firebase_data.json')
-    ivy_file = os.path.join(app.root_path, 'tests', 'data', 'results.csv')
+    firebase_file = os.path.join(app.root_path, '..', 'tests', 'data', 'firebase_data.json')
+    ivy_file = os.path.join(app.root_path, '..', 'tests', 'data', 'results.csv')
 
 
     if not app.config['TESTING']:
