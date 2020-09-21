@@ -23,6 +23,8 @@ SQLALCHEMY_DATABASE_URI = environ.get(
 )
 ADMIN_UIDS = ['dhf8r']
 
+
 print('### USING TESTING CONFIG: ###')
 print('SQLALCHEMY_DATABASE_URI = ', SQLALCHEMY_DATABASE_URI)
 print('TESTING = ', TESTING)
+

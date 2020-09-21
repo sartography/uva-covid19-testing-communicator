@@ -33,7 +33,7 @@ after_success:
 
 deploy:
   provider: script
-  script: bash deploy.sh sartography/testing-communicator
+  script: bash deploy.sh sartography/uva-covid19-testing-communicator
   skip_cleanup: true
   on:
     all_branches: true
