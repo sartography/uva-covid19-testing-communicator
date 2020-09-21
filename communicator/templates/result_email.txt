@@ -1,22 +1,6 @@
-You have a new account on the Autism DRIVE.
+You have a new notification from the University of Virginia BE SAFE System.
 
-Someone recently created an account for you on the Autism DRIVE. To create your profile,
-please place the following url in your browser to confirm your email address:
-{{confirm_url}}
+Please follow this link, and log in with Netbadge to securely view your notification:
+{{link}}
 
-Please note that this password-setting link will expire in 24 hours. If that happens you can
-set your password by requesting a password reset at: {{ forgot_pass_url }}
-
----------------------------------
-
-Currently Enrolling Studies:
-{% for study in current_studies %}
-{{ study.short_title }}: {{ study.link }}
-{{ study.short_description }}
-{% endfor %}
-All Studies: {{ studies_url }}
-
----------------------------------
-You received this email because you registered an account with Autism DRIVE.
-Please note that email is not a secure form of communication and should not be used to discuss any
-confidential matters, including personal health information, given its confidentiality cannot be assured.
+Please note that email is not a secure form of communication and should not be used to discuss any confidential matters, including personal health information, given its confidentiality cannot be assured.
