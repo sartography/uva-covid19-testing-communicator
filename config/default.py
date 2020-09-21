@@ -44,10 +44,16 @@ MAIL_SERVER = environ.get('MAIL_SERVER', default='smtp.mailtrap.io')
 MAIL_PORT = environ.get('MAIL_PORT', default=2525)
 MAIL_USE_SSL = environ.get('MAIL_USE_SSL', default=False)
 MAIL_USE_TLS = environ.get('MAIL_USE_TLS', default=False)
-MAIL_USERNAME = environ.get('MAIL_USERNAME', default='')
-MAIL_PASSWORD = environ.get('MAIL_PASSWORD', default='')
+MAIL_USERNAME = environ.get('MAIL_USERNAME', default='xxx')
+MAIL_PASSWORD = environ.get('MAIL_PASSWORD', default='yyy')
 MAIL_SENDER = 'askresearch@virginia.edu'
 
 # Ivy Directory
 IVY_IMPORT_DIR = os.path.join(basedir, '..', 'example_ivy_data')
 
+# Globus endpoint connections
+GLOBUS_CLIENT_ID = environ.get('GLOBUS_CLIENT_ID')
+GLOBUS_TRANSFER_RT = environ.get('GLOBUS_TRANSFER_RT')
+GLOBUS_TRANSFER_AT = environ.get('GLOBUS_TRANSFER_AT')
+GLOBUS_IVY_ENDPOINT = environ.get('GLOBUS_IVY_ENDPOINT')
+GLOBUS_DTN_ENDPOINT = environ.get('GLOBUS_DTN_ENDPOINT')

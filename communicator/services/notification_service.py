@@ -20,6 +20,7 @@ class NotificationService(object):
         self.sender = app.config['MAIL_SENDER']
 
     def email_server(self):
+        print("Server:" + self.app.config['MAIL_SERVER'])
         server = smtplib.SMTP(host=self.app.config['MAIL_SERVER'],
                               port=self.app.config['MAIL_PORT'],
                               timeout=self.app.config['MAIL_TIMEOUT'])
