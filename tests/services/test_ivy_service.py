@@ -19,7 +19,7 @@ class IvyServiceTest(BaseTest):
 
     def test_invalid_file(self):
         with self.assertRaises(CommError):
-            ivy_incorrect_file = os.path.join(app.instance_path, '..', 'tests', 'data', 'incorrect.csv')
+            ivy_incorrect_file = os.path.join(app.root_path, '..', 'tests', 'data', 'incorrect.csv')
             IvyService.samples_from_ivy_file(ivy_incorrect_file)
 
 
