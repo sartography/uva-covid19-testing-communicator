@@ -32,6 +32,7 @@ python-box = "*"
 psycopg2-binary = "*"
 google-cloud-firestore = "*"
 globus-sdk = "*"
+apscheduler = "*"
 
 [requires]
 python_version = "3.8"
