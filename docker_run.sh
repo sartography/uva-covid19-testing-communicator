@@ -19,6 +19,12 @@ if [ "$RESET_DB" = "true" ]; then
 fi
 
 # THIS MUST BE THE LAST COMMAND!
+if [ -z "$PORT0" ]
+then
+  echo "$PORT0 is not set, setting to 5000"
+  PORT0=5000
+fi
+
 if [ "$APPLICATION_ROOT" = "/" ]; then
   pipenv run gunicorn --bind 0.0.0.0:$PORT0 wsgi:app
 else

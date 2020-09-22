@@ -26,12 +26,12 @@ marshmallow-enum = "*"
 marshmallow-sqlalchemy = "*"
 sentry-sdk = {extras = ["flask"],version = "==0.14.4"}
 swagger-ui-bundle = "*"
-spiffworkflow = {git = "https://github.com/sartography/SpiffWorkflow.git",ref = "master"}
 webtest = "*"
 python-box = "*"
 psycopg2-binary = "*"
 google-cloud-firestore = "*"
 globus-sdk = "*"
+gunicorn = "*"
 
 [requires]
 python_version = "3.8"
