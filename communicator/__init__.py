@@ -3,13 +3,13 @@ import os
 
 import connexion
 import sentry_sdk
+from flask import render_template, request
 from flask_cors import CORS
 from flask_mail import Mail
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sentry_sdk.integrations.flask import FlaskIntegration
-
 
 logging.basicConfig(level=logging.INFO)
 
@@ -36,6 +36,8 @@ ma = Marshmallow(app)
 
 from communicator import models
 from communicator import api
+from communicator import forms
+
 connexion_app.add_api('api.yml', base_path='/v1.0')
 
 # Convert list of allowed origins to list of regexes
@@ -50,6 +52,38 @@ if app.config['SENTRY_ENVIRONMENT']:
         integrations=[FlaskIntegration()]
     )
 
+### HTML Pages
+BASE_HREF = app.config['APPLICATION_ROOT'].strip('/')
+
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    # display results
+    return render_template(
+        'index.html',
+        base_href=BASE_HREF
+    )
+
+
+@app.route('/invitation', methods=['GET', 'POST'])
+def send_invitation():
+    form = forms.InvitationForm(request.form)
+    action = BASE_HREF + "/invitation"
+    title = "Send invitation to students"
+    if request.method == 'POST':
+        from communicator.services.notification_service import NotificationService
+        with NotificationService(app) as ns:
+            ns.send_invitations(form.date.data, form.location.data, form.emails.data)
+    return render_template(
+        'form.html',
+        form=form,
+        action=action,
+        title=title,
+        description_map={},
+        base_href=BASE_HREF
+    )
+
+
 # Access tokens
 @app.cli.command()
 def globus_token():
@@ -57,17 +91,20 @@ def globus_token():
     ivy_service = IvyService()
     ivy_service.get_access_token()
 
+
 @app.cli.command()
 def list_files():
     from communicator.services.ivy_service import IvyService
     ivy_service = IvyService()
     ivy_service.list_files()
 
+
 @app.cli.command()
 def transfer():
     from communicator.services.ivy_service import IvyService
     ivy_service = IvyService()
     ivy_service.request_transfer()
+
 
 @app.cli.command()
 def delete():
