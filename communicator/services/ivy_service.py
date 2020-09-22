@@ -3,8 +3,9 @@ import csv
 import globus_sdk
 from dateutil import parser
 
-from communicator import app
+from communicator import app, db
 from communicator.errors import CommError
+from communicator.models.ivy_file import IvyFile
 from communicator.models.sample import Sample
 from os import listdir
 from os.path import isfile, join
@@ -30,8 +31,10 @@ class IvyService(object):
     def load_directory(self):
         onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
         samples = []
-        for file in onlyfiles:
-            samples.extend(IvyService.samples_from_ivy_file(join(self.path, file)))
+        for file_name in onlyfiles:
+            samples = IvyService.samples_from_ivy_file(join(self.path, file_name))
+            ivy_file = IvyFile(file_name=file_name)
+            db.session.add(ivy_file)
         return samples
 
     @staticmethod

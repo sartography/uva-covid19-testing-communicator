@@ -18,7 +18,6 @@ class FirebaseService(object):
         self.db = firestore.Client(project="uva-covid19-testing-kiosk",
                                    credentials= credentials)
 
-
     def get_samples(self):
         # Then query for documents
         fb_samples = self.db.collection(u'samples')

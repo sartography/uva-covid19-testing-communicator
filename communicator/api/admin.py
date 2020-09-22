@@ -14,7 +14,7 @@ def status():
 
 
 def update_data():
-    """Updates the database based on local files placed by IVY and recoreds
+    """Updates the database based on local files placed by IVY and records
     read in from the firecloud database."""
     fb_service = FirebaseService()
     ivy_service = IvyService()
@@ -22,6 +22,7 @@ def update_data():
     samples = fb_service.get_samples()
     samples.extend(ivy_service.load_directory())
     SampleService().add_or_update_records(samples)
+    db.session.commit()
 
 
 def notify_by_email():
