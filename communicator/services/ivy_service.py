@@ -1,4 +1,5 @@
 import csv
+from datetime import datetime
 
 import globus_sdk
 from dateutil import parser
@@ -23,18 +24,20 @@ class IvyService(object):
         self.GLOBUS_IVY_ENDPOINT = app.config['GLOBUS_IVY_ENDPOINT']
         self.GLOBUS_DTN_ENDPOINT = app.config['GLOBUS_DTN_ENDPOINT']
 
-        print("Client ID:" + self.GLOBUS_CLIENT_ID)
-
-        self.client = globus_sdk.NativeAppAuthClient(self.GLOBUS_CLIENT_ID)
-        self.client.oauth2_start_flow(refresh_tokens=True)
 
     def load_directory(self):
         onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
         samples = []
         for file_name in onlyfiles:
             samples = IvyService.samples_from_ivy_file(join(self.path, file_name))
-            ivy_file = IvyFile(file_name=file_name)
+            ivy_file = db.session.query(IvyFile).filter(IvyFile.file_name == file_name).first()
+            if not ivy_file:
+                ivy_file = IvyFile(file_name=file_name, sample_count=len(samples))
+            else:
+                ivy_file.date_added = datetime.now()
+                ivy_file.sample_count = len(samples)
             db.session.add(ivy_file)
+            db.session.commit()
         return samples
 
     @staticmethod
@@ -105,6 +108,9 @@ class IvyService(object):
 
 
     def get_transfer_client(self):
+        self.client = globus_sdk.NativeAppAuthClient(self.GLOBUS_CLIENT_ID)
+        self.client.oauth2_start_flow(refresh_tokens=True)
+
         authorizer = globus_sdk.RefreshTokenAuthorizer(
             self.GLOBUS_TRANSFER_RT, self.client, access_token=self.GLOBUS_TRANSFER_AT, expires_at=self.EXPIRES_AT)
         tc = globus_sdk.TransferClient(authorizer=authorizer)
