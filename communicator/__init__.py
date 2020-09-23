@@ -14,6 +14,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
 
+
 logging.basicConfig(level=logging.INFO)
 
 # API, fully defined in api.yml
@@ -80,7 +81,7 @@ if app.config['SENTRY_ENVIRONMENT']:
 BASE_HREF = app.config['APPLICATION_ROOT'].strip('/')
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
 def index():
     from communicator.models import Sample
     from communicator.tables import SampleTable
@@ -114,6 +115,24 @@ def send_invitation():
         action=action,
         title=title,
         description_map={},
+        base_href=BASE_HREF
+    )
+
+@app.route('/imported_files', methods=['GET'])
+def list_imported_files_from_ivy():
+    from communicator.models.ivy_file import IvyFile
+    from communicator.tables import IvyFileTable
+
+    # display results
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
+    pagination = Pagination(page=page, total=files.count(), search=False, record_name='samples')
+
+    table = IvyFileTable(files.paginate(page, 10, error_out=False).items)
+    return render_template(
+        'imported_files.html',
+        table=table,
+        pagination=pagination,
         base_href=BASE_HREF
     )
 
