@@ -3,12 +3,14 @@ import uuid
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import re
 
 from flask import render_template
 from twilio.rest import Client
 
-from communicator import app
+from communicator import app, db
 from communicator.errors import CommError
+from communicator.models.invitation import Invitation
 
 TEST_MESSAGES = []
 
@@ -85,6 +87,10 @@ class NotificationService(object):
                                     tracking_code=tracking_code)
 
         self._send_email(subject, recipients=[self.sender], bcc=emails, text_body=text_body, html_body=html_body)
+
+        invitation_log = Invitation(location=location, date=date, total_recipients=len(emails))
+        db.session.add(invitation_log)
+        db.session.commit()
 
     def _tracking_code(self):
         return str(uuid.uuid4())[:16]

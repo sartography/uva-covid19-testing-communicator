@@ -18,3 +18,12 @@ class IvyFileTable(Table):
     file_name = Col('File Name')
     date_added = DatetimeCol('Date', "medium")
     sample_count = Col('Total Records')
+
+
+class InvitationTable(Table):
+    def sort_url(self, col_id, reverse=False):
+        pass
+    date_sent = DatetimeCol('Date Sent', "medium")
+    location = Col('Location')
+    date = Col('Date')
+    total_recipients = Col('# Recipients')
