@@ -35,6 +35,9 @@ google-cloud-firestore = "*"
 globus-sdk = "*"
 gunicorn = "*"
 twilio = "*"
+flask-paginate = "*"
+flask-assets = "*"
+pyscss = "*"
 
 [requires]
 python_version = "3.8"

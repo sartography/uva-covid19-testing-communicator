@@ -14,7 +14,6 @@ class Sample(db.Model):
     in_ivy = db.Column(db.Boolean, default=False)  # Has this record come in from the IVY?
     email_notified = db.Column(db.Boolean, default=False)
     text_notified = db.Column(db.Boolean, default=False)
-    ivy_file_name = db.Column(db.String)
     notifications = db.relationship(Notification, back_populates="sample",
                                     cascade="all, delete, delete-orphan",
                                     order_by=Notification.date)

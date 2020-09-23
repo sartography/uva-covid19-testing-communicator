@@ -4,12 +4,15 @@ import os
 import connexion
 import sentry_sdk
 from flask import render_template, request
+from flask_assets import Environment
 from flask_cors import CORS
 from flask_mail import Mail
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
+from flask_paginate import Pagination, get_page_parameter
 from flask_sqlalchemy import SQLAlchemy
 from sentry_sdk.integrations.flask import FlaskIntegration
+from webassets import Bundle
 
 logging.basicConfig(level=logging.INFO)
 
@@ -33,6 +36,27 @@ mail = Mail(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 ma = Marshmallow(app)
+
+# Asset management
+url_map = app.url_map
+try:
+    for rule in url_map.iter_rules('static'):
+        url_map._rules.remove(rule)
+except ValueError:
+    # no static view was created yet
+    pass
+app.add_url_rule(
+    app.static_url_path + '/<path:filename>',
+    endpoint='static', view_func=app.send_static_file)
+assets = Environment(app)
+assets.init_app(app)
+assets.url = app.static_url_path
+scss = Bundle(
+    'scss/app.scss',
+    filters='pyscss',
+    output='app.css'
+)
+assets.register('app_scss', scss)
 
 from communicator import models
 from communicator import api
@@ -58,18 +82,28 @@ BASE_HREF = app.config['APPLICATION_ROOT'].strip('/')
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    from communicator.models import Sample
+    from communicator.tables import SampleTable
     # display results
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    samples = db.session.query(Sample).order_by(Sample.date.desc())
+    pagination = Pagination(page=page, total=samples.count(), search=False, record_name='samples')
+
+    table = SampleTable(samples.paginate(page,10,error_out=False).items)
     return render_template(
         'index.html',
+        table=table,
+        pagination=pagination,
         base_href=BASE_HREF
     )
-
 
 @app.route('/invitation', methods=['GET', 'POST'])
 def send_invitation():
     form = forms.InvitationForm(request.form)
     action = BASE_HREF + "/invitation"
     title = "Send invitation to students"
+
+
     if request.method == 'POST':
         from communicator.services.notification_service import NotificationService
         with NotificationService(app) as ns:

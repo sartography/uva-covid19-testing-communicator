@@ -12,6 +12,13 @@ from communicator.services.sample_service import SampleService
 def status():
     return {"status":"good"}
 
+def add_sample(body):
+    sample = Sample(barcode=body['barcode'],
+                    student_id=body['student_id'],
+                    date=body['date'],
+                    location=body['location'])
+    db.session.add(sample)
+    db.session.commit()
 
 def update_data():
     """Updates the database based on local files placed by IVY and records
