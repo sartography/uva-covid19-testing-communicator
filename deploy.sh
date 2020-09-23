@@ -19,14 +19,7 @@ function branch_to_tag () {
   if [ "$1" == "master" ]; then echo "latest"; else echo "$1" ; fi
 }
 
-function branch_to_deploy_group() {
-  echo "covid";
-  # if [[ $1 =~ ^(rrt\/.*)$ ]]; then echo "rrt"; else echo "crconnect" ; fi
-}
-
 DOCKER_TAG=$(branch_to_tag "$TRAVIS_BRANCH")
-
-DEPLOY_GROUP=$(branch_to_deploy_group "$TRAVIS_BRANCH")
 
 echo "DOCKER_REPO = $DOCKER_REPO"
 echo "DOCKER_TAG = $DOCKER_TAG"
