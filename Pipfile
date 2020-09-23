@@ -34,6 +34,7 @@ psycopg2-binary = "*"
 google-cloud-firestore = "*"
 globus-sdk = "*"
 gunicorn = "*"
+twilio = "*"
 
 [requires]
 python_version = "3.8"
