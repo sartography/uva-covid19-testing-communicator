@@ -117,6 +117,17 @@ def send_invitation():
         base_href=BASE_HREF
     )
 
+@app.route('/sso')
+def sso():
+    response = ""
+    response += "<h1>Headers</h1>"
+    response += "<ul>"
+    for k, v in request.headers:
+        response += "<li><b>%s</b> %s</li>\n" % (k, v)
+    response += "<h1>Environment</h1>"
+    for k, v in request.environ:
+        response += "<li><b>%s</b> %s</li>\n" % (k, v)
+    return response
 
 # Access tokens
 @app.cli.command()
