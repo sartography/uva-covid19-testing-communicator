@@ -29,11 +29,15 @@ class NotificationService(object):
         self.sender = app.config['MAIL_SENDER']
 
     def __enter__(self):
+        if 'TESTING' in self.app.config and self.app.config['TESTING']:
+            return self
         self.email_server = self._get_email_server()
         self.twilio_client = self._get_twilio_client()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        if 'TESTING' in self.app.config and self.app.config['TESTING']:
+            return
         self.email_server.close()
         # No way to close the twilio client that I can see.
 
@@ -68,26 +72,25 @@ class NotificationService(object):
 
     def send_invitations(self, date, location, email_string):
         emails = email_string.splitlines()
-        for email in emails:
-            subject = "UVA: BE SAFE - Appointment"
-            tracking_code = self._tracking_code()
-            text_body = render_template("invitation_email.txt",
-                                        date=date,
-                                        location=location,
-                                        tracking_code=tracking_code)
+        subject = "UVA: BE SAFE - Appointment"
+        tracking_code = self._tracking_code()
+        text_body = render_template("invitation_email.txt",
+                                    date=date,
+                                    location=location,
+                                    tracking_code=tracking_code)
 
-            html_body = render_template("invitation_email.html",
-                                        date=date,
-                                        location=location,
-                                        tracking_code=tracking_code)
+        html_body = render_template("invitation_email.html",
+                                    date=date,
+                                    location=location,
+                                    tracking_code=tracking_code)
 
-            self._send_email(subject, recipients=[email], text_body=text_body, html_body=html_body)
+        self._send_email(subject, recipients=[self.sender], bcc=emails, text_body=text_body, html_body=html_body)
 
     def _tracking_code(self):
         return str(uuid.uuid4())[:16]
 
     def _get_email_server(self):
-        print("Server:" + self.app.config['MAIL_SERVER'])
+
         server = smtplib.SMTP(host=self.app.config['MAIL_SERVER'],
                               port=self.app.config['MAIL_PORT'],
                               timeout=self.app.config['MAIL_TIMEOUT'])
@@ -103,7 +106,7 @@ class NotificationService(object):
         return Client(self.app.config['TWILIO_SID'],
                       self.app.config['TWILIO_TOKEN'])
 
-    def _send_email(self, subject, recipients, text_body, html_body, sender=None, ical=None):
+    def _send_email(self, subject, recipients, text_body, html_body, bcc=[], sender=None, ical=None):
         msgRoot = MIMEMultipart('related')
         msgRoot.set_charset('utf8')
 
@@ -136,8 +139,10 @@ class NotificationService(object):
             TEST_MESSAGES.append(msgRoot)
             return
 
+        all_recipients = recipients + bcc
+
         try:
-            self.email_server.sendmail(sender, recipients, msgRoot.as_bytes())
+            self.email_server.sendmail(sender, all_recipients, msgRoot.as_bytes())
         except Exception as e:
             app.logger.error('An exception happened in EmailService', exc_info=True)
             app.logger.error(str(e))

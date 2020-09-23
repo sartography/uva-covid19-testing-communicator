@@ -47,6 +47,7 @@ MAIL_USE_TLS = environ.get('MAIL_USE_TLS', default=False)
 MAIL_USERNAME = environ.get('MAIL_USERNAME', default='xxx')
 MAIL_PASSWORD = environ.get('MAIL_PASSWORD', default='yyy')
 MAIL_SENDER = 'askresearch@virginia.edu'
+MAIL_TIMEOUT = 10
 
 # Ivy Directory
 IVY_IMPORT_DIR = os.path.join(basedir, '..', 'example_ivy_data')
