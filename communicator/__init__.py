@@ -14,7 +14,6 @@ from flask_sqlalchemy import SQLAlchemy
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
 
-
 logging.basicConfig(level=logging.INFO)
 
 # API, fully defined in api.yml
@@ -100,18 +99,29 @@ def index():
 
 @app.route('/invitation', methods=['GET', 'POST'])
 def send_invitation():
+    from communicator.models.invitation import Invitation
+    from communicator.tables import InvitationTable
+
     form = forms.InvitationForm(request.form)
     action = BASE_HREF + "/invitation"
     title = "Send invitation to students"
-
-
-    if request.method == 'POST':
+    if request.method == 'POST' and form.validate():
         from communicator.services.notification_service import NotificationService
         with NotificationService(app) as ns:
             ns.send_invitations(form.date.data, form.location.data, form.emails.data)
+
+    # display results
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    invites = db.session.query(Invitation).order_by(Invitation.date.desc())
+    pagination = Pagination(page=page, total=invites.count(), search=False, record_name='samples')
+
+    table = InvitationTable(invites.paginate(page,10,error_out=False).items)
+
     return render_template(
         'form.html',
         form=form,
+        table=table,
+        pagination=pagination,
         action=action,
         title=title,
         description_map={},
