@@ -63,6 +63,14 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Sample"
+    delete:
+      operationId: communicator.api.admin.clear_samples
+      summary: Removes the given samples completely.
+      tags:
+        - Studies
+      responses:
+        '204':
+          description: All Samples removed.
 components:
   schemas:
     Status:
