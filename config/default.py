@@ -62,4 +62,8 @@ GLOBUS_DTN_ENDPOINT = environ.get('GLOBUS_DTN_ENDPOINT')
 # Twilio SMS Messages
 TWILIO_SID = environ.get('TWILIO_SID')
 TWILIO_TOKEN = environ.get('TWILIO_TOKEN')
+TWILIO_NUMBER =  environ.get('TWILIO_NUMBER')
+
+# Firestore configuration
+FIRESTORE_JSON = environ.get('FIRESTORE_JSON')
 

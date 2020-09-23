@@ -1,7 +1,5 @@
 import json
-import os
 
-from google.auth.credentials import Credentials
 from google.cloud import firestore
 from google.oauth2 import service_account
 
