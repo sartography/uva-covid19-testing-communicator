@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>UVA Be Safe Communicator</title>
+    <base href="/">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.typekit.net/kwp6dli.css">
+    <link rel="shortcut icon" href="{{ base_href + url_for('static', filename='favicon.ico') }}">
+    {% assets 'app_scss' %}
+        <link href="{{ base_href + ASSET_URL }}" rel="stylesheet" type="text/css">
+    {% endassets %}
+    <link rel="shortcut icon" href="{{ base_href + url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+<h2>UVA Be Safe Communicator</h2>
+<a href="{{base_href + '/invitation'}}">Send Invitations</a> | <a href="{{base_href + '/imported_files'}}">View imported files</a>
+
+<h3>Records to be processed</h3>
+{{ pagination.info }}
+{{ pagination.links }}
+{{ table }}
+{{ pagination.links }}
+</body>
+</html>

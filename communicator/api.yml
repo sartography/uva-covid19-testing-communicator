@@ -6,8 +6,6 @@ info:
     name: MIT
 servers:
   - url: http://localhost:5000/v1.0
-security:
-  - jwt: ['secret']
 paths:
   /status:
     get:
@@ -45,10 +43,52 @@ paths:
             text/plain:
               schema:
                 type: string
-
+  /sample:
+    post:
+      operationId: communicator.api.admin.add_sample
+      summary: Creates a new sample
+      tags:
+        - Samples
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Sample'
+      responses:
+        '200':
+          description: Sample created successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sample"
+    delete:
+      operationId: communicator.api.admin.clear_samples
+      summary: Removes the given samples completely.
+      tags:
+        - Studies
+      responses:
+        '204':
+          description: All Samples removed.
 components:
   schemas:
     Status:
       properties:
         status:
           type: string
+    Sample:
+      properties:
+        barcode:
+          type: string
+          example: "000000111-202009091449-4321"
+        student_id:
+          type: string
+          example: "000000111"
+        date:
+          type: string
+          format: date_time
+          example: "2019-12-25T09:12:33.001Z"
+        location:
+          type: string
+          example: "0001"
