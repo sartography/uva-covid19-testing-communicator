@@ -2,7 +2,6 @@ from sqlalchemy import func
 
 from communicator import db
 
-
 class Invitation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date_sent = db.Column(db.DateTime(timezone=True), default=func.now())
