@@ -14,8 +14,6 @@ from flask_sqlalchemy import SQLAlchemy
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
 
-from communicator.services.user_service import UserService
-
 logging.basicConfig(level=logging.INFO)
 
 # API, fully defined in api.yml
@@ -151,6 +149,7 @@ def list_imported_files_from_ivy():
 
 @app.route('/sso')
 def sso():
+    from communicator.services.user_service import UserService
     user = UserService().get_user_info()
     response = ""
     response += f"<h1>Current User: {user.display_name} ({user.uid})</h1>"
