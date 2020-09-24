@@ -1,3 +1,7 @@
+from datetime import datetime
+
+import pytz
+
 from tests.base_test import BaseTest
 
 
@@ -15,4 +19,5 @@ class TestNotificationService(BaseTest):
             notifier.send_result_email(sample)
         self.assertEqual(len(TEST_MESSAGES), message_count + 1)
         self.assertEqual("UVA: BE SAFE Notification", self.decode(TEST_MESSAGES[-1]['subject']))
+
 

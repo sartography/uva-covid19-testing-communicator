@@ -17,15 +17,16 @@ def add_sample(body):
                     student_id=body['student_id'],
                     date=body['date'],
                     location=body['location'])
-    db.session.add(sample)
-    db.session.commit()
+    SampleService().add_or_update_records([sample])
 
 def clear_samples():
     db.session.query(Sample).delete()
     db.session.commit()
 
 def update_and_notify():
-    print("updating and notifying")
+    update_data()
+    notify_by_email()
+    notify_by_text()
 
 def update_data():
     """Updates the database based on local files placed by IVY.  No longer attempts
@@ -48,7 +49,22 @@ def notify_by_email():
         except CommError as ce:
             print("Error")
 
+def notify_by_text():
+    """Sends out notifications via SMS Message, but only at reasonable times of day"""
+    notifier = NotificationService(app)
+    if not notifier.is_reasonable_hour_for_text_messages:
+        print("Skipping text messages, it's not a good time to get one.")
+        return
 
+    samples = db.session.query(Sample)\
+        .filter(Sample.result_code != None)\
+        .filter(Sample.text_notified == False).all()
+    for sample in samples:
+        try:
+            notifier.send_result_sms(sample)
+            sample.text_notified = True
+        except CommError as ce:
+            print("Error")
 
 
 

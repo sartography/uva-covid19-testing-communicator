@@ -29,7 +29,8 @@ class SampleTable(Table):
     location = Col('Location')
     email_notified = BoolCol('Emailed?')
     text_notified = BoolCol('Texted?')
-
+    phone = Col('Phone')
+    email = Col('Email')
 
 class IvyFileTable(Table):
     def sort_url(self, col_id, reverse=False):
