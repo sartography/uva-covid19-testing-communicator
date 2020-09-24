@@ -1,11 +1,15 @@
 import smtplib
 import uuid
+from datetime import datetime, time, date
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import re
 
+import dateutil
+import pytz
 from flask import render_template
+from pytz import timezone
 from twilio.rest import Client
 
 from communicator import app, db
@@ -158,3 +162,11 @@ class NotificationService(object):
             app.logger.error('An exception happened in EmailService', exc_info=True)
             app.logger.error(str(e))
             raise CommError(5000, f"failed to send email to {', '.join(recipients)}", e)
+
+    def is_reasonable_hour_for_text_messages(self):
+        """Where 'reasaonable' is between 8am and 10pm. """
+        tz = pytz.timezone('US/Eastern')
+        now = (datetime.now(tz))
+        eight_am = (datetime.now(tz).replace(hour=8, minute=0, second=0, microsecond=0))
+        ten_pm = (datetime.now(tz).replace(hour=22, minute=0, second=0, microsecond=0))
+        return eight_am <= now <= ten_pm
