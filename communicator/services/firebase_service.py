@@ -1,7 +1,5 @@
 import json
-import os
 
-from google.auth.credentials import Credentials
 from google.cloud import firestore
 from google.oauth2 import service_account
 
@@ -17,7 +15,6 @@ class FirebaseService(object):
         credentials = service_account.Credentials.from_service_account_info(json_config)
         self.db = firestore.Client(project="uva-covid19-testing-kiosk",
                                    credentials= credentials)
-
 
     def get_samples(self):
         # Then query for documents

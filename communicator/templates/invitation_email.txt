@@ -1,0 +1,22 @@
+This is your invitation from the University of Virginia Be SAFE System.
+-----------------------------------------------------------------------
+
+To help keep our classes in-person, and to help keep our community safe, we are launching Be SAFE*
+(Screening Asymptomatic Finding Effort). Be SAFE is a quick and easy coronavirus screening
+program that will rely on saliva samples to detect the virus, with the goal of identifying silent
+carriers before they have the opportunity to transmit the coronavirus. The saliva screenings are
+mandatory and free of charge. The screenings will be done at multiple locations around Grounds and
+only take about 2-3 minutes. The ultimate goal is to test all asymptomatic students who are coming
+on Grounds periodically throughout the semester and to get them results within hours (rather than days).
+
+==========================================
+Your next screening test is scheduled at:
+{{location}}
+{{date}}
+==========================================
+
+You will need to bring your student ID card with you.
+
+For more information please visit https://besafe.virginia.edu/
+Questions? Email us at asksafe@virginia.edu
+

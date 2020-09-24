@@ -12,16 +12,25 @@ from communicator.services.sample_service import SampleService
 def status():
     return {"status":"good"}
 
+def add_sample(body):
+    sample = Sample(barcode=body['barcode'],
+                    student_id=body['student_id'],
+                    date=body['date'],
+                    location=body['location'])
+    db.session.add(sample)
+    db.session.commit()
+
+def clear_samples():
+    db.session.query(Sample).delete()
+    db.session.commit()
 
 def update_data():
-    """Updates the database based on local files placed by IVY and recoreds
-    read in from the firecloud database."""
-    fb_service = FirebaseService()
+    """Updates the database based on local files placed by IVY.  No longer attempts
+    to pull files from the Firebase service."""
     ivy_service = IvyService()
-
-    samples = fb_service.get_samples()
-    samples.extend(ivy_service.load_directory())
+    samples = ivy_service.load_directory()
     SampleService().add_or_update_records(samples)
+    db.session.commit()
 
 
 def notify_by_email():

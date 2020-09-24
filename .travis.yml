@@ -21,7 +21,6 @@ install:
 env:
   global:
     - TESTING=true
-    - PB_ENABLED=false
     - SQLALCHEMY_DATABASE_URI="postgresql://postgres:@localhost:5432/communicator_test"
 
 script:
