@@ -24,6 +24,9 @@ def clear_samples():
     db.session.query(Sample).delete()
     db.session.commit()
 
+def update_and_notify():
+    print("updating and notifying")
+
 def update_data():
     """Updates the database based on local files placed by IVY.  No longer attempts
     to pull files from the Firebase service."""
@@ -32,10 +35,8 @@ def update_data():
     SampleService().add_or_update_records(samples)
     db.session.commit()
 
-
 def notify_by_email():
     """Sends out notifications via email"""
-
     samples = db.session.query(Sample)\
         .filter(Sample.result_code != None)\
         .filter(Sample.email_notified == False).all()
