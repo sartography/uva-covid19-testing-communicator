@@ -61,6 +61,7 @@ assets.register('app_scss', scss)
 from communicator import models
 from communicator import api
 from communicator import forms
+from communicator import scheduler
 
 connexion_app.add_api('api.yml', base_path='/v1.0')
 
