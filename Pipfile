@@ -39,6 +39,7 @@ twilio = "*"
 flask-paginate = "*"
 flask-assets = "*"
 pyscss = "*"
+pyzt = "*"
 
 [requires]
 python_version = "3.8"
