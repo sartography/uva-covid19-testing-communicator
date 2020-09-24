@@ -3,7 +3,7 @@ import os
 
 import connexion
 import sentry_sdk
-from flask import render_template, request
+from flask import render_template, request, redirect, url_for
 from flask_assets import Environment
 from flask_cors import CORS
 from flask_mail import Mail
@@ -109,10 +109,10 @@ def send_invitation():
         from communicator.services.notification_service import NotificationService
         with NotificationService(app) as ns:
             ns.send_invitations(form.date.data, form.location.data, form.emails.data)
-
+            return redirect(url_for('send_invitation'))
     # display results
     page = request.args.get(get_page_parameter(), type=int, default=1)
-    invites = db.session.query(Invitation).order_by(Invitation.date.desc())
+    invites = db.session.query(Invitation).order_by(Invitation.date_sent.desc())
     pagination = Pagination(page=page, total=invites.count(), search=False, record_name='samples')
 
     table = InvitationTable(invites.paginate(page,10,error_out=False).items)
