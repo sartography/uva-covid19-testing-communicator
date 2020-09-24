@@ -50,7 +50,7 @@ MAIL_SENDER = 'askresearch@virginia.edu'
 MAIL_TIMEOUT = 10
 
 # Ivy Directory
-IVY_IMPORT_DIR = os.path.join(basedir, '..', 'example_ivy_data')
+IVY_IMPORT_DIR = environ.get('IVY_IMPORT_DIR', default='')
 
 # Globus endpoint connections
 GLOBUS_CLIENT_ID = environ.get('GLOBUS_CLIENT_ID')
