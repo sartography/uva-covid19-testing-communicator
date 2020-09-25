@@ -26,7 +26,8 @@ class FirebaseService(object):
 
     @staticmethod
     def record_to_sample(fb_sample):
-        sample = Sample()
+        sample: Sample = Sample()
+
         dictionary = fb_sample.to_dict()
         sample.barcode = dictionary["id"]
         sample.student_id = dictionary["barcodeId"]

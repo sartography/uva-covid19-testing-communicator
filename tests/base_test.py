@@ -1,15 +1,14 @@
 # Set environment variable to testing before loading.
 # IMPORTANT - Environment must be loaded before app, models, etc....
 import base64
+import json
 import os
 import quopri
 import re
 import unittest
 os.environ["TESTING"] = "true"
 
-from communicator.models import Sample
-
-
+from communicator.models import Sample, Location, Kiosk
 from communicator import app, db
 
 import logging
@@ -21,6 +20,8 @@ class BaseTest(unittest.TestCase):
         efficiently when we have a database in place.
     """
 
+    kiosks_file = os.path.join(app.root_path, '..', 'tests', 'data', 'kiosks.json')
+    locations_file = os.path.join(app.root_path, '..', 'tests', 'data', 'locations.json')
     firebase_file = os.path.join(app.root_path, '..', 'tests', 'data', 'firebase_data.json')
     ivy_file = os.path.join(app.root_path, '..', 'tests', 'data', 'results.csv')
 
@@ -49,6 +50,8 @@ class BaseTest(unittest.TestCase):
 
     def tearDown(self):
         db.session.query(Sample).delete()
+        db.session.query(Kiosk).delete()
+        db.session.query(Location).delete()
         db.session.commit()
 
     def decode(self, encoded_words):
@@ -66,3 +69,29 @@ class BaseTest(unittest.TestCase):
         text = byte_string.decode(charset)
         text = text.replace("_", " ")
         return text
+
+    def load_example_data(self):
+        self.load_example_locations()
+        self.load_example_kiosks()
+
+    def load_example_locations(self):
+        with open(self.locations_file, 'r') as f:
+            raw_data = json.load(f)
+            for d in raw_data:
+                new_loc = Location(id=d['id'], firebase_id=d['firebase_id'], name=d['name'])
+                db.session.add(new_loc)
+                db.session.commit()
+
+            locs = db.session.query(Location).all()
+            self.assertEqual(len(raw_data), len(locs))
+
+    def load_example_kiosks(self):
+        with open(self.kiosks_file, 'r') as f:
+            raw_data = json.load(f)
+            for d in raw_data:
+                new_kiosk = Kiosk(id=d['id'], location_id=d['location_id'])
+                db.session.add(new_kiosk)
+                db.session.commit()
+
+            kiosks = db.session.query(Kiosk).all()
+            self.assertEqual(len(raw_data), len(kiosks))

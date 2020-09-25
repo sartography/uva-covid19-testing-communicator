@@ -1,0 +1,26 @@
+[
+  {
+    "id": 101,
+    "location_id": 1
+  },
+  {
+    "id": 102,
+    "location_id": 1
+  },
+  {
+    "id": 201,
+    "location_id": 2
+  },
+  {
+    "id": 202,
+    "location_id": 2
+  },
+  {
+    "id": 301,
+    "location_id": 3
+  },
+  {
+    "id": 302,
+    "location_id": 3
+  }
+]

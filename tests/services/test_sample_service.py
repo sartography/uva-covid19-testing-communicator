@@ -13,7 +13,6 @@ from communicator.services.sample_service import SampleService
 
 class IvyServiceTest(BaseTest):
 
-
     def get_firebase_records(self):
         with open(self.firebase_file, 'r') as fb_file:
             raw_data = json.load(fb_file)
@@ -25,7 +24,6 @@ class IvyServiceTest(BaseTest):
                                       location=d['locationId'],
                                       in_firebase=True))
             return samples
-
 
     def test_correlate_samples_firebase_first(self):
         """Load up all the samples from firebase, then load data from ivy, and assure we
@@ -44,12 +42,11 @@ class IvyServiceTest(BaseTest):
         service.add_or_update_records(ivy_samples)
 
         # There are 6 records in ivy, but three records that should match up, giving seven total
-        self.assertEqual(6, len(db.session.query(Sample).filter(Sample.in_ivy == True).all()))
-        self.assertEqual(4, len(db.session.query(Sample).filter(Sample.in_firebase == True).all()))
-        self.assertEqual(3, len(db.session.query(Sample).filter(Sample.in_firebase == True)
-                                 .filter(Sample.in_ivy == True).all()))
+        self.assertEqual(6, len(db.session.query(Sample).filter(Sample.in_ivy is True).all()))
+        self.assertEqual(4, len(db.session.query(Sample).filter(Sample.in_firebase is True).all()))
+        self.assertEqual(3, len(db.session.query(Sample).filter(Sample.in_firebase is True)
+                                .filter(Sample.in_ivy is True).all()))
         self.assertEqual(7, len(db.session.query(Sample).all()))
-
 
     def test_correlate_samples_ivy_first(self):
         service = SampleService()
@@ -63,9 +60,9 @@ class IvyServiceTest(BaseTest):
         fb_samples = self.get_firebase_records()
         service.add_or_update_records(fb_samples)
 
-        self.assertEqual(6, len(db.session.query(Sample).filter(Sample.in_ivy == True).all()))
-        self.assertEqual(4, len(db.session.query(Sample).filter(Sample.in_firebase == True).all()))
-        self.assertEqual(3, len(db.session.query(Sample).filter(Sample.in_firebase == True)
-                                 .filter(Sample.in_ivy == True).all()))
+        self.assertEqual(6, len(db.session.query(Sample).filter(Sample.in_ivy is True).all()))
+        self.assertEqual(4, len(db.session.query(Sample).filter(Sample.in_firebase is True).all()))
+        self.assertEqual(3, len(db.session.query(Sample).filter(Sample.in_firebase is True)
+                                .filter(Sample.in_ivy is True).all()))
         self.assertEqual(7, len(db.session.query(Sample).all()))
 

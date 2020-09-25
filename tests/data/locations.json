@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "firebase_id": "https://www.virginia.edu/location-1-covid-testing",
+    "name": "Location 1 Name"
+  },
+  {
+    "id": 2,
+    "firebase_id": "https://www.virginia.edu/location-2-covid-testing",
+    "name": "Location 2 Name"
+  },
+  {
+    "id": 3,
+    "firebase_id": "https://www.virginia.edu/location-3-covid-testing",
+    "name": "Location 3 Name"
+  }
+]

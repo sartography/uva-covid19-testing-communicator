@@ -1,5 +1,6 @@
 from communicator import db, app
-from communicator.models import Sample
+from communicator.errors import ApiError, CommError
+from communicator.models import Sample, Kiosk
 from communicator.models.notification import Notification, EMAIL_TYPE, TEXT_TYPE
 from communicator.services.ivy_service import IvyService
 from communicator.services.notification_service import NotificationService
@@ -11,12 +12,20 @@ def status():
     return {"status":"good"}
 
 def add_sample(body):
+    kiosk_id = int(body['location'])
+    kiosk = db.session.query(Kiosk).filter(Kiosk.id == kiosk_id).first()
+
+    if kiosk is None:
+        raise CommError(400, f"Invalid location. Location must be a 4-digit string. Integer value of first 2 digits "
+                             f"should match an existing location id. Integer value of 4-digit string should match an "
+                             f"existing kiosk id.")
+
     sample = Sample(
         barcode=body['barcode'],
         student_id=body['student_id'],
         date=body['date'],
-        testing_location_id=int(body['location'][0:2]),
-        testing_kiosk_id=int(body['location'][0:2])
+        location_id=kiosk.location_id,
+        kiosk_id=kiosk.id
     )
     SampleService().add_or_update_records([sample])
 
