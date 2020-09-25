@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Be SAFE Testing Locations</title>
+    <base href="/">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.typekit.net/kwp6dli.css">
+    <link rel="shortcut icon" href="{{ base_href + url_for('static', filename='favicon.ico') }}">
+    {% assets 'app_scss' %}
+        <link href="{{ base_href + ASSET_URL }}" rel="stylesheet" type="text/css">
+    {% endassets %}
+    <link rel="shortcut icon" href="{{ base_href + url_for('static', filename='favicon.ico') }}">
+</head>
+    <style type="text/css">
+        input {
+            width: 500px;
+            margin-bottom: 20px;
+        }
+    </style>
+<body>
+<a href="{{base_href}}"><< Home</a>
+
+<div style="margin: 2em 0 2em 0">
+    <a href="{{ url_for('new_location') }}" class="btn btn-accent">Add Location</a>
+</div>
+
+<h3>Locations</h3>
+{{ pagination.info }}
+{{ pagination.links }}
+{{ table }}
+{{ pagination.links }}
+
+</body>
+</html>

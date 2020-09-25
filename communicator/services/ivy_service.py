@@ -65,7 +65,7 @@ class IvyService(object):
             sample.in_ivy = True
             return sample
         except KeyError as e:
-            raise CommError("100", f"Invalid CSV Record, missing column {e}")
+            raise CommError(100, f"Invalid CSV Record, missing column {e}")
 
 
     def get_access_token(self):

@@ -24,3 +24,5 @@ class LocationForm(FlaskForm):
     id = IntegerField('ID #', [validators.DataRequired()])
     firebase_id = StringField('Value of @id field in Firebase database (ex. https://www.virginia.edu/newcomb-covid-testing)', [validators.DataRequired()])
     name = StringField('Display name of location (ex. Newcomb Hall South Meeting Room)', [validators.DataRequired()])
+    num_kiosks = IntegerField('# of kiosks at location', [validators.DataRequired()])
+

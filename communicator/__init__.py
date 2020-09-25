@@ -11,6 +11,7 @@ from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_paginate import Pagination, get_page_parameter
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import CSRFProtect
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
 
@@ -19,6 +20,8 @@ logging.basicConfig(level=logging.INFO)
 # API, fully defined in api.yml
 connexion_app = connexion.FlaskApp(__name__)
 app = connexion_app.app
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 # Configuration
 app.config.from_object('config.default')
@@ -77,7 +80,10 @@ if app.config['SENTRY_ENVIRONMENT']:
         integrations=[FlaskIntegration()]
     )
 
-### HTML Pages
+
+#
+# HTML Pages
+#
 BASE_HREF = app.config['APPLICATION_ROOT'].strip('/')
 
 
@@ -148,32 +154,44 @@ def list_imported_files_from_ivy():
     )
 
 
-@app.route('/locations', methods=['GET', 'POST'])
+@app.route('/locations', methods=['GET'])
 def manage_locations():
     from communicator.models.location import Location, Kiosk
     from communicator.tables import LocationTable
 
-    form = forms.LocationForm(request.form)
     action = BASE_HREF + "/locations"
-    title = "Manage Testing Locations and Kiosks"
-    if request.method == 'POST' and form.validate():
-        from communicator.services.notification_service import NotificationService
-        with NotificationService(app) as ns:
-            ns.send_invitations(form.date.data, form.location.data, form.emails.data)
+    title = "Manage Testing Locations"
 
     # display results
+    page = request.args.get(get_page_parameter(), type=int, default=1)
     locations = db.session.query(Location).order_by(Location.id)
-    table = LocationTable(locations.items)
+    pagination = Pagination(page=page, total=locations.count(), search=False, record_name='locations')
+
+    table = LocationTable(locations.paginate(page, 10, error_out=False).items)
 
     return render_template(
-        'form.html',
-        form=form,
+        'locations.html',
         table=table,
+        pagination=pagination,
         action=action,
         title=title,
         description_map={},
         base_href=BASE_HREF
     )
+
+
+@app.route('/new_location', methods=['GET', 'POST'])
+def new_location():
+    action = BASE_HREF + "/new_location"
+    title = "Add Testing Location"
+    return _add_or_edit_location(action, title)
+
+
+@app.route('/location/<location_id>', methods=['GET', 'POST'])
+def edit_location(location_id):
+    action = BASE_HREF + "/location/" + str(location_id)
+    title = "Edit Testing Location #" + str(location_id)
+    return _add_or_edit_location(action, title)
 
 
 @app.route('/sso')
@@ -183,6 +201,7 @@ def sso():
     response = ""
     response += f"<h1>Current User: {user.display_name} ({user.uid})</h1>"
     return response
+
 
 # Access tokens
 @app.cli.command()
@@ -211,3 +230,26 @@ def delete():
     from communicator.services.ivy_service import IvyService
     ivy_service = IvyService()
     ivy_service.delete_file()
+
+
+def _add_or_edit_location(action, title):
+    from communicator.models.location import Location, Kiosk
+    from communicator.tables import LocationTable
+
+    form = forms.LocationForm
+    if request.method == 'POST' and form.validate():
+        from communicator.services.location_service import LocationService
+
+        loc = Location(id=form.id.data, firebase_id=form.firebase_id.data, name=form.name.data)
+        LocationService().add_or_update_locations([loc])
+        LocationService().add_or_update_kiosks_for_location(loc.id, form.num_kiosks.data)
+        return redirect(url_for('manage_locations'))
+
+    return render_template(
+        'edit_form.html',
+        form=form,
+        action=action,
+        title=title,
+        description_map={},
+        base_href=BASE_HREF
+    )

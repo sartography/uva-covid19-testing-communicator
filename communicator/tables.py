@@ -1,5 +1,5 @@
 from babel.dates import format_datetime, get_timezone
-from flask_table import Table, Col, DatetimeCol, BoolCol, NestedTableCol
+from flask_table import Table, Col, DatetimeCol, BoolCol, NestedTableCol, LinkCol
 
 
 class BetterDatetimeCol(Col):
@@ -20,7 +20,7 @@ class BetterDatetimeCol(Col):
             return ''
 
 
-class NotificationTAale(Table):
+class NotificationTable(Table):
     type = Col('type')
     date = BetterDatetimeCol('Date', "medium", tzinfo=get_timezone('US/Eastern'), locale='en')
     successful = BoolCol('Success?')
@@ -36,7 +36,7 @@ class SampleTable(Table):
     location = Col('Location')
     phone = Col('Phone')
     email = Col('Email')
-    notifications = NestedTableCol('notifications', NotificationTAale)
+    notifications = NestedTableCol('notifications', NotificationTable)
 
 
 class IvyFileTable(Table):
@@ -56,10 +56,22 @@ class InvitationTable(Table):
     total_recipients = Col('# Recipients')
 
 
-class LocationTable(Table):
+class KiosksTable(Table):
     def sort_url(self, col_id, reverse=False):
         pass
     id = Col('id')
+    location_id = Col('location_id')
+
+
+class LocationTable(Table):
+    def sort_url(self, col_id, reverse=False):
+        pass
+    edit = LinkCol(
+        'edit', 'edit_location', url_kwargs=dict(location_id='id'),
+        anchor_attrs={'class': 'btn btn-icon btn-primary', 'title': 'Edit Location'},
+        th_html_attrs={'class': 'mat-icon text-center', 'title': 'Edit Location'}
+    )
+    id = Col('id')
     firebase_id = Col('firebase_id')
     name = Col('name')
-    kiosks = Col('Kiosks')
+    kiosks = NestedTableCol('kiosks', KiosksTable)
