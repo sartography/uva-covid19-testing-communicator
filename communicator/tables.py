@@ -1,5 +1,5 @@
 from babel.dates import format_datetime, get_timezone
-from flask_table import Table, Col, DatetimeCol, BoolCol
+from flask_table import Table, Col, DatetimeCol, BoolCol, NestedTableCol
 
 
 class BetterDatetimeCol(Col):
@@ -20,6 +20,13 @@ class BetterDatetimeCol(Col):
             return ''
 
 
+class NotificationTAale(Table):
+    type = Col('type')
+    date = BetterDatetimeCol('Date', "medium", tzinfo=get_timezone('US/Eastern'), locale='en')
+    successful = BoolCol('Success?')
+    error_message = Col('error')
+
+
 class SampleTable(Table):
     def sort_url(self, col_id, reverse=False):
         pass
@@ -27,10 +34,10 @@ class SampleTable(Table):
     student_id = Col('Student Id')
     date = BetterDatetimeCol('Date', "medium", tzinfo=get_timezone('US/Eastern'), locale='en')
     location = Col('Location')
-    email_notified = BoolCol('Emailed?')
-    text_notified = BoolCol('Texted?')
     phone = Col('Phone')
     email = Col('Email')
+    notifications = NestedTableCol('notifications', NotificationTAale)
+
 
 class IvyFileTable(Table):
     def sort_url(self, col_id, reverse=False):
