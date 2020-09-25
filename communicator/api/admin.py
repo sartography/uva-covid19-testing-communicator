@@ -1,9 +1,6 @@
-from operator import or_
-
 from communicator import db, app
-from communicator.errors import ApiError, CommError
 from communicator.models import Sample
-from communicator.services.firebase_service import FirebaseService
+from communicator.models.notification import Notification, EMAIL_TYPE, TEXT_TYPE
 from communicator.services.ivy_service import IvyService
 from communicator.services.notification_service import NotificationService
 from communicator.services.sample_service import SampleService
@@ -20,13 +17,16 @@ def add_sample(body):
     SampleService().add_or_update_records([sample])
 
 def clear_samples():
+    db.session.query(Notification).delete()
     db.session.query(Sample).delete()
     db.session.commit()
+
 
 def update_and_notify():
     update_data()
     notify_by_email()
     notify_by_text()
+    db.session.commit()
 
 def update_data():
     """Updates the database based on local files placed by IVY.  No longer attempts
@@ -36,35 +36,43 @@ def update_data():
     SampleService().add_or_update_records(samples)
     db.session.commit()
 
+
 def notify_by_email():
     """Sends out notifications via email"""
     samples = db.session.query(Sample)\
         .filter(Sample.result_code != None)\
         .filter(Sample.email_notified == False).all()
-    notifier = NotificationService(app)
-    for sample in samples:
-        try:
-            notifier.send_result_email(sample)
-            sample.email_notified = True
-        except CommError as ce:
-            print("Error")
+    with NotificationService(app) as notifier:
+        for sample in samples:
+            last_failure = sample.last_failure_by_type(EMAIL_TYPE)
+            if last_failure: continue
+            try:
+                notifier.send_result_email(sample)
+                sample.email_notified = True
+                db.session.add(Notification(type=EMAIL_TYPE, sample=sample, successful=True))
+            except Exception as e:
+                db.session.add(Notification(type=EMAIL_TYPE, sample=sample, successful=False,
+                                            error_message=str(e)))
 
 def notify_by_text():
     """Sends out notifications via SMS Message, but only at reasonable times of day"""
-    notifier = NotificationService(app)
-    if not notifier.is_reasonable_hour_for_text_messages:
-        print("Skipping text messages, it's not a good time to get one.")
-        return
-
-    samples = db.session.query(Sample)\
-        .filter(Sample.result_code != None)\
-        .filter(Sample.text_notified == False).all()
-    for sample in samples:
-        try:
-            notifier.send_result_sms(sample)
-            sample.text_notified = True
-        except CommError as ce:
-            print("Error")
+    with NotificationService(app) as notifier:
+        if not notifier.is_reasonable_hour_for_text_messages:
+            print("Skipping text messages, it's not a good time to get one.")
+            return
+        samples = db.session.query(Sample)\
+            .filter(Sample.result_code != None)\
+            .filter(Sample.text_notified == False).all()
+        for sample in samples:
+            last_failure = sample.last_failure_by_type(TEXT_TYPE)
+            if last_failure: continue
+            try:
+                notifier.send_result_sms(sample)
+                sample.text_notified = True
+                db.session.add(Notification(type=TEXT_TYPE, sample=sample, successful=True))
+            except Exception as e:
+                db.session.add(Notification(type=TEXT_TYPE, sample=sample, successful=False,
+                                            error_message=str(e)))
 
 
 

@@ -7,6 +7,7 @@ from email.mime.text import MIMEText
 import re
 
 import dateutil
+import phonenumbers
 import pytz
 from flask import render_template
 from pytz import timezone
@@ -53,8 +54,13 @@ class NotificationService(object):
 
     def send_result_sms(self, sample):
         link = self.get_link(sample)
+
+        phone_number = phonenumbers.parse(sample.phone, "US")
+        if not phonenumbers.is_valid_number(phone_number):
+            raise CommError(6001, f"invalid phone number: {sample.phone}")
+        phone_number_string = phonenumbers.format_number(phone_number, phonenumbers.PhoneNumberFormat.E164)
         message = self.twilio_client.messages.create(
-            to=sample.phone,
+            to=phone_number_string,
             from_=self.app.config['TWILIO_NUMBER'],
             body=f"You have an important notification from UVA Be Safe, please visit: {link}")
         print(message.sid)
