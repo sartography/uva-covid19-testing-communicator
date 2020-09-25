@@ -46,7 +46,7 @@ MAIL_USE_SSL = environ.get('MAIL_USE_SSL', default="false") == "true"
 MAIL_USE_TLS = environ.get('MAIL_USE_TLS', default="false") == "true"
 MAIL_USERNAME = environ.get('MAIL_USERNAME', default='')
 MAIL_PASSWORD = environ.get('MAIL_PASSWORD', default='')
-MAIL_SENDER = 'askresearch@virginia.edu'
+MAIL_SENDER = 'UVA Prevalence Testing <Prevalence-Test@virginia.edu>'
 MAIL_TIMEOUT = 10
 
 # Ivy Directory

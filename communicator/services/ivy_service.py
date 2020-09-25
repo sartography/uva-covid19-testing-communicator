@@ -141,9 +141,13 @@ class IvyService(object):
         print("What is there?")
         print(response)
 
-    def delete_file(self):
+    def delete_file(self, file_name):
         tc = self.get_transfer_client()
         ddata = globus_sdk.DeleteData(tc, self.GLOBUS_DTN_ENDPOINT, recursive=True)
-        ddata.add_item("/~/project/covid-vpr/snr_20091409000102.csv")
+        ddata.add_item(f"/~/project/covid-vpr/outgoing/{file_name}")
         delete_result = tc.submit_delete(ddata)
-        print(str(delete_result))
+
+        ddata = globus_sdk.DeleteData(tc, self.GLOBUS_IVY_ENDPOINT, recursive=True)
+        ddata.add_item(f"/ics/ics343/ivy-hip-vprcv/outgoing/{file_name}")
+        delete_result = tc.submit_delete(ddata)
+
