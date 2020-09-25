@@ -11,10 +11,13 @@ def status():
     return {"status":"good"}
 
 def add_sample(body):
-    sample = Sample(barcode=body['barcode'],
-                    student_id=body['student_id'],
-                    date=body['date'],
-                    location=body['location'])
+    sample = Sample(
+        barcode=body['barcode'],
+        student_id=body['student_id'],
+        date=body['date'],
+        testing_location_id=int(body['location'][0:2]),
+        testing_kiosk_id=int(body['location'][0:2])
+    )
     SampleService().add_or_update_records([sample])
 
 def clear_samples():

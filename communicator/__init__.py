@@ -147,6 +147,35 @@ def list_imported_files_from_ivy():
         base_href=BASE_HREF
     )
 
+
+@app.route('/locations', methods=['GET', 'POST'])
+def manage_locations():
+    from communicator.models.location import Location, Kiosk
+    from communicator.tables import LocationTable
+
+    form = forms.LocationForm(request.form)
+    action = BASE_HREF + "/locations"
+    title = "Manage Testing Locations and Kiosks"
+    if request.method == 'POST' and form.validate():
+        from communicator.services.notification_service import NotificationService
+        with NotificationService(app) as ns:
+            ns.send_invitations(form.date.data, form.location.data, form.emails.data)
+
+    # display results
+    locations = db.session.query(Location).order_by(Location.id)
+    table = LocationTable(locations.items)
+
+    return render_template(
+        'form.html',
+        form=form,
+        table=table,
+        action=action,
+        title=title,
+        description_map={},
+        base_href=BASE_HREF
+    )
+
+
 @app.route('/sso')
 def sso():
     from communicator.services.user_service import UserService

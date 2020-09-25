@@ -2,7 +2,7 @@ import re
 
 from flask_table import Table, Col, LinkCol, BoolCol, DatetimeCol, NestedTableCol
 from flask_wtf import FlaskForm
-from wtforms import SelectMultipleField, StringField, BooleanField, SelectField, validators, HiddenField, TextAreaField, \
+from wtforms import SelectMultipleField, StringField, IntegerField, BooleanField, SelectField, validators, HiddenField, TextAreaField, \
     ValidationError
 from wtforms.widgets import TextArea
 
@@ -18,3 +18,9 @@ class InvitationForm(FlaskForm):
         for email in all_emails:
             if not re.search(EMAIL_REGEX, email):
                 raise ValidationError(f'Invalid email \'{email}\', Emails must each be on a seperate line.')
+
+
+class LocationForm(FlaskForm):
+    id = IntegerField('ID #', [validators.DataRequired()])
+    firebase_id = StringField('Value of @id field in Firebase database (ex. https://www.virginia.edu/newcomb-covid-testing)', [validators.DataRequired()])
+    name = StringField('Display name of location (ex. Newcomb Hall South Meeting Room)', [validators.DataRequired()])

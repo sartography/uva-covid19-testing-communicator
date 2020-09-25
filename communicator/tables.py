@@ -54,3 +54,12 @@ class InvitationTable(Table):
     location = Col('Location')
     date = Col('Date')
     total_recipients = Col('# Recipients')
+
+
+class LocationTable(Table):
+    def sort_url(self, col_id, reverse=False):
+        pass
+    id = Col('id')
+    firebase_id = Col('firebase_id')
+    name = Col('name')
+    kiosks = Col('Kiosks')

@@ -8,7 +8,7 @@ from communicator.models.sample import Sample
 
 
 class FirebaseService(object):
-    """Connects to the Google's Firecloud service to retrieve any records added by the tablets. """
+    """Connects to the Google's Firecloud service to retrieve any records added by the kiosks. """
 
     def __init__(self):
         json_config = json.loads(app.config['FIRESTORE_JSON'])
