@@ -1,5 +1,6 @@
 from communicator import db, app
 from communicator.models import Sample
+from communicator.models.invitation import Invitation
 from communicator.models.notification import Notification, EMAIL_TYPE, TEXT_TYPE
 from communicator.services.ivy_service import IvyService
 from communicator.services.notification_service import NotificationService
@@ -20,6 +21,7 @@ def add_sample(body):
 def clear_samples():
     db.session.query(Notification).delete()
     db.session.query(Sample).delete()
+    db.session.query(Invitation).delete()
     db.session.commit()
 
 
