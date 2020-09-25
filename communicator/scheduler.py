@@ -15,6 +15,7 @@ scheduler = BackgroundScheduler()
 scheduler.add_jobstore('sqlalchemy', url=db.engine.url)
 scheduler.add_job(
     update_and_notify, 'interval', minutes=app.config['SCHEDULED_TASK_MINUTES'],
+#    update_and_notify, 'interval', seconds=5,
     id='update_data', replace_existing=True
 )
 
