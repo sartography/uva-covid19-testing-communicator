@@ -16,8 +16,12 @@ PRODUCTION = (environ.get('PRODUCTION', default="false") == "true")
 ENABLE_SENTRY = environ.get('ENABLE_SENTRY', default="false") == "true"  # To be removed soon
 SENTRY_ENVIRONMENT = environ.get('SENTRY_ENVIRONMENT', None)
 
-# Add trailing slash to base path
+# Add trailing slash to base path, typically this would be something like "/api/" don't use the full path!
 APPLICATION_ROOT = re.sub(r'//', '/', '/%s/' % environ.get('APPLICATION_ROOT', default="/").strip('/'))
+# The full path to get to this, this is what would be returned form flask's request.url_root, but we won't
+# have access to that in scheduled tasks run outside a request, this should include and match the APPLICATION_ROOT
+# with no trailing backslask
+URL_ROOT = environ.get('URL_ROOT', default="http://localhost:5000")
 
 DB_HOST = environ.get('DB_HOST', default="localhost")
 DB_PORT = environ.get('DB_PORT', default="5433")
