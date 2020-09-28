@@ -2,9 +2,11 @@ import smtplib
 import uuid
 from datetime import datetime, time, date
 from email.header import Header
+from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import re
+from os.path import join
 
 import dateutil
 import phonenumbers
@@ -147,6 +149,15 @@ class NotificationService(object):
 
         msgAlternative.attach(part1)
         msgAlternative.attach(part2)
+
+        # Embed the logo image
+        # This example assumes the image is in the current directory
+        fp = open(join(app.root_path, 'static', 'uva_logo.png'), 'rb')
+        msgImage = MIMEImage(fp.read())
+        fp.close()
+        # Define the image's ID as referenced above
+        msgImage.add_header('Content-ID', '<logo>')
+        msgRoot.attach(msgImage)
 
         # Leaving this on here, just in case we need it later.
         if ical:
