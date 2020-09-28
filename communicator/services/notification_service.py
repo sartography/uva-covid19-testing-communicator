@@ -34,7 +34,7 @@ class NotificationService(object):
     def __init__(self, app):
         self.app = app
         self.sender = app.config['MAIL_SENDER']
-        self.BASE_HREF = app.config['APPLICATION_ROOT'].strip('/')
+        self.URL_ROOT = app.config['URL_ROOT']
 
     def __enter__(self):
         if 'TESTING' in self.app.config and self.app.config['TESTING']:
@@ -71,13 +71,13 @@ class NotificationService(object):
         tracking_code = self._tracking_code()
         text_body = render_template("result_email.txt",
                                     link=link,
-                                    base_url = self.BASE_HREF,
+                                    base_url=self.URL_ROOT,
                                     sample=sample,
                                     tracking_code=tracking_code)
 
         html_body = render_template("result_email.html",
                                     link=link,
-                                    base_url = self.BASE_HREF,
+                                    base_url=self.URL_ROOT,
                                     sample=sample,
                                     tracking_code=tracking_code)
 
@@ -92,13 +92,13 @@ class NotificationService(object):
         text_body = render_template("invitation_email.txt",
                                     date=date,
                                     location=location,
-                                    base_url = self.BASE_HREF,
+                                    base_url=self.URL_ROOT,
                                     tracking_code=tracking_code)
 
         html_body = render_template("invitation_email.html",
                                     date=date,
                                     location=location,
-                                    base_url = self.BASE_HREF,
+                                    base_url=self.URL_ROOT,
                                     tracking_code=tracking_code)
 
         self._send_email(subject, recipients=[self.sender], bcc=emails, text_body=text_body, html_body=html_body)
