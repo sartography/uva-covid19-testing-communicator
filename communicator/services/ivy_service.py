@@ -23,6 +23,8 @@ class IvyService(object):
         self.EXPIRES_AT = 1600601877
         self.GLOBUS_IVY_ENDPOINT = app.config['GLOBUS_IVY_ENDPOINT']
         self.GLOBUS_DTN_ENDPOINT = app.config['GLOBUS_DTN_ENDPOINT']
+        self.GLOBUS_IVY_PATH = app.config['GLOBUS_IVY_PATH']
+        self.GLOBUS_DTN_PATH = app.config['GLOBUS_DTN_PATH']
 
 
     def load_directory(self, delete_from_globus=True):
@@ -134,8 +136,9 @@ class IvyService(object):
         tc = self.get_transfer_client()
         tdata = globus_sdk.TransferData(tc, self.GLOBUS_IVY_ENDPOINT, self.GLOBUS_DTN_ENDPOINT, label="Transfer",
                                         sync_level="checksum")
-        tdata.add_item("/ics/ics343/ivy-hip-vprcv", "project/covid-vpr/", recursive = True)
+        tdata.add_item(self.GLOBUS_IVY_PATH, self.GLOBUS_DTN_PATH, recursive = True)
         transfer_result = tc.submit_transfer(tdata)
+        print("Trasfer requested:" + str(transfer_result))
 
     def list_files(self):
         tc = self.get_transfer_client()
@@ -147,14 +150,14 @@ class IvyService(object):
     def delete_file(self, file_name):
         tc = self.get_transfer_client()
         ddata = globus_sdk.DeleteData(tc, self.GLOBUS_DTN_ENDPOINT, recursive=True)
-        file_path = f"/~/project/covid-vpr/outgoing/{file_name}"
+        file_path = f"{self.GLOBUS_DTN_PATH}/{file_name}"
         ddata.add_item(file_path)
         delete_result = tc.submit_delete(ddata)
         print("Requested deleting file: " + file_path)
         print("Deleted Covid-vpr file:" + str(delete_result))
 
         ddata = globus_sdk.DeleteData(tc, self.GLOBUS_IVY_ENDPOINT, recursive=True)
-        file_path = f"/ics/ics343/ivy-hip-vprcv/outgoing/{file_name}"
+        file_path = f"{self.GLOBUS_IVY_PATH}/{file_name}"
         ddata.add_item(file_path)
         delete_result = tc.submit_delete(ddata)
         print("Requested deleting file: " + file_path)
