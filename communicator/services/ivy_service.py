@@ -25,7 +25,7 @@ class IvyService(object):
         self.GLOBUS_DTN_ENDPOINT = app.config['GLOBUS_DTN_ENDPOINT']
 
 
-    def load_directory(self):
+    def load_directory(self, delete_from_globus=True):
         onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
         samples = []
         for file_name in onlyfiles:
@@ -38,6 +38,8 @@ class IvyService(object):
                 ivy_file.sample_count = len(samples)
             db.session.add(ivy_file)
             db.session.commit()
+            if(delete_from_globus):
+                self.delete_file(file_name)
         return samples
 
     @staticmethod
@@ -115,16 +117,17 @@ class IvyService(object):
             self.GLOBUS_TRANSFER_RT, self.client, access_token=self.GLOBUS_TRANSFER_AT, expires_at=self.EXPIRES_AT)
         tc = globus_sdk.TransferClient(authorizer=authorizer)
 
-        # r = tc.endpoint_autoactivate(self.GLOBUS_CLIENT_ID, if_expires_in=3600)
-        # print(str(r))
-        # if r['code'] == 'AutoActivationFailed':
-        #     print('Endpoint({}) Not Active! Error! Source message: {}'.format(self.GLOBUS_CLIENT_ID, r['message']))
-        # elif r['code'] == 'AutoActivated.CachedCredential':
-        #     print('Endpoint({}) autoactivated using a cached credential.'.format(self.GLOBUS_CLIENT_ID))
-        # elif r['code'] == 'AutoActivated.GlobusOnlineCredential':
-        #     print(('Endpoint({}) autoactivated using a built-in Globus credential.').format(self.GLOBUS_CLIENT_ID))
-        # elif r['code'] == 'AlreadyActivated':
-        #     print('Endpoint({}) already active until at least {}'.format(self.GLOBUS_CLIENT_ID, 3600))
+        r = tc.endpoint_autoactivate(self.GLOBUS_IVY_ENDPOINT, if_expires_in=3600)
+        r = tc.endpoint_autoactivate(self.GLOBUS_DTN_ENDPOINT, if_expires_in=3600)
+        print(str(r))
+        if r['code'] == 'AutoActivationFailed':
+            print('Endpoint({}) Not Active! Error! Source message: {}'.format(self.GLOBUS_CLIENT_ID, r['message']))
+        elif r['code'] == 'AutoActivated.CachedCredential':
+            print('Endpoint({}) autoactivated using a cached credential.'.format(self.GLOBUS_CLIENT_ID))
+        elif r['code'] == 'AutoActivated.GlobusOnlineCredential':
+            print(('Endpoint({}) autoactivated using a built-in Globus credential.').format(self.GLOBUS_CLIENT_ID))
+        elif r['code'] == 'AlreadyActivated':
+            print('Endpoint({}) already active until at least {}'.format(self.GLOBUS_CLIENT_ID, 3600))
         return tc
 
     def request_transfer(self):
@@ -144,10 +147,16 @@ class IvyService(object):
     def delete_file(self, file_name):
         tc = self.get_transfer_client()
         ddata = globus_sdk.DeleteData(tc, self.GLOBUS_DTN_ENDPOINT, recursive=True)
-        ddata.add_item(f"/~/project/covid-vpr/outgoing/{file_name}")
+        file_path = f"/~/project/covid-vpr/outgoing/{file_name}"
+        ddata.add_item(file_path)
         delete_result = tc.submit_delete(ddata)
+        print("Requested deleting file: " + file_path)
+        print("Deleted Covid-vpr file:" + str(delete_result))
 
         ddata = globus_sdk.DeleteData(tc, self.GLOBUS_IVY_ENDPOINT, recursive=True)
-        ddata.add_item(f"/ics/ics343/ivy-hip-vprcv/outgoing/{file_name}")
+        file_path = f"/ics/ics343/ivy-hip-vprcv/outgoing/{file_name}"
+        ddata.add_item(file_path)
         delete_result = tc.submit_delete(ddata)
+        print("Requested deleting file: " + file_path)
+        print("Deleted ics file:" + str(delete_result))
 
