@@ -35,6 +35,7 @@ def update_data():
     """Updates the database based on local files placed by IVY.  No longer attempts
     to pull files from the Firebase service."""
     ivy_service = IvyService()
+    ivy_service.request_transfer()
     samples = ivy_service.load_directory()
     SampleService().add_or_update_records(samples)
     db.session.commit()
