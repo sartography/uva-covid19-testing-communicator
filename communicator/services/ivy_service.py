@@ -29,6 +29,8 @@ class IvyService(object):
 
     def load_directory(self, delete_from_globus=True):
         onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
+        app.logger.info(f'Loading directory {self.path}')
+
         samples = []
         for file_name in onlyfiles:
             samples = IvyService.samples_from_ivy_file(join(self.path, file_name))
@@ -40,6 +42,7 @@ class IvyService(object):
                 ivy_file.sample_count = len(samples)
             db.session.add(ivy_file)
             db.session.commit()
+            app.logger.info(f'Loading file {file_name}')
             if(delete_from_globus):
                 self.delete_file(file_name)
         return samples
@@ -153,13 +156,13 @@ class IvyService(object):
         file_path = f"{self.GLOBUS_DTN_PATH}/{file_name}"
         ddata.add_item(file_path)
         delete_result = tc.submit_delete(ddata)
-        print("Requested deleting file: " + file_path)
-        print("Deleted Covid-vpr file:" + str(delete_result))
+        app.logger.info("Requested deleting file: " + file_path)
+        app.logger.info("Deleted Covid-vpr file:" + str(delete_result))
 
         ddata = globus_sdk.DeleteData(tc, self.GLOBUS_IVY_ENDPOINT, recursive=True)
         file_path = f"{self.GLOBUS_IVY_PATH}/{file_name}"
         ddata.add_item(file_path)
         delete_result = tc.submit_delete(ddata)
-        print("Requested deleting file: " + file_path)
-        print("Deleted ics file:" + str(delete_result))
+        app.logger.info("Requested deleting file: " + file_path)
+        app.logger.info("Deleted ics file:" + str(delete_result))
 
