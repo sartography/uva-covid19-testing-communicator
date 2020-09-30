@@ -29,7 +29,6 @@ def update_and_notify():
     update_data()
     notify_by_email()
     notify_by_text()
-    db.session.commit()
 
 def update_data():
     """Updates the database based on local files placed by IVY.  No longer attempts
@@ -57,7 +56,9 @@ def notify_by_email():
             except Exception as e:
                 db.session.add(Notification(type=EMAIL_TYPE, sample=sample, successful=False,
                                             error_message=str(e)))
+            db.session.commit()
             sleep(0.5)
+
 
 def notify_by_text():
     """Sends out notifications via SMS Message, but only at reasonable times of day"""
@@ -78,6 +79,7 @@ def notify_by_text():
             except Exception as e:
                 db.session.add(Notification(type=TEXT_TYPE, sample=sample, successful=False,
                                             error_message=str(e)))
+            db.session.commit()
             sleep(0.5)
 
 
