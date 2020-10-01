@@ -164,11 +164,11 @@ def globus_token():
 
 
 @app.cli.command()
-def list_files():
+def count_files_in_ivy():
     from communicator.services.ivy_service import IvyService
     ivy_service = IvyService()
-    ivy_service.list_files()
-
+    count = ivy_service.get_file_count_from_globus()
+    print(f"There are {count} files awaiting transfer")
 
 @app.cli.command()
 def transfer():
