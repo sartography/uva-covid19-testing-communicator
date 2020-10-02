@@ -1,9 +1,10 @@
 import logging
 import os
+from functools import wraps
 
 import connexion
 import sentry_sdk
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, flash, abort
 from flask_assets import Environment
 from flask_cors import CORS
 from flask_mail import Mail
@@ -13,6 +14,7 @@ from flask_paginate import Pagination, get_page_parameter
 from flask_sqlalchemy import SQLAlchemy
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -73,15 +75,27 @@ cors = CORS(connexion_app.app, origins=origins_re)
 if app.config['SENTRY_ENVIRONMENT']:
     sentry_sdk.init(
         environment=app.config['SENTRY_ENVIRONMENT'],
-        dsn="https://25342ca4e2d443c6a5c49707d68e9f40@o401361.ingest.sentry.io/5260915",
+        dsn="https://c37225ab38de49749acfbb9c7381f065@o401361.ingest.sentry.io/5449288",
         integrations=[FlaskIntegration()]
     )
 
 ### HTML Pages
 BASE_HREF = app.config['APPLICATION_ROOT'].strip('/')
 
+def superuser(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        from communicator.services.user_service import UserService
+        if not UserService().is_valid_user():
+            flash("You do not have permission to view that page", "warning")
+            logging.info("Permission Denied to user " + UserService.get_user_info())
+            abort(404)
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 @app.route('/', methods=['GET'])
+@superuser
 def index():
     from communicator.models import Sample
     from communicator.tables import SampleTable
@@ -99,6 +113,7 @@ def index():
     )
 
 @app.route('/invitation', methods=['GET', 'POST'])
+@superuser
 def send_invitation():
     from communicator.models.invitation import Invitation
     from communicator.tables import InvitationTable
@@ -130,6 +145,7 @@ def send_invitation():
     )
 
 @app.route('/imported_files', methods=['GET'])
+@superuser
 def list_imported_files_from_ivy():
     from communicator.models.ivy_file import IvyFile
     from communicator.tables import IvyFileTable
@@ -154,6 +170,10 @@ def sso():
     response = ""
     response += f"<h1>Current User: {user.display_name} ({user.uid})</h1>"
     return response
+
+@app.route('/debug-sentry')
+def trigger_error():
+    division_by_zero = 1 / 0
 
 # Access tokens
 @app.cli.command()
@@ -182,3 +202,4 @@ def delete():
     from communicator.services.ivy_service import IvyService
     ivy_service = IvyService()
     ivy_service.delete_file()
+
