@@ -1,6 +1,4 @@
-You have a new notification from the University of Virginia BE SAFE System.
+You have a new notification from UVA Prevalence Testing
 
-Please follow this link, and log in with Netbadge to securely view your notification:
+Please follow this link, and log in with Netbadge, to securely view your notification:
 {{link}}
-
-Please note that email is not a secure form of communication and should not be used to discuss any confidential matters, including personal health information, given its confidentiality cannot be assured.
