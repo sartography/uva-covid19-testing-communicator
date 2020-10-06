@@ -72,11 +72,11 @@ origins_re = [r"^https?:\/\/%s(.*)" % o.replace('.', '\.') for o in app.config['
 cors = CORS(connexion_app.app, origins=origins_re)
 
 # Sentry error handling
-if app.config['SENTRY_ENVIRONMENT']:
+if app.config['ENABLE_SENTRY']:
     sentry_sdk.init(
-        environment=app.config['SENTRY_ENVIRONMENT'],
-        dsn="https://c37225ab38de49749acfbb9c7381f065@o401361.ingest.sentry.io/5449288",
-        integrations=[FlaskIntegration()]
+        dsn="https://048a9b3ac72f476a8c77b910ad4d7f84@o401361.ingest.sentry.io/5454621",
+        integrations=[FlaskIntegration()],
+        traces_sample_rate=1.0
     )
 
 ### HTML Pages
