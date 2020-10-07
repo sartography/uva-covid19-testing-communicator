@@ -1,18 +1,15 @@
 import json
-import os
-import unittest
 
 from dateutil import parser
 
 from tests.base_test import BaseTest
-from communicator import db, app
+from communicator import db
 from communicator.models.sample import Sample
 from communicator.services.ivy_service import IvyService
 from communicator.services.sample_service import SampleService
 
 
 class IvyServiceTest(BaseTest):
-
 
     def get_firebase_records(self):
         with open(self.firebase_file, 'r') as fb_file:
@@ -68,4 +65,44 @@ class IvyServiceTest(BaseTest):
         self.assertEqual(3, len(db.session.query(Sample).filter(Sample.in_firebase == True)
                                  .filter(Sample.in_ivy == True).all()))
         self.assertEqual(7, len(db.session.query(Sample).all()))
+
+
+    def test_merge_similar_records(self):
+        service = SampleService()
+#        511908685 - 202010051136 - 0202
+        db.session.add(Sample(barcode="111111111-AAA-202010050000-0000",
+                              student_id=111111111,
+                              date = parser.parse("202010050000"),
+                              location=0))
+        db.session.add(Sample(barcode="111111111-202010050000-0000",
+                              student_id=111111111,
+                              date = parser.parse("202010050000"),
+                              location=0,
+                              email="dan@sartography.com",
+                              phone="555-555-5555"))
+        db.session.commit()
+        self.assertEquals(2, len(db.session.query(Sample).all()))
+        service.merge_similar_records()
+        self.assertEquals(1, len(db.session.query(Sample).all()))
+        sample = db.session.query(Sample).first()
+        self.assertEquals("dan@sartography.com", sample.email)
+        self.assertEquals("111111111-AAA-202010050000-0000", sample.barcode)
+
+    def test_merge_non_similar_records(self):
+        service = SampleService()
+        db.session.add(Sample(barcode="222222222-AAA-202010050000-0000",
+                              student_id=222222222,
+                              date = parser.parse("202010050000"),
+                              location=0))
+        db.session.add(Sample(barcode="111111111-202010050000-0000",
+                              student_id=111111111,
+                              date = parser.parse("202010050000"),
+                              location=0,
+                              email="dan@sartography.com",
+                              phone="555-555-5555"))
+        service.merge_similar_records()
+        self.assertEquals(2, len(db.session.query(Sample).all()))
+
+
+
 

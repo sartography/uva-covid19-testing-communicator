@@ -39,6 +39,10 @@ def update_data():
     SampleService().add_or_update_records(samples)
     db.session.commit()
 
+def merge_similar_records():
+    sample_service = SampleService()
+    sample_service.merge_similar_records()
+
 
 def notify_by_email():
     """Sends out notifications via email"""
