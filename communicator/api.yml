@@ -31,6 +31,18 @@ paths:
             text/plain:
               schema:
                 type: string
+  /merge_similar_records:
+    get:
+      operationId: communicator.api.admin.merge_similar_records
+      summary: Checks the local file system and firecloud for data and loads it into the db.
+      security: []  # Disable security for this endpoint only.
+      responses:
+        '200':
+          description: Status indicator that the app is up and alive.
+          content:
+            text/plain:
+              schema:
+                type: string
   /notify_by_email:
     get:
       operationId: communicator.api.admin.notify_by_email

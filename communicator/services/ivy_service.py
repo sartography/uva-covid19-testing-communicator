@@ -66,7 +66,7 @@ class IvyService(object):
         """Creates a Test Result from a record read in from the IVY CSV File"""
         sample = Sample()
         try:
-            sample.barcode = f"{dictionary['Student ID']}-{dictionary['Test Date Time']}-{dictionary['Test Kiosk Loc']}"
+            sample.barcode = dictionary['Test Bar Code']
             sample.student_id = dictionary["Student ID"]
             sample.phone = dictionary["Student Cellphone"]
             sample.email = dictionary["Student Email"]
