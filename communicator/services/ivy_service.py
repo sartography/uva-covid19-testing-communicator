@@ -91,8 +91,6 @@ class IvyService(object):
         authorizer = globus_sdk.RefreshTokenAuthorizer(
             self.GLOBUS_TRANSFER_RT, self.client, access_token=self.GLOBUS_TRANSFER_AT, expires_at=self.EXPIRES_AT)
         tc = globus_sdk.TransferClient(authorizer=authorizer)
-
-        r = tc.endpoint_autoactivate(self.GLOBUS_IVY_ENDPOINT, if_expires_in=3600)
         r = tc.endpoint_autoactivate(self.GLOBUS_DTN_ENDPOINT, if_expires_in=3600)
         print(str(r))
         if r['code'] == 'AutoActivationFailed':
@@ -102,7 +100,7 @@ class IvyService(object):
         elif r['code'] == 'AutoActivated.GlobusOnlineCredential':
             app.logger.error(('Endpoint({}) autoactivated using a built-in Globus credential.').format(self.GLOBUS_CLIENT_ID))
         elif r['code'] == 'AlreadyActivated':
-            app.logger.error('Endpoint({}) already active until at least {}'.format(self.GLOBUS_CLIENT_ID, 3600))
+            app.logger.info('Endpoint({}) already active until at least {}'.format(self.GLOBUS_CLIENT_ID, 3600))
 
         self.transfer_client = tc
         self.transfer_client_date = datetime.now()
