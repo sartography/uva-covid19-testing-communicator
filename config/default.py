@@ -75,4 +75,5 @@ TWILIO_NUMBER =  environ.get('TWILIO_NUMBER')
 FIRESTORE_JSON = environ.get('FIRESTORE_JSON')
 
 # Scheduled tasks
-SCHEDULED_TASK_MINUTES = float(environ.get('SCHEDULED_TASK_MINUTES', default=10))
+SCHEDULED_TASK_MINUTES = float(environ.get('SCHEDULED_TASK_MINUTES', default=1))
+RUN_SCHEDULED_TASKS = environ.get('RUN_SCHEDULED_TASKS', default="false") == "true"
