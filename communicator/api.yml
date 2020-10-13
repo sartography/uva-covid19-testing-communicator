@@ -43,10 +43,34 @@ paths:
             text/plain:
               schema:
                 type: string
+  /update_and_notify:
+    get:
+      operationId: communicator.api.admin.update_and_notify
+      summary: Does everything, updates data from IVY, and sends out all notifications.
+      security: []  # Disable security for this endpoint only.
+      responses:
+        '200':
+          description: Just returns a 200 if it was successful.
+          content:
+            text/plain:
+              schema:
+                type: string
   /notify_by_email:
     get:
       operationId: communicator.api.admin.notify_by_email
-      summary: when called, reviews all samples, and sends out any pending notifications.
+      summary: when called, reviews all samples, and sends out any pending email notifications.
+      security: []  # Disable security for this endpoint only.
+      responses:
+        '200':
+          description: Just returns a 200 if it was successful.
+          content:
+            text/plain:
+              schema:
+                type: string
+  /notify_by_text:
+    get:
+      operationId: communicator.api.admin.notify_by_text
+      summary: when called, reviews all samples, and sends out any pending SMS notifications.
       security: []  # Disable security for this endpoint only.
       responses:
         '200':
