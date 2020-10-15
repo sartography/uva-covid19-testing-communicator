@@ -28,14 +28,15 @@ class IvyService(object):
         self.transfer_client = None
         self.transfer_client_date = datetime.now()
 
-    def load_directory(self, delete_from_globus=True):
-        """Loads files from a local directory, and optionally issues a delete command
-        to the Globus file manager to remove the file once it is ingested. """
+    def load_directory(self):
+        """Loads files from a local directory, returning a tuple containing the list
+        of files, and the list of samples respectively"""
 
         onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
         app.logger.info(f'Loading directory {self.path}')
 
         samples = []
+        files = []
         for file_name in onlyfiles:
             samples = IvyService.samples_from_ivy_file(join(self.path, file_name))
             ivy_file = db.session.query(IvyFile).filter(IvyFile.file_name == file_name).first()
@@ -44,12 +45,9 @@ class IvyService(object):
             else:
                 ivy_file.date_added = datetime.now()
                 ivy_file.sample_count = len(samples)
-            db.session.add(ivy_file)
-            db.session.commit()
-            app.logger.info(f'Loading file {file_name}')
-            if(delete_from_globus):
-                self.delete_file(file_name)
-        return samples
+            files.append(ivy_file)
+            app.logger.info(f'Loaded {len(samples)} samples from file {file_name}')
+        return files, samples
 
     @staticmethod
     def samples_from_ivy_file(file_name):
@@ -57,12 +55,12 @@ class IvyService(object):
         with open(file_name, 'r') as csv_file:
             reader = csv.DictReader(csv_file, delimiter='|')
             for row in reader:
-                sample = IvyService.record_to_sample(row)
+                sample = IvyService.record_to_sample(row, file_name)
                 rows.append(sample)
         return rows
 
     @staticmethod
-    def record_to_sample(dictionary):
+    def record_to_sample(dictionary, file_name):
         """Creates a Test Result from a record read in from the IVY CSV File"""
         sample = Sample()
         try:
@@ -73,6 +71,7 @@ class IvyService(object):
             sample.date = parser.parse(dictionary["Test Date Time"])
             sample.location = dictionary["Test Kiosk Loc"]
             sample.result_code = dictionary["Test Result Code"]
+            sample.ivy_file = file_name
             sample.in_ivy = True
             return sample
         except KeyError as e:

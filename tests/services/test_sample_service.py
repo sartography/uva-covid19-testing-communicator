@@ -1,8 +1,9 @@
+from tests.base_test import BaseTest
 import json
 
 from dateutil import parser
 
-from tests.base_test import BaseTest
+from communicator.models.notification import Notification
 from communicator import db
 from communicator.models.sample import Sample
 from communicator.services.ivy_service import IvyService
@@ -70,16 +71,20 @@ class IvyServiceTest(BaseTest):
     def test_merge_similar_records(self):
         service = SampleService()
 #        511908685 - 202010051136 - 0202
-        db.session.add(Sample(barcode="111111111-AAA-202010050000-0000",
+        s1 = Sample(barcode="111111111-AAA-202010050000-0000",
                               student_id=111111111,
                               date = parser.parse("202010050000"),
-                              location=0))
-        db.session.add(Sample(barcode="111111111-202010050000-0000",
+                              location=0)
+        s2 = Sample(barcode="111111111-202010050000-0000",
                               student_id=111111111,
                               date = parser.parse("202010050000"),
                               location=0,
                               email="dan@sartography.com",
-                              phone="555-555-5555"))
+                              phone="555-555-5555")
+        s2n = Notification(date=parser.parse("202010050000"), type="email", successful=True)
+        s2.notifications = [s2n]
+        db.session.add(s1)
+        db.session.add(s2)
         db.session.commit()
         self.assertEquals(2, len(db.session.query(Sample).all()))
         service.merge_similar_records()
@@ -87,6 +92,7 @@ class IvyServiceTest(BaseTest):
         sample = db.session.query(Sample).first()
         self.assertEquals("dan@sartography.com", sample.email)
         self.assertEquals("111111111-AAA-202010050000-0000", sample.barcode)
+        self.assertEquals(1, len(sample.notifications))
 
     def test_merge_non_similar_records(self):
         service = SampleService()
