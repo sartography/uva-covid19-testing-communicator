@@ -1,4 +1,4 @@
-from communicator import db
+from communicator import db, app
 from communicator.models.sample import Sample
 
 
@@ -10,6 +10,7 @@ class SampleService(object):
             existing = db.session.query(Sample).filter(Sample.barcode == sample.barcode).first()
             if existing is not None:
                 existing.merge(sample)
+                app.logger.info("updating existing sample: " + sample.barcode)
                 db.session.add(existing)
             else:
                 db.session.add(sample)
