@@ -50,7 +50,10 @@ def _update_data():
     for file in files:
         db.session.add(file)
         db.session.commit()
-        ivy_service.delete_file(file.file_name)
+        if app.config['DELETE_IVY_FILES']:
+            ivy_service.delete_file(file.file_name)
+        else:
+            app.logger.info("Not Deleting Files, per DELETE_IVY_FILES flag")
     db.session.commit()
 
 
