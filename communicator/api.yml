@@ -75,6 +75,12 @@ paths:
                 type: string
   /notify_by_text:
     get:
+      parameters:
+        - in: query
+          name: file_name
+          schema:
+            type: string
+          description: An optional file name, only records from this ivy file will be notified.
       operationId: communicator.api.admin.notify_by_text
       summary: when called, reviews all samples, and sends out any pending SMS notifications.
       security: []  # Disable security for this endpoint only.
