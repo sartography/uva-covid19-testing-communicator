@@ -39,4 +39,6 @@ class Sample(db.Model):
             self.in_firebase = True
         if sample.in_ivy:
             self.in_ivy = True
+        if sample.ivy_file:
+            self.ivy_file = sample.ivy_file
 
