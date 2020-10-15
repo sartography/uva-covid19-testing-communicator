@@ -56,6 +56,7 @@ MAIL_TIMEOUT = 10
 
 # Ivy Directory
 IVY_IMPORT_DIR = environ.get('IVY_IMPORT_DIR', default='')
+DELETE_IVY_FILES = environ.get('DELETE_IVY_FILES', default="false") == "true"
 
 # Globus endpoint connections
 GLOBUS_CLIENT_ID = environ.get('GLOBUS_CLIENT_ID')
