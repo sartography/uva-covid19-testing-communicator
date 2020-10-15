@@ -10,9 +10,10 @@ class SampleService(object):
             existing = db.session.query(Sample).filter(Sample.barcode == sample.barcode).first()
             if existing is not None:
                 existing.merge(sample)
-                app.logger.info("updating existing sample: " + sample.barcode)
+                app.logger.info("updating existing sample: " + existing.barcode)
                 db.session.add(existing)
             else:
+                app.logger.info("adding a new sample: " + sample.barcode)
                 db.session.add(sample)
         db.session.commit()
 
