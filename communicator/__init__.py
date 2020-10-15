@@ -14,6 +14,7 @@ from flask_paginate import Pagination, get_page_parameter
 from flask_sqlalchemy import SQLAlchemy
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
+from flask_executor import Executor
 
 
 logging.basicConfig(level=logging.INFO)
@@ -21,6 +22,9 @@ logging.basicConfig(level=logging.INFO)
 # API, fully defined in api.yml
 connexion_app = connexion.FlaskApp(__name__)
 app = connexion_app.app
+
+# Executor for long running tasks
+executor = Executor(app)
 
 # Configuration
 app.config.from_object('config.default')

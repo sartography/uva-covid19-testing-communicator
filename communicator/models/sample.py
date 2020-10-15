@@ -10,6 +10,7 @@ class Sample(db.Model):
     phone = db.Column(db.String)
     email = db.Column(db.String)
     result_code = db.Column(db.String)
+    ivy_file = db.Column(db.String)
     in_firebase = db.Column(db.Boolean, default=False)  # Does this record exist in Firebase?
     in_ivy = db.Column(db.Boolean, default=False)  # Has this record come in from the IVY?
     email_notified = db.Column(db.Boolean, default=False)

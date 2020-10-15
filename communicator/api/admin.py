@@ -1,4 +1,4 @@
-from communicator import db, app
+from communicator import db, app, executor
 from communicator.models import Sample
 from communicator.models.invitation import Invitation
 from communicator.models.notification import Notification, EMAIL_TYPE, TEXT_TYPE
@@ -9,7 +9,8 @@ from time import sleep
 
 
 def status():
-    return {"status":"good"}
+    return {"status": "good"}
+
 
 def add_sample(body):
     sample = Sample(barcode=body['barcode'],
@@ -17,6 +18,7 @@ def add_sample(body):
                     date=body['date'],
                     location=body['location'])
     SampleService().add_or_update_records([sample])
+
 
 def clear_samples():
     db.session.query(Notification).delete()
@@ -26,29 +28,51 @@ def clear_samples():
 
 
 def update_and_notify():
-    update_data()
-    notify_by_email()
-    notify_by_text()
+    # These can take a very long time to execute.
+    executor.submit(_update_data)
+    executor.submit(_notify_by_email)
+    executor.submit(_notify_by_text)
+    return "Task scheduled and running the background"
+
 
 def update_data():
+    executor.submit(_update_data)
+    return "Task scheduled and running the background"
+
+
+def _update_data():
     """Updates the database based on local files placed by IVY.  No longer attempts
     to pull files from the Firebase service."""
     ivy_service = IvyService()
     ivy_service.request_transfer()
-    samples = ivy_service.load_directory()
+    files, samples = ivy_service.load_directory()
     SampleService().add_or_update_records(samples)
+    for file in files:
+        db.session.add(file)
+        db.session.commit()
+        ivy_service.delete_file(file.file_name)
     db.session.commit()
+
 
 def merge_similar_records():
     sample_service = SampleService()
     sample_service.merge_similar_records()
 
 
-def notify_by_email():
+def notify_by_email(file_name=None):
+    executor.submit(_notify_by_email, file_name)
+    return "Task scheduled and running the background"
+
+
+def _notify_by_email(file_name=None):
     """Sends out notifications via email"""
-    samples = db.session.query(Sample)\
-        .filter(Sample.result_code != None)\
-        .filter(Sample.email_notified == False).all()
+    sample_query = db.session.query(Sample) \
+        .filter(Sample.result_code != None) \
+        .filter(Sample.email_notified == False)
+    if file_name:
+        sample_query = sample_query.filter(Sample.ivy_file == file_name)
+
+    samples = sample_query.all()
     with NotificationService(app) as notifier:
         for sample in samples:
             last_failure = sample.last_failure_by_type(EMAIL_TYPE)
@@ -64,15 +88,23 @@ def notify_by_email():
             sleep(0.5)
 
 
-def notify_by_text():
+def notify_by_text(file_name=None):
+    executor.submit(_notify_by_text, file_name)
+    return "Task scheduled and running the background"
+
+
+def _notify_by_text(file_name):
     """Sends out notifications via SMS Message, but only at reasonable times of day"""
     with NotificationService(app) as notifier:
         if not notifier.is_reasonable_hour_for_text_messages:
             print("Skipping text messages, it's not a good time to get one.")
             return
-        samples = db.session.query(Sample)\
-            .filter(Sample.result_code != None)\
-            .filter(Sample.text_notified == False).all()
+        sample_query = db.session.query(Sample) \
+            .filter(Sample.result_code != None) \
+            .filter(Sample.text_notified == False)
+        if file_name:
+            sample_query = sample_query.filter(Sample.ivy_file == file_name)
+        samples = sample_query.all()
         for sample in samples:
             last_failure = sample.last_failure_by_type(TEXT_TYPE)
             if last_failure: continue
@@ -85,6 +117,3 @@ def notify_by_text():
                                             error_message=str(e)))
             db.session.commit()
             sleep(0.5)
-
-
-

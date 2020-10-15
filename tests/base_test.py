@@ -1,16 +1,20 @@
 # Set environment variable to testing before loading.
 # IMPORTANT - Environment must be loaded before app, models, etc....
 import base64
+import ctypes
 import os
 import quopri
 import re
 import unittest
+
+
 os.environ["TESTING"] = "true"
 
 from communicator.models import Sample
+from communicator.models.notification import Notification
 
 
-from communicator import app, db
+from communicator import app, db, executor
 
 import logging
 logging.basicConfig()
@@ -42,13 +46,16 @@ class BaseTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.ctx.pop()
         db.drop_all()
+        executor.shutdown(wait=False)
         pass
 
     def setUp(self):
         pass
 
     def tearDown(self):
+        db.session.query(Notification).delete()
         db.session.query(Sample).delete()
+        executor.shutdown(wait=False)
         db.session.commit()
 
     def decode(self, encoded_words):

@@ -27,8 +27,7 @@ class IvyServiceTest(BaseTest):
     def test_load_directory(self):
         self.assertEquals(0, db.session.query(IvyFile).count())
         app.config['IVY_IMPORT_DIR'] = os.path.join(app.root_path, '..', 'tests', 'data', 'import_directory')
-        records = IvyService().load_directory(delete_from_globus=False)
-        files = db.session.query(IvyFile).all()
+        files, records = IvyService().load_directory()
         self.assertEquals(4, len(files))
 
 

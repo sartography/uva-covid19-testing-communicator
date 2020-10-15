@@ -30,6 +30,10 @@ class SampleService(object):
                 first()
             if sample2:
                 sample.merge(sample2)
+                # Move notifications over as well.
+                notifications = sample2.notifications
+                sample.notifications = notifications
+                sample2.notifications = []
                 db.session.add(sample)
                 db.session.delete(sample2)
         db.session.commit()
