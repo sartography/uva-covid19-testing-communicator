@@ -38,15 +38,17 @@ class IvyService(object):
         samples = []
         files = []
         for file_name in onlyfiles:
-            samples = IvyService.samples_from_ivy_file(join(self.path, file_name))
+            file_samples = IvyService.samples_from_ivy_file(join(self.path, file_name))
             ivy_file = db.session.query(IvyFile).filter(IvyFile.file_name == file_name).first()
             if not ivy_file:
-                ivy_file = IvyFile(file_name=file_name, sample_count=len(samples))
+                ivy_file = IvyFile(file_name=file_name, sample_count=len(file_samples))
             else:
                 ivy_file.date_added = datetime.now()
-                ivy_file.sample_count = len(samples)
+                ivy_file.sample_count = len(file_samples)
             files.append(ivy_file)
-            app.logger.info(f'Loaded {len(samples)} samples from file {file_name}')
+            samples.extend(file_samples)
+            app.logger.info(f'Loaded {len(file_samples)} samples from file {file_name}')
+        app.logger.info(f'Loading a total of {len(samples)} samples from {len(files)} files')
         return files, samples
 
     @staticmethod
