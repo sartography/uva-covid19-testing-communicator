@@ -63,6 +63,11 @@ paths:
           schema:
             type: string
           description: An optional file name, only records from this ivy file will be notified.
+        - in: query
+          name: retry
+          schema:
+            type: boolean
+          description: If set to true, will attept to resend previous failures.
       operationId: communicator.api.admin.notify_by_email
       summary: when called, reviews all samples, and sends out any pending email notifications.
       security: []  # Disable security for this endpoint only.
@@ -81,6 +86,11 @@ paths:
           schema:
             type: string
           description: An optional file name, only records from this ivy file will be notified.
+        - in: query
+          name: retry
+          schema:
+            type: boolean
+          description: If set to true, will attept to resend previous failures.
       operationId: communicator.api.admin.notify_by_text
       summary: when called, reviews all samples, and sends out any pending SMS notifications.
       security: []  # Disable security for this endpoint only.
