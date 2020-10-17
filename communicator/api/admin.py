@@ -62,12 +62,12 @@ def merge_similar_records():
     sample_service.merge_similar_records()
 
 
-def notify_by_email(file_name=None):
-    executor.submit(_notify_by_email, file_name)
+def notify_by_email(file_name=None, retry=False):
+    executor.submit(_notify_by_email, file_name, retry)
     return "Task scheduled and running the background"
 
 
-def _notify_by_email(file_name=None):
+def _notify_by_email(file_name=None, retry=False):
     """Sends out notifications via email"""
     sample_query = db.session.query(Sample) \
         .filter(Sample.result_code != None) \
@@ -79,7 +79,8 @@ def _notify_by_email(file_name=None):
     with NotificationService(app) as notifier:
         for sample in samples:
             last_failure = sample.last_failure_by_type(EMAIL_TYPE)
-            if last_failure: continue
+            if last_failure and not retry:
+                continue
             try:
                 notifier.send_result_email(sample)
                 sample.email_notified = True
@@ -91,13 +92,15 @@ def _notify_by_email(file_name=None):
             sleep(0.5)
 
 
-def notify_by_text(file_name=None):
-    executor.submit(_notify_by_text, file_name)
+def notify_by_text(file_name=None, retry=False):
+    executor.submit(_notify_by_text, file_name, retry)
     return "Task scheduled and running the background"
 
 
-def _notify_by_text(file_name):
-    """Sends out notifications via SMS Message, but only at reasonable times of day"""
+def _notify_by_text(file_name, retry=False):
+    """Sends out notifications via SMS Message, but only at reasonable times of day,
+       Can be resticted to a specific file name, and will attempt to retry on previous
+       failures if requested to do so. """
     with NotificationService(app) as notifier:
         if not notifier.is_reasonable_hour_for_text_messages:
             print("Skipping text messages, it's not a good time to get one.")
@@ -110,7 +113,8 @@ def _notify_by_text(file_name):
         samples = sample_query.all()
         for sample in samples:
             last_failure = sample.last_failure_by_type(TEXT_TYPE)
-            if last_failure: continue
+            if last_failure and not retry:
+                continue
             try:
                 notifier.send_result_sms(sample)
                 sample.text_notified = True

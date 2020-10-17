@@ -19,14 +19,14 @@ class Sample(db.Model):
                                     cascade="all, delete, delete-orphan",
                                     order_by=Notification.date.desc)
 
-    def last_failure_by_type(self, type):
-        email_notifications = list(filter(lambda x: x.type == type, self.notifications))
-        if len(email_notifications) == 0:
+    def last_failure_by_type(self, notification_type):
+        notifications = list(filter(lambda x: x.type == notification_type, self.notifications))
+        if len(notifications) == 0:
             return  # No notifications yet.
-        elif email_notifications[0].successful:
+        elif notifications[0].successful:
             return  # Last notification was successful.
         else:
-            return email_notifications[0]
+            return notifications[0]
 
     def merge(self, sample):
         if sample.phone:
