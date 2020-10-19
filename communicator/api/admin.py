@@ -89,7 +89,7 @@ def _notify_by_email(file_name=None, retry=False):
                 db.session.add(Notification(type=EMAIL_TYPE, sample=sample, successful=False,
                                             error_message=str(e)))
             db.session.commit()
-            sleep(0.5)
+            sleep(2)
 
 
 def notify_by_text(file_name=None, retry=False):
