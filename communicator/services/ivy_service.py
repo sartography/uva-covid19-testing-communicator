@@ -109,7 +109,9 @@ class IvyService(object):
 
     def request_transfer(self):
         file_count = self.get_file_count_from_globus()
+        app.logger.info(f"There are {file_count} files ready for transfer from Globus")
         if (file_count > 0):
+            app.logger.info("Located file(s) in Globus, requesting a transfer.")
             tc = self.get_transfer_client()
             tdata = globus_sdk.TransferData(tc, self.GLOBUS_IVY_ENDPOINT, self.GLOBUS_DTN_ENDPOINT, label="Transfer",
                                             sync_level="checksum")
