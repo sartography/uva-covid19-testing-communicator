@@ -75,7 +75,7 @@ def _notify_by_email(file_name=None, retry=False):
         .filter(Sample.email_notified == False)
     if file_name:
         sample_query = sample_query.filter(Sample.ivy_file == file_name)
-
+    sample_query = sample_query.limit(150)  # Only send out 200 emails at a time.
     samples = sample_query.all()
     with NotificationService(app) as notifier:
         for sample in samples:
@@ -90,7 +90,7 @@ def _notify_by_email(file_name=None, retry=False):
                 db.session.add(Notification(type=EMAIL_TYPE, sample=sample, successful=False,
                                             error_message=str(e)))
             db.session.commit()
-            sleep(2)
+            sleep(0.5)
 
 
 def notify_by_text(file_name=None, retry=False):
