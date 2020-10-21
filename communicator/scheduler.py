@@ -11,7 +11,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from communicator.api import admin
 
 
-def within_notification_window(self):
+def within_notification_window():
     """Where 'reasaonable' is between 8am and 10pm. """
     tz = pytz.timezone('US/Eastern')
     now = (datetime.now(tz))
