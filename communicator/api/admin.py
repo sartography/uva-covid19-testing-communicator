@@ -98,7 +98,7 @@ def notify_by_text(file_name=None, retry=False):
     return "Task scheduled and running the background"
 
 
-def _notify_by_text(file_name, retry=False):
+def _notify_by_text(file_name=None, retry=False):
     """Sends out notifications via SMS Message, but only at reasonable times of day,
        Can be resticted to a specific file name, and will attempt to retry on previous
        failures if requested to do so. """
