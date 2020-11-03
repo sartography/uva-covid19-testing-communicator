@@ -15,6 +15,23 @@
 <h2>UVA Be Safe Communicator</h2>
 <a href="{{base_href + '/invitation'}}">Send Invitations</a> | <a href="{{base_href + '/imported_files'}}">View imported files</a>
 
+<form action="{{ action }}" method="post">
+
+    {{ form.csrf_token() }}
+    {% for field in form if field.name != "csrf_token" %}
+        <div class="form-field {{ field.widget.input_type }}">
+            <div class="form-field-label">{{ field.label() }}:</div>
+            <div class="form-field-input">{{ field }}</div>
+            <div class="form-field-help">{{ description_map[field.name] }}</div>
+            {% for error in field.errors %}
+                <div class="form-field-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+    <button class="btn btn-primary" type="submit">Submit</button>
+    <a href="{{ url_for('index') }}" class="btn btn-default">Cancel</a>
+</form>
+
 <h3>Records to be processed</h3>
 {{ pagination.info }}
 {{ pagination.links }}

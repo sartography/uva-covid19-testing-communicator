@@ -112,7 +112,8 @@ def _notify_by_text(file_name=None, retry=False):
         if file_name:
             sample_query = sample_query.filter(Sample.ivy_file == file_name)
 
-        sample_query = sample_query.limit(150)  # Only send out 150 texts at a time.
+        # Do not limit texts, as errors pile up we end up sending less and less, till none go out.
+        # sample_query = sample_query.limit(150)  # Only send out 150 texts at a time.
         samples = sample_query.all()
         for sample in samples:
             last_failure = sample.last_failure_by_type(TEXT_TYPE)

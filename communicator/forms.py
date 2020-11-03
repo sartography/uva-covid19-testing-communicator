@@ -3,7 +3,7 @@ import re
 from flask_table import Table, Col, LinkCol, BoolCol, DatetimeCol, NestedTableCol
 from flask_wtf import FlaskForm
 from wtforms import SelectMultipleField, StringField, BooleanField, SelectField, validators, HiddenField, TextAreaField, \
-    ValidationError
+    ValidationError, DateField
 from wtforms.widgets import TextArea
 
 
@@ -18,3 +18,11 @@ class InvitationForm(FlaskForm):
         for email in all_emails:
             if not re.search(EMAIL_REGEX, email):
                 raise ValidationError(f'Invalid email \'{email}\', Emails must each be on a seperate line.')
+
+
+class SearchForm(FlaskForm):
+    startDate = DateField("Start Date (YYYY-MM-DD)",  validators=[validators.Optional()])
+    endDate = DateField("End Date (YYYY-MM-DD)",  validators=[validators.Optional()])
+    studentId = TextAreaField('Student Id')
+    location = TextAreaField('Location')
+    download = BooleanField('Download Results')
