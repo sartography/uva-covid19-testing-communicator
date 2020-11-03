@@ -1,10 +1,13 @@
+import csv
+import io
+
 import logging
 import os
 from functools import wraps
 
 import connexion
 import sentry_sdk
-from flask import render_template, request, redirect, url_for, flash, abort
+from flask import render_template, request, redirect, url_for, flash, abort, Response, send_file
 from flask_assets import Environment
 from flask_cors import CORS
 from flask_mail import Mail
@@ -12,6 +15,7 @@ from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_paginate import Pagination, get_page_parameter
 from flask_sqlalchemy import SQLAlchemy
+from pyparsing import unicode
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
 from flask_executor import Executor
@@ -98,23 +102,92 @@ def superuser(f):
     return decorated_function
 
 
-@app.route('/', methods=['GET'])
+@app.route('/', methods=['GET', 'POST'])
 @superuser
 def index():
     from communicator.models import Sample
     from communicator.tables import SampleTable
-    # display results
-    page = request.args.get(get_page_parameter(), type=int, default=1)
-    samples = db.session.query(Sample).order_by(Sample.date.desc())
-    pagination = Pagination(page=page, total=samples.count(), search=False, record_name='samples')
 
-    table = SampleTable(samples.paginate(page,10,error_out=False).items)
-    return render_template(
-        'index.html',
-        table=table,
-        pagination=pagination,
-        base_href=BASE_HREF
-    )
+    download = False
+
+    form = forms.SearchForm(request.form)
+    action = BASE_HREF + "/"
+    samples = db.session.query(Sample).order_by(Sample.date.desc())
+    if request.method == 'POST' and form.validate():
+        if form.startDate.data:
+            samples = samples.filter(Sample.date >= form.startDate.data)
+        if form.endDate.data:
+            samples = samples.filter(Sample.date <= form.endDate.data)
+        if form.studentId.data:
+            samples = samples.filter(Sample.student_id == form.studentId.data)
+        if form.location.data:
+            samples = samples.filter(Sample.location == form.location.data)
+        if form.download.data:
+            download = True
+
+    # display results
+    if download:
+        csv = __make_csv(samples)
+        return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
+
+    else:
+        page = request.args.get(get_page_parameter(), type=int, default=1)
+        pagination = Pagination(page=page, total=samples.count(), search=False, record_name='samples')
+
+        table = SampleTable(samples.paginate(page,10,error_out=False).items)
+
+        return render_template(
+            'index.html',
+            form=form,
+            table=table,
+            action=action,
+            pagination=pagination,
+            base_href=BASE_HREF,
+            description_map={}
+        )
+
+
+def __make_csv(sample_query):
+    csvfile = io.StringIO()
+    headers = [
+        'barcode',
+        'student_id',
+        'date',
+        'location',
+        'phone',
+        'email',
+        'result_code',
+        'ivy_file',
+        'email_notified',
+        'text_notified'
+    ]
+    writer = csv.DictWriter(csvfile, headers)
+    writer.writeheader()
+    for sample in sample_query.all():
+        writer.writerow(
+            {
+                'barcode': sample.barcode,
+                'student_id': sample.student_id,
+                'date': sample.date,
+                'location': sample.location,
+                'phone': sample.phone,
+                'email': sample.email,
+                'result_code': sample.result_code,
+                'ivy_file': sample.ivy_file,
+                'email_notified': sample.email_notified,
+                'text_notified': sample.text_notified,
+            }
+        )
+
+    # Creating the byteIO object from the StringIO Object
+    mem = io.BytesIO()
+    mem.write(csvfile.getvalue().encode('utf-8'))
+    # seeking was necessary. Python 3.5.2, Flask 0.12.2
+    mem.seek(0)
+    csvfile.close()
+    return mem
+
+
 
 @app.route('/invitation', methods=['GET', 'POST'])
 @superuser
