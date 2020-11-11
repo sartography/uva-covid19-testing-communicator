@@ -115,6 +115,9 @@ def index():
     action = BASE_HREF + "/"
     samples = db.session.query(Sample).order_by(Sample.date.desc())
 
+    if request.method == "POST" or request.args.get('cancel') == 'true':
+        session["index_filter"] = {} # Clear out the session if it is invalid.
+
     if form.validate():
         session["index_filter"] = {}
         if form.startDate.data:
@@ -124,26 +127,25 @@ def index():
         if form.studentId.data:
             session["index_filter"]["student_id"] = form.studentId.data
         if form.location.data:
-            session["index_filter"]["location"] = form.studentId.data
+            session["index_filter"]["location"] = form.location.data
         if form.download.data:
             download = True
 
     # Store previous form submission settings in the session, so they are preseved through pagination.
     if "index_filter" in session:
         filters = session["index_filter"]
-        if "start_date" in filters:
-            samples = samples.filter(Sample.date >= filters["start_date"])
-            form.startDate.data = datetime.strptime(filters["start_date"], "%Y-%m-%d")
-        if "end_date" in filters:
-            samples = samples.filter(Sample.date >= filters["end_date"])
-            form.startDate.data = datetime.strptime(filters["end_date"], "%Y-%m-%d")
-        if "student_id" in filters:
-            samples = samples.filter(Sample.date >= filters["student_id"])
-            form.startDate.data = filters["student_id"]
-        if "location" in filters:
-            samples = samples.filter(Sample.date >= filters["location"])
-            form.startDate.data = filters["location"]
-
+        try:
+            if "start_date" in filters:
+                samples = samples.filter(Sample.date >= filters["start_date"])
+            if "end_date" in filters:
+                samples = samples.filter(Sample.date <= filters["end_date"])
+            if "student_id" in filters:
+                samples = samples.filter(Sample.student_id == filters["student_id"])
+            if "location" in filters:
+                samples = samples.filter(Sample.location == filters["location"])
+        except Exception as e:
+            logging.error("Encountered an error building filters, so clearing. " + e)
+            session["index_filter"] = {}
 
     # display results
     if download:

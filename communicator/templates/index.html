@@ -36,7 +36,7 @@
         </div>
     {% endfor %}
     <button class="btn btn-primary" type="submit">Submit</button>
-    <a href="{{ url_for('index') }}" class="btn btn-default">Cancel</a>
+    <a href="{{ url_for('index') }}?cancel=true" class="btn btn-default">Cancel</a>
 </form>
 
 </body>
