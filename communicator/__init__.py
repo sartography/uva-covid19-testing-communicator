@@ -3,11 +3,12 @@ import io
 
 import logging
 import os
+from datetime import datetime
 from functools import wraps
 
 import connexion
 import sentry_sdk
-from flask import render_template, request, redirect, url_for, flash, abort, Response, send_file
+from flask import render_template, request, redirect, url_for, flash, abort, Response, send_file, session
 from flask_assets import Environment
 from flask_cors import CORS
 from flask_mail import Mail
@@ -113,17 +114,36 @@ def index():
     form = forms.SearchForm(request.form)
     action = BASE_HREF + "/"
     samples = db.session.query(Sample).order_by(Sample.date.desc())
-    if request.method == 'POST' and form.validate():
+
+    if form.validate():
+        session["index_filter"] = {}
         if form.startDate.data:
-            samples = samples.filter(Sample.date >= form.startDate.data)
+            session["index_filter"]["start_date"] = form.startDate.data
         if form.endDate.data:
-            samples = samples.filter(Sample.date <= form.endDate.data)
+            session["index_filter"]["end_date"] = form.endDate.data
         if form.studentId.data:
-            samples = samples.filter(Sample.student_id == form.studentId.data)
+            session["index_filter"]["student_id"] = form.studentId.data
         if form.location.data:
-            samples = samples.filter(Sample.location == form.location.data)
+            session["index_filter"]["location"] = form.studentId.data
         if form.download.data:
             download = True
+
+    # Store previous form submission settings in the session, so they are preseved through pagination.
+    if "index_filter" in session:
+        filters = session["index_filter"]
+        if "start_date" in filters:
+            samples = samples.filter(Sample.date >= filters["start_date"])
+            form.startDate.data = datetime.strptime(filters["start_date"], "%Y-%m-%d")
+        if "end_date" in filters:
+            samples = samples.filter(Sample.date >= filters["end_date"])
+            form.startDate.data = datetime.strptime(filters["end_date"], "%Y-%m-%d")
+        if "student_id" in filters:
+            samples = samples.filter(Sample.date >= filters["student_id"])
+            form.startDate.data = filters["student_id"]
+        if "location" in filters:
+            samples = samples.filter(Sample.date >= filters["location"])
+            form.startDate.data = filters["location"]
+
 
     # display results
     if download:

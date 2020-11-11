@@ -15,6 +15,13 @@
 <h2>UVA Be Safe Communicator</h2>
 <a href="{{base_href + '/invitation'}}">Send Invitations</a> | <a href="{{base_href + '/imported_files'}}">View imported files</a>
 
+<h3>Records to be processed</h3>
+{{ pagination.info }}
+{{ pagination.links }}
+{{ table }}
+{{ pagination.links }}
+
+
 <form action="{{ action }}" method="post">
 
     {{ form.csrf_token() }}
@@ -32,10 +39,5 @@
     <a href="{{ url_for('index') }}" class="btn btn-default">Cancel</a>
 </form>
 
-<h3>Records to be processed</h3>
-{{ pagination.info }}
-{{ pagination.links }}
-{{ table }}
-{{ pagination.links }}
 </body>
 </html>
