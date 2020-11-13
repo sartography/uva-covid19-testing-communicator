@@ -61,11 +61,18 @@ class NotificationService(object):
         if not phonenumbers.is_valid_number(phone_number):
             raise CommError(6001, f"invalid phone number: {sample.phone}")
         phone_number_string = phonenumbers.format_number(phone_number, phonenumbers.PhoneNumberFormat.E164)
-        message = self.twilio_client.messages.create(
-            to=phone_number_string,
-            from_=self.app.config['TWILIO_NUMBER'],
-            body=f"You have an important notification from UVA Be Safe, please visit: {link}")
-        print(message.sid)
+        if sample.email and '@' in sample.email:
+            name = sample.email.split('@')[0]
+        else:
+            name = "Student"
+
+        message = f"Dear {name}, You have an important notification from UVA, please visit: {link}. " \
+                  f"Reply 'STOP' to opt-out."
+
+        if 'TESTING' in self.app.config and self.app.config['TESTING']:
+            TEST_MESSAGES.append(message)
+        else:
+            self.twilio_client.messages.create(phone_number_string, self.app.config['TWILIO_NUMBER'], message)
 
     def send_result_email(self, sample):
         link = self.get_link(sample)

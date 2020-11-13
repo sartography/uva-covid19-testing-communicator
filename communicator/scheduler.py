@@ -21,9 +21,10 @@ def within_notification_window():
 
 def update():
     with app.app_context():
-        if app.config['RUN_SCHEDULED_TASKS']:
+        if within_notification_window():
+            app.logger.info("Do not load new files during the notification window.")
+        else:
             admin._update_data()
-
 
 def notify():
     with app.app_context():
