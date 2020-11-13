@@ -72,7 +72,10 @@ class NotificationService(object):
         if 'TESTING' in self.app.config and self.app.config['TESTING']:
             TEST_MESSAGES.append(message)
         else:
-            self.twilio_client.messages.create(phone_number_string, self.app.config['TWILIO_NUMBER'], message)
+            message = self.twilio_client.messages.create(
+                to=phone_number_string,
+                from_=self.app.config['TWILIO_NUMBER'],
+                body=message)
 
     def send_result_email(self, sample):
         link = self.get_link(sample)
