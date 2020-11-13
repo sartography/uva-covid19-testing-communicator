@@ -116,6 +116,7 @@ def _notify_by_text(file_name=None, retry=False):
 
         # Do not limit texts, as errors pile up we end up sending less and less, till none go out.
         # sample_query = sample_query.limit(150)  # Only send out 150 texts at a time.
+        count = 0
         samples = sample_query.all()
         for sample in samples:
             last_failure = sample.last_failure_by_type(TEXT_TYPE)
@@ -128,5 +129,8 @@ def _notify_by_text(file_name=None, retry=False):
             except Exception as e:
                 db.session.add(Notification(type=TEXT_TYPE, sample=sample, successful=False,
                                             error_message=str(e)))
+            count += 1
             db.session.commit()
             sleep(0.5)
+            if count % 100 == 0:
+                sleep(300)  # Sleep for 5 minutes after every 100 records to avoid throttling errors.
