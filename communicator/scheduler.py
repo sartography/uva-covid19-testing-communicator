@@ -15,7 +15,7 @@ def within_notification_window():
     tz = pytz.timezone('US/Eastern')
     now = (datetime.now(tz))
     one_pm = (datetime.now(tz).replace(hour=13, minute=0, second=0, microsecond=0))
-    two_pm = (datetime.now(tz).replace(hour=14, minute=30, second=0, microsecond=0))
+    two_pm = (datetime.now(tz).replace(hour=17, minute=30, second=0, microsecond=0))
     return one_pm <= now <= two_pm
 
 
