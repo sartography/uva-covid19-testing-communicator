@@ -84,16 +84,18 @@ def _notify_by_email(file_name=None, retry=False):
                 continue
             try:
                 notifier.send_result_email(sample)
+                count += 1
                 sample.email_notified = True
                 db.session.add(Notification(type=EMAIL_TYPE, sample=sample, successful=True))
             except Exception as e:
                 db.session.add(Notification(type=EMAIL_TYPE, sample=sample, successful=False,
                                             error_message=str(e)))
-            count += 1
             db.session.commit()
             sleep(0.5)
-            if count % 100 == 0:
-                sleep(300)  # Sleep for 5 minutes after every 100 records to avoid throttling errors.
+            if count > 190:
+                break
+
+
 
 def notify_by_text(file_name=None, retry=False):
     executor.submit(_notify_by_text, file_name, retry)
@@ -116,21 +118,21 @@ def _notify_by_text(file_name=None, retry=False):
 
         # Do not limit texts, as errors pile up we end up sending less and less, till none go out.
         # sample_query = sample_query.limit(150)  # Only send out 150 texts at a time.
-        count = 0
         samples = sample_query.all()
+        count = 0
         for sample in samples:
             last_failure = sample.last_failure_by_type(TEXT_TYPE)
             if last_failure and not retry:
                 continue
             try:
                 notifier.send_result_sms(sample)
+                count += 1
                 sample.text_notified = True
                 db.session.add(Notification(type=TEXT_TYPE, sample=sample, successful=True))
             except Exception as e:
                 db.session.add(Notification(type=TEXT_TYPE, sample=sample, successful=False,
                                             error_message=str(e)))
-            count += 1
             db.session.commit()
             sleep(0.5)
-            if count % 100 == 0:
-                sleep(300)  # Sleep for 5 minutes after every 100 records to avoid throttling errors.
+            if count > 190:
+                break
