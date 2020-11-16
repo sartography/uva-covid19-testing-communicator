@@ -182,13 +182,7 @@ class NotificationService(object):
             return
 
         all_recipients = recipients + bcc
-
-        try:
-            self.email_server.sendmail(sender, all_recipients, msgRoot.as_bytes())
-        except Exception as e:
-            app.logger.error('An exception happened in EmailService', exc_info=True)
-            app.logger.error(str(e))
-            raise CommError(5000, f"failed to send email to {', '.join(recipients)}", e)
+        self.email_server.sendmail(sender, all_recipients, msgRoot.as_bytes())
 
     def is_reasonable_hour_for_text_messages(self):
         """Where 'reasaonable' is between 8am and 10pm. """

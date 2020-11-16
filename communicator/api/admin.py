@@ -1,3 +1,5 @@
+import smtplib
+
 from communicator import db, app, executor
 from communicator.models import Sample
 from communicator.models.invitation import Invitation
@@ -87,12 +89,27 @@ def _notify_by_email(file_name=None, retry=False):
                 count += 1
                 sample.email_notified = True
                 db.session.add(Notification(type=EMAIL_TYPE, sample=sample, successful=True))
+            except smtplib.SMTPServerDisconnected as de:
+                app.logger.error("Database connection terminated, stopping for now.", exc_info=True)
+                break
+            except smtplib.SMTPResponseException as re:
+                if re.smtp_code == 451:
+                    app.logger.error("Too many messages error from SMTP Service, stopping for now.", exc_info=True)
+                    break
+                else:
+                    app.logger.error(f'An exception happened in EmailService sending to {sample.email} ', exc_info=True)
+                    app.logger.error(str(e))
+                    db.session.add(Notification(type=EMAIL_TYPE, sample=sample, successful=False,
+                                                error_message=str(e)))
             except Exception as e:
+                app.logger.error(f'An exception happened in EmailService sending to {sample.email} ', exc_info=True)
+                app.logger.error(str(e))
                 db.session.add(Notification(type=EMAIL_TYPE, sample=sample, successful=False,
                                             error_message=str(e)))
             db.session.commit()
             sleep(0.5)
-            if count > 190:
+            if count > 190:  # At 2 a second, it should take 80 seconds or around a minute and 1/2 to send out a set.
+                app.logger.info("Reached the max 190 messages, stopping for now.")
                 break
 
 
