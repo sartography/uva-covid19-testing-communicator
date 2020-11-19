@@ -128,6 +128,8 @@ def index():
             session["index_filter"]["student_id"] = form.studentId.data
         if form.location.data:
             session["index_filter"]["location"] = form.location.data
+        if form.email.data:
+            session["index_filter"]["email"] = form.email.data
         if form.download.data:
             download = True
 
@@ -143,6 +145,8 @@ def index():
                 samples = samples.filter(Sample.student_id == filters["student_id"])
             if "location" in filters:
                 samples = samples.filter(Sample.location == filters["location"])
+            if "email" in filters:
+                samples = samples.filter(Sample.email.ilike(filters["email"] + "%"))
         except Exception as e:
             logging.error("Encountered an error building filters, so clearing. " + e)
             session["index_filter"] = {}
