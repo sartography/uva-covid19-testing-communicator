@@ -78,3 +78,7 @@ FIRESTORE_JSON = environ.get('FIRESTORE_JSON')
 # Scheduled tasks
 SCHEDULED_TASK_MINUTES = float(environ.get('SCHEDULED_TASK_MINUTES', default=1))
 RUN_SCHEDULED_TASKS = environ.get('RUN_SCHEDULED_TASKS', default="false") == "true"
+
+# Argon Settings
+CSRF_ENABLED = True
+SECRET_KEY = environ.get('SECRET_KEY', default="Shhhh!!! This is secret!  And better darn well not show up in prod.")

@@ -39,6 +39,7 @@ else:
     app.config.root_path = app.instance_path
     app.config.from_pyfile('config.py', silent=True)
 
+
 # Mail settings
 mail = Mail(app)
 
@@ -62,15 +63,16 @@ assets = Environment(app)
 assets.init_app(app)
 assets.url = app.static_url_path
 scss = Bundle(
-    'scss/app.scss',
+    'assets/scss/argon.scss',
     filters='pyscss',
-    output='app.css'
+    output='argon.css'
 )
 assets.register('app_scss', scss)
 
 from communicator import models
 from communicator import api
 from communicator import forms
+import random 
 from communicator import scheduler
 
 connexion_app.add_api('api.yml', base_path='/v1.0')
@@ -126,7 +128,7 @@ def index():
         if form.studentId.data:
             session["index_filter"]["student_id"] = form.studentId.data
         if form.location.data:
-            session["index_filter"]["location"] = form.location.data
+            session["index_filter"]["location"] = form.location.data + form.location.data
         if form.email.data:
             session["index_filter"]["email"] = form.email.data
         if form.download.data:
@@ -135,6 +137,7 @@ def index():
     # Store previous form submission settings in the session, so they are preseved through pagination.
     if "index_filter" in session:
         filters = session["index_filter"]
+        print(BASE_HREF)
         try:
             if "start_date" in filters:
                 samples = samples.filter(Sample.date >= filters["start_date"])
@@ -143,13 +146,14 @@ def index():
             if "student_id" in filters:
                 samples = samples.filter(Sample.student_id == filters["student_id"])
             if "location" in filters:
-                samples = samples.filter(Sample.location == filters["location"])
+                if filters["location"] != "AllAll":
+                    samples = samples.filter(Sample.location == filters["location"])
             if "email" in filters:
                 samples = samples.filter(Sample.email.ilike(filters["email"] + "%"))
         except Exception as e:
             logging.error("Encountered an error building filters, so clearing. " + e)
             session["index_filter"] = {}
-
+    #
     # display results
     if download:
         csv = __make_csv(samples)
@@ -158,18 +162,23 @@ def index():
     else:
         page = request.args.get(get_page_parameter(), type=int, default=1)
         pagination = Pagination(page=page, total=samples.count(), search=False, record_name='samples')
-        print(samples.paginate(page,10,error_out=False))
+        
         table = SampleTable(samples.paginate(page,10,error_out=False).items)
 
-        return render_template(
+        locations = []
+        for name in ["10","20","30","40","50",]:
+            locations.append({"name":name,"data":str({"data":{"datasets":[{"data":[random.randint(10,50) for _ in range(15)]}]}}).replace("\'","\"")   })
+
+        return render_template('layouts/default.html', content = render_template(
             'pages/index.html',
             form=form,
             table=table,
             action=action,
             pagination=pagination,
             base_href=BASE_HREF,
-            description_map={}
-        )
+            description_map={},
+            locations = locations
+        ))
 
 
 def __make_csv(sample_query):
@@ -277,6 +286,7 @@ def sso():
 def trigger_error():
     division_by_zero = 1 / 0
 
+
 # Access tokens
 @app.cli.command()
 def globus_token():
@@ -304,4 +314,12 @@ def delete():
     from communicator.services.ivy_service import IvyService
     ivy_service = IvyService()
     ivy_service.delete_file()
+
+# {% for location in locations %}
+#                     <li class="nav-item " data-toggle="chart" data-target="#chart-sales" data-update='{{location.data}}' data-suffix="e2">
+#                       <a href="#" class="nav-link py-2 px-3" name = "location" value="{{location.name}}" type="radio" data-toggle="tab">
+#                         <span class="d-none d-md-block">{{location.name}}</span>
+#                       </a>
+#                     </li>
+#                     {% endfor %}
 
