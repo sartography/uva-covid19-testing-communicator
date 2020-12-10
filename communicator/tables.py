@@ -30,6 +30,7 @@ class NotificationTAale(Table):
 class SampleTable(Table):
     def sort_url(self, col_id, reverse=False):
         pass
+    classes = ["table","align-items-center","table-flush"]
     barcode = Col('Barcode')
     student_id = Col('Student Id')
     date = BetterDatetimeCol('Date', "medium", tzinfo=get_timezone('US/Eastern'), locale='en')
@@ -37,7 +38,6 @@ class SampleTable(Table):
     phone = Col('Phone')
     email = Col('Email')
     notifications = NestedTableCol('notifications', NotificationTAale)
-
 
 class IvyFileTable(Table):
     def sort_url(self, col_id, reverse=False):
