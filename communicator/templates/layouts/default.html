@@ -2,9 +2,16 @@
 <html>
 
   <head>
-
-    <title>Flask Dashboard Argon - Admin Dashboard with Argon Design | AppSeed</title>
-    <meta name="description" content="Admin Panel with Argon Design crafted by Creative-Tim and coded in Flask  with SQLite database, ORM and authentication.">
+    <meta charset="UTF-8">
+    <title>Be SAFE Notification System</title>
+    <base href="/">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.typekit.net/kwp6dli.css">
+    <link rel="shortcut icon" href="{{ base_href + url_for('static', filename='favicon.ico') }}">
+    {% assets 'app_scss' %}
+        <link href="{{ base_href + ASSET_URL }}" rel="stylesheet" type="text/css">
+    {% endassets %}
+    <link rel="shortcut icon" href="{{ base_href + url_for('static', filename='favicon.ico') }}">
 
     {% include 'includes/header.html' %}
 
