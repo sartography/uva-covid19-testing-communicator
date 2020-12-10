@@ -16,7 +16,6 @@ from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_paginate import Pagination, get_page_parameter
 from flask_sqlalchemy import SQLAlchemy
-from pyparsing import unicode
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
 from flask_executor import Executor
@@ -159,11 +158,11 @@ def index():
     else:
         page = request.args.get(get_page_parameter(), type=int, default=1)
         pagination = Pagination(page=page, total=samples.count(), search=False, record_name='samples')
-
+        print(samples.paginate(page,10,error_out=False))
         table = SampleTable(samples.paginate(page,10,error_out=False).items)
 
         return render_template(
-            'index.html',
+            'pages/index.html',
             form=form,
             table=table,
             action=action,
