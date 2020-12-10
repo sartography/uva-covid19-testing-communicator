@@ -171,31 +171,3 @@ select.multi {
       transform: scale3d(0, 0, 0);
       padding: 0;
       margin: 0; }
-
-.highlight {
-  font-weight: bolder;
-  font-style: italic; }
-
-  .pagination-page-info {
-    padding: 0.6em;
-    padding-left: 0;
-    width: 40em;
-    margin: 0.5em;
-    margin-left: 0;
-    font-size: 12px; }
-
-    .pagination-page-info b {
-      color: black;
-      background: #6aa6ed;
-      padding-left: 2px;
-      padding: 0.1em 0.25em;
-      font-size: 150%; }
-
-      .pagination ul li {
-        display: inline-block;
-        width: 30px;
-        height: 20px;
-        border: 1px solid black;
-        text-align: center; }
-        .pagination ul li.active {
-          background-color: #ededed; }

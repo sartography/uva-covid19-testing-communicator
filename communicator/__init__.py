@@ -169,13 +169,14 @@ def index():
         for name in ["10","20","30","40","50",]:
             locations.append({"name":name,"data":str({"data":{"datasets":[{"data":[random.randint(10,50) for _ in range(15)]}]}}).replace("\'","\"")   })
 
-        return render_template('layouts/default.html', content = render_template(
+        return render_template('layouts/default.html', 
+        base_href=BASE_HREF,
+        content = render_template(
             'pages/index.html',
             form=form,
             table=table,
             action=action,
             pagination=pagination,
-            base_href=BASE_HREF,
             description_map={},
             locations = locations
         ))
