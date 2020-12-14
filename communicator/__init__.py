@@ -145,7 +145,7 @@ def index():
                 samples = samples.filter(Sample.date >= filters["start_date"])
             if "end_date" in filters:
                 samples = samples.filter(Sample.date <= filters["end_date"])
-            if "student_id" in filters:.
+            if "student_id" in filters:
                 samples = samples.filter(Sample.student_id.in_(filters["student_id"].split()))
             if "location" in filters:
                 samples = samples.filter(Sample.location.in_(filters["location"].split()))
