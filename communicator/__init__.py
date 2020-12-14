@@ -167,7 +167,7 @@ def index():
         table = SampleTable(samples.paginate(page,10,error_out=False).items)
 
         chart_data = {"datasets": []}
-        
+        active_stations = ["10","20","30","40","50","60"]
         # Seperate Data
         location_data = dict()
         for entry in samples:
@@ -191,7 +191,21 @@ def index():
                     },],
                     })
             i+=1
-  
+        # Check for Unresponsive
+        for loc_code in active_stations:
+            if loc_code not in location_data:
+                chart_data["datasets"].append({
+                    "label":loc_code,
+                        "borderColor": f'rgba(128,128,128,.7)',
+                        "pointBorderColor":f'rgba(128,128,128,1)',
+                        "borderWidth": 10,
+                        "data": [{
+                            "x": session["index_filter"]["start_date"], "y": i
+                        }, {
+                            "x": session["index_filter"]["start_date"], "y": i
+                        },],
+                        })
+            i+=1
         return render_template('layouts/default.html', 
         base_href=BASE_HREF,
         content = render_template(
