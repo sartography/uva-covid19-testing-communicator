@@ -123,37 +123,38 @@ def index():
         session["index_filter"] = {}
         if form.startDate.data:
             session["index_filter"]["start_date"] = form.startDate.data
+        else:
+            from datetime import date
+            session["index_filter"]["start_date"] = date.today()
         if form.endDate.data:
             session["index_filter"]["end_date"] = form.endDate.data
         if form.studentId.data:
             session["index_filter"]["student_id"] = form.studentId.data
         if form.location.data:
-            session["index_filter"]["location"] = form.location.data + form.location.data
+            session["index_filter"]["location"] = form.location.data
         if form.email.data:
             session["index_filter"]["email"] = form.email.data
         if form.download.data:
             download = True
 
-    # Store previous form submission settings in the session, so they are preseved through pagination.
+    # # Store previous form submission settings in the session, so they are preseved through pagination.
     if "index_filter" in session:
         filters = session["index_filter"]
-        print(BASE_HREF)
         try:
             if "start_date" in filters:
                 samples = samples.filter(Sample.date >= filters["start_date"])
             if "end_date" in filters:
                 samples = samples.filter(Sample.date <= filters["end_date"])
-            if "student_id" in filters:
-                samples = samples.filter(Sample.student_id == filters["student_id"])
+            if "student_id" in filters:.
+                samples = samples.filter(Sample.student_id.in_(filters["student_id"].split()))
             if "location" in filters:
-                if filters["location"] != "AllAll":
-                    samples = samples.filter(Sample.location == filters["location"])
+                samples = samples.filter(Sample.location.in_(filters["location"].split()))
             if "email" in filters:
                 samples = samples.filter(Sample.email.ilike(filters["email"] + "%"))
         except Exception as e:
             logging.error("Encountered an error building filters, so clearing. " + e)
             session["index_filter"] = {}
-    #
+    
     # display results
     if download:
         csv = __make_csv(samples)
@@ -165,10 +166,32 @@ def index():
         
         table = SampleTable(samples.paginate(page,10,error_out=False).items)
 
-        locations = []
-        for name in ["10","20","30","40","50",]:
-            locations.append({"name":name,"data":str({"data":{"datasets":[{"data":[random.randint(10,50) for _ in range(15)]}]}}).replace("\'","\"")   })
-
+        chart_data = {"datasets": []}
+        
+        # Seperate Data
+        location_data = dict()
+        for entry in samples:
+            loc_code = str(entry.location)[:2]
+            if loc_code not in location_data:
+                location_data[loc_code] = [entry]
+            else:
+                location_data[loc_code].append(entry)
+        # Analysis
+        i = 0 
+        for loc_code in location_data.keys():
+            chart_data["datasets"].append({
+                "label":loc_code,
+                    "borderColor": f'rgba(255,{i*50},{i*10},.7)',
+                    "pointBorderColor":f'rgba(255,{i*50},{i*10},1)',
+                    "borderWidth": 10,
+                    "data": [{
+                        "x": location_data[loc_code][0].date, "y": i
+                    }, {
+                        "x": location_data[loc_code][-1].date, "y": i
+                    },],
+                    })
+            i+=1
+  
         return render_template('layouts/default.html', 
         base_href=BASE_HREF,
         content = render_template(
@@ -178,7 +201,7 @@ def index():
             action=action,
             pagination=pagination,
             description_map={},
-            locations = locations
+            chart_data= chart_data
         ))
 
 

@@ -3,7 +3,9 @@ import re
 from flask_table import Table, Col, LinkCol, BoolCol, DatetimeCol, NestedTableCol
 from flask_wtf import FlaskForm
 from wtforms import SelectMultipleField, StringField, BooleanField, SelectField, validators, HiddenField, TextAreaField, \
-    ValidationError, DateField
+    ValidationError
+
+from wtforms.fields.html5 import DateField
 from wtforms.widgets import TextArea
 
 
@@ -21,8 +23,8 @@ class InvitationForm(FlaskForm):
 
 
 class SearchForm(FlaskForm):
-    startDate = DateField("Start Date (YYYY-MM-DD)",  validators=[validators.Optional()])
-    endDate = DateField("End Date (YYYY-MM-DD)",  validators=[validators.Optional()])
+    startDate = DateField("Start Date (YYYY-MM-DD)",id="startDate", validators=[validators.Optional()],render_kw={"class":"datepicker"})
+    endDate = DateField("End Date (YYYY-MM-DD)", id="endDate", validators=[validators.Optional()],render_kw={"class":"datepicker"})
     studentId = TextAreaField('Student Id')
     location = TextAreaField('Location')
     email = TextAreaField('Email')

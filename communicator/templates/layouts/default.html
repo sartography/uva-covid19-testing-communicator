@@ -10,7 +10,7 @@
     <link rel="shortcut icon" href="{{ base_href + url_for('static', filename='favicon.ico') }}">
     
     {% include 'includes/header.html' %}
-
+    {% include 'includes/scripts.html' %}
   </head>
 
 <body>
@@ -19,7 +19,6 @@
 
   {{ content | safe }}
 
-  {% include 'includes/scripts.html' %}
 
 </body>
 
