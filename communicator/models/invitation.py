@@ -8,3 +8,4 @@ class Invitation(db.Model):
     location = db.Column(db.String)
     date = db.Column(db.String)
     total_recipients = db.Column(db.Integer)
+    coolness = db.Boolean()

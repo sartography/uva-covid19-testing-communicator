@@ -1,5 +1,6 @@
 import csv
 import io
+import json
 
 import logging
 import os
@@ -8,6 +9,7 @@ from functools import wraps
 
 import connexion
 import sentry_sdk
+from connexion import ProblemException
 from flask import render_template, request, redirect, url_for, flash, abort, Response, send_file, session
 from flask_assets import Environment
 from flask_cors import CORS
@@ -16,7 +18,6 @@ from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_paginate import Pagination, get_page_parameter
 from flask_sqlalchemy import SQLAlchemy
-from pyparsing import unicode
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
 from flask_executor import Executor
@@ -31,6 +32,7 @@ app = connexion_app.app
 # Executor for long running tasks
 executor = Executor(app)
 
+
 # Configuration
 app.config.from_object('config.default')
 if "TESTING" in os.environ and os.environ["TESTING"] == "true":
@@ -39,6 +41,14 @@ if "TESTING" in os.environ and os.environ["TESTING"] == "true":
 else:
     app.config.root_path = app.instance_path
     app.config.from_pyfile('config.py', silent=True)
+
+
+# Connexion Error handling
+def render_errors(exception):
+    return Response(json.dumps({"error": str(exception)}), status=500, mimetype="application/json")
+
+connexion_app.add_error_handler(Exception, render_errors)
+
 
 # Mail settings
 mail = Mail(app)
