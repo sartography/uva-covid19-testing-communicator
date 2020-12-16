@@ -20,6 +20,8 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
 from flask_executor import Executor
 
+import numpy as np
+import matplotlib.pyplot as plt
 
 logging.basicConfig(level=logging.INFO)
 
@@ -73,12 +75,13 @@ from communicator import models
 from communicator import api
 from communicator import forms
 import random 
-from communicator import scheduler
+# from communicator import scheduler
 
 connexion_app.add_api('api.yml', base_path='/v1.0')
 
 # Convert list of allowed origins to list of regexes
-origins_re = [r"^https?:\/\/%s(.*)" % o.replace('.', '\.') for o in app.config['CORS_ALLOW_ORIGINS']]
+origins_re = [r"^https?:\/\/%s(.*)" % o.replace('.', '\.')
+              for o in app.config['CORS_ALLOW_ORIGINS']]
 cors = CORS(connexion_app.app, origins=origins_re)
 
 # Sentry error handling
@@ -89,8 +92,9 @@ if app.config['ENABLE_SENTRY']:
         traces_sample_rate=1.0
     )
 
-### HTML Pages
+# HTML Pages
 BASE_HREF = app.config['APPLICATION_ROOT'].strip('/')
+
 
 def superuser(f):
     @wraps(f)
@@ -98,7 +102,8 @@ def superuser(f):
         from communicator.services.user_service import UserService
         if not UserService().is_valid_user():
             flash("You do not have permission to view that page", "warning")
-            logging.info("Permission Denied to user " + UserService().get_user_info())
+            logging.info("Permission Denied to user " +
+                         UserService().get_user_info())
             abort(404)
         return f(*args, **kwargs)
     return decorated_function
@@ -117,7 +122,7 @@ def index():
     samples = db.session.query(Sample).order_by(Sample.date.desc())
 
     if request.method == "POST" or request.args.get('cancel') == 'true':
-        session["index_filter"] = {} # Clear out the session if it is invalid.
+        session["index_filter"] = {}  # Clear out the session if it is invalid.
 
     if form.validate():
         session["index_filter"] = {}
@@ -146,15 +151,19 @@ def index():
             if "end_date" in filters:
                 samples = samples.filter(Sample.date <= filters["end_date"])
             if "student_id" in filters:
-                samples = samples.filter(Sample.student_id.in_(filters["student_id"].split()))
+                samples = samples.filter(
+                    Sample.student_id.in_(filters["student_id"].split()))
             if "location" in filters:
-                samples = samples.filter(Sample.location.in_(filters["location"].split()))
+                samples = samples.filter(
+                    Sample.location.in_(filters["location"].split()))
             if "email" in filters:
-                samples = samples.filter(Sample.email.ilike(filters["email"] + "%"))
+                samples = samples.filter(
+                    Sample.email.ilike(filters["email"] + "%"))
         except Exception as e:
-            logging.error("Encountered an error building filters, so clearing. " + e)
+            logging.error(
+                "Encountered an error building filters, so clearing. " + e)
             session["index_filter"] = {}
-    
+
     # display results
     if download:
         csv = __make_csv(samples)
@@ -162,61 +171,76 @@ def index():
 
     else:
         page = request.args.get(get_page_parameter(), type=int, default=1)
-        pagination = Pagination(page=page, total=samples.count(), search=False, record_name='samples')
-        
-        table = SampleTable(samples.paginate(page,10,error_out=False).items)
+        pagination = Pagination(page=page, total=samples.count(
+        ), search=False, record_name='samples', css_framework='bootstrap4')
+
+        table = SampleTable(samples.paginate(page, 10, error_out=False).items)
 
         chart_data = {"datasets": []}
-        active_stations = ["10","20","30","40","50","60"]
+        # Get Active Locations Info 
+        active_stations = ["10", "20", "30", "40", "50", "60"]
+        # https://stackoverflow.com/questions/19442224/getting-information-for-bins-in-matplotlib-histogram-function
+       
+
         # Seperate Data
         location_data = dict()
+        sample_times = dict()
+
         for entry in samples:
             loc_code = str(entry.location)[:2]
             if loc_code not in location_data:
                 location_data[loc_code] = [entry]
+                sample_times[loc_code] = [entry.date.timestamp()]
+                logging.info(entry.date)
             else:
                 location_data[loc_code].append(entry)
+                sample_times[loc_code].append(entry.date.timestamp())
         # Analysis
-        i = 0 
+        i = 0
         for loc_code in location_data.keys():
-            chart_data["datasets"].append({
-                "label":loc_code,
-                    "borderColor": f'rgba(255,{i*50},{i*10},.7)',
-                    "pointBorderColor":f'rgba(255,{i*50},{i*10},1)',
-                    "borderWidth": 10,
-                    "data": [{
-                        "x": location_data[loc_code][0].date, "y": i
-                    }, {
-                        "x": location_data[loc_code][-1].date, "y": i
-                    },],
-                    })
-            i+=1
+            data_dict = dict({
+                "label": loc_code,
+                "borderColor": f'rgba(255,{i*50},{i*20},.7)',
+                "pointBorderColor": f'rgba(255,{i*50},{i*20},1)',
+                "borderWidth": 10,
+                "data": [],
+            })
+
+            hist, bin_edges = np.histogram(np.array(sample_times[loc_code]))#, dtype = np.int64))
+            #bin_edges = [datetime.fromtimestamp(date) for date in bin_edges]
+            bins = [bin_edges[i]+(bin_edges[i+1]-bin_edges[i])/2 for i in range(len(bin_edges)-1)]
+        
+            for cnt, date in zip(hist,bins):
+                data_dict["data"].append({
+                    "x": datetime.utcfromtimestamp(date), "y": int(cnt)
+                })
+
+            chart_data["datasets"].append(data_dict)
+            i += 1
         # Check for Unresponsive
         for loc_code in active_stations:
             if loc_code not in location_data:
                 chart_data["datasets"].append({
-                    "label":loc_code,
-                        "borderColor": f'rgba(128,128,128,.7)',
-                        "pointBorderColor":f'rgba(128,128,128,1)',
-                        "borderWidth": 10,
-                        "data": [{
-                            "x": session["index_filter"]["start_date"], "y": i
-                        }, {
-                            "x": session["index_filter"]["start_date"], "y": i
-                        },],
-                        })
-            i+=1
-        return render_template('layouts/default.html', 
-        base_href=BASE_HREF,
-        content = render_template(
-            'pages/index.html',
-            form=form,
-            table=table,
-            action=action,
-            pagination=pagination,
-            description_map={},
-            chart_data= chart_data
-        ))
+                    "label": loc_code,
+                    "borderColor": f'rgba(128,128,128,.7)',
+                    "pointBorderColor": f'rgba(128,128,128,1)',
+                    "borderWidth": 10,
+                    "data": [{
+                        "x": session["index_filter"]["start_date"], "y": i
+                    }, ],
+                })
+            i += 1
+        return render_template('layouts/default.html',
+                               base_href=BASE_HREF,
+                               content=render_template(
+                                   'pages/index.html',
+                                   form=form,
+                                   table=table,
+                                   action=action,
+                                   pagination=pagination,
+                                   description_map={},
+                                   chart_data=chart_data
+                               ))
 
 
 def __make_csv(sample_query):
@@ -260,7 +284,6 @@ def __make_csv(sample_query):
     return mem
 
 
-
 @app.route('/invitation', methods=['GET', 'POST'])
 @superuser
 def send_invitation():
@@ -273,14 +296,17 @@ def send_invitation():
     if request.method == 'POST' and form.validate():
         from communicator.services.notification_service import NotificationService
         with NotificationService(app) as ns:
-            ns.send_invitations(form.date.data, form.location.data, form.emails.data)
+            ns.send_invitations(
+                form.date.data, form.location.data, form.emails.data)
             return redirect(url_for('send_invitation'))
     # display results
     page = request.args.get(get_page_parameter(), type=int, default=1)
-    invites = db.session.query(Invitation).order_by(Invitation.date_sent.desc())
-    pagination = Pagination(page=page, total=invites.count(), search=False, record_name='samples')
+    invites = db.session.query(Invitation).order_by(
+        Invitation.date_sent.desc())
+    pagination = Pagination(page=page, total=invites.count(),
+                            search=False, record_name='samples')
 
-    table = InvitationTable(invites.paginate(page,10,error_out=False).items)
+    table = InvitationTable(invites.paginate(page, 10, error_out=False).items)
 
     return render_template(
         'form.html',
@@ -293,6 +319,7 @@ def send_invitation():
         base_href=BASE_HREF
     )
 
+
 @app.route('/imported_files', methods=['GET'])
 @superuser
 def list_imported_files_from_ivy():
@@ -302,7 +329,8 @@ def list_imported_files_from_ivy():
     # display results
     page = request.args.get(get_page_parameter(), type=int, default=1)
     files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
-    pagination = Pagination(page=page, total=files.count(), search=False, record_name='samples')
+    pagination = Pagination(page=page, total=files.count(),
+                            search=False, record_name='samples')
 
     table = IvyFileTable(files.paginate(page, 10, error_out=False).items)
     return render_template(
@@ -312,6 +340,7 @@ def list_imported_files_from_ivy():
         base_href=BASE_HREF
     )
 
+
 @app.route('/sso')
 def sso():
     from communicator.services.user_service import UserService
@@ -319,6 +348,7 @@ def sso():
     response = ""
     response += f"<h1>Current User: {user.display_name} ({user.uid})</h1>"
     return response
+
 
 @app.route('/debug-sentry')
 def trigger_error():
@@ -340,6 +370,7 @@ def count_files_in_ivy():
     count = ivy_service.get_file_count_from_globus()
     print(f"There are {count} files awaiting transfer")
 
+
 @app.cli.command()
 def transfer():
     from communicator.services.ivy_service import IvyService
@@ -352,12 +383,3 @@ def delete():
     from communicator.services.ivy_service import IvyService
     ivy_service = IvyService()
     ivy_service.delete_file()
-
-# {% for location in locations %}
-#                     <li class="nav-item " data-toggle="chart" data-target="#chart-sales" data-update='{{location.data}}' data-suffix="e2">
-#                       <a href="#" class="nav-link py-2 px-3" name = "location" value="{{location.name}}" type="radio" data-toggle="tab">
-#                         <span class="d-none d-md-block">{{location.name}}</span>
-#                       </a>
-#                     </li>
-#                     {% endfor %}
-

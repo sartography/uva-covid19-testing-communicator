@@ -47,55 +47,60 @@
           </div>
         </div>
       </div>
-      
-        
+
+
       <div class="col-xl-4">
         <div class="card shadow">
           <form action="{{ action }}" method="post">
-          {{ form.csrf_token() }}
-          <div class="card-header border-0">
-            <div class="row align-items-center">
-              <div class="col">
-                <h3 class="mb-0">Search</h3>
-              </div>
-              <div class="col text-right">
-                <button type="submit" class="btn btn-sm btn-primary">Run Search</button>
+            {{ form.csrf_token() }}
+            <div class="card-header border-0">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h3 class="mb-0">Search</h3>
+                </div>
+                <div class="col text-right">
+                  <button type="submit" class="btn btn-sm btn-primary">Run Search</button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="table-responsive">
-           
-            <!-- Projects table -->
-            <table class="table align-items-center table-flush">
-              <tbody>
-                {% for field in form if field.name != "csrf_token" %}
-                <tr>
+            <div class="table-responsive">
 
-                  <div class="form-field {{ field.widget.input_type }}">
-                    <td>
-                      <div class="form-field-label">{{ field.label() }}:</div>
+              <!-- Projects table -->
+              <table class="table align-items-center table-flush">
+                <tbody>
+                  {% for field in form if field.name != "csrf_token" %}
+                  <tr>
+
+                    <div class="form-field {{ field.widget.input_type }}">
+                      <td>
+                        <div class="form-field-label">{{ field.label() }}:</div>
+                      </td>
+                      <td>
+                        {% if field.type == "date" %}
+                        <input name="{{field.name}}" />
+                        {%else%}
+                        <div class="form-field-input">{{ field }}</div>
+                        <div class="form-field-help">{{ description_map[field.name] }}</div>
+                        {% for error in field.errors %}
+                        <div class="form-field-error">{{ error }}</div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
                     </td>
-                    <td>
-                      {% if field.type == "date" %}
-                      <input name="{{field.name}}" />
-                      {%else%}
-                      <div class="form-field-input">{{ field }}</div>
-                      <div class="form-field-help">{{ description_map[field.name] }}</div>
-                      {% for error in field.errors %}
-                      <div class="form-field-error">{{ error }}</div>
-                      {% endfor %}
-                      {% endif %}
-                  </div>
-                  </td>
-                </tr>
-                {% endfor %}
-                <script>
-                  $('.datepicker').datepicker({format: 'yyyy-mm-dd',});
-                </script>
-              </tbody>
-            </table>
-          </div>
+                  </tr>
+                  {% endfor %}
+                  <script>
+                    $('.datepicker').datepicker({
+                      showButtonPanel: true,
+                      localToday: new Date(),    // This option determines the highlighted today date
+                      format: 'yyyy-mm-dd',
+                      todayHighlight: true,
+                    });
+                  </script>
+                </tbody>
+              </table>
+            </div>
           </form>
         </div>
       </div>
@@ -114,14 +119,17 @@
               </div>
             </div>
           </div>
+
           <div class="table-responsive">
             <!-- Projects table -->
-            {{table}}
+            {{ table }}
+          </div>
+          <div class="row justify-content-center">
             {{ pagination.links }}
           </div>
         </div>
-      </div>
 
+      </div>
     </div>
 
     {% include 'includes/footer.html' %}
@@ -132,7 +140,7 @@
   var data = JSON.parse('{{ chart_data | tojson | safe}}');
   var ctx = document.getElementById('chart-sales').getContext('2d');
   var timeFormat = 'YYYY-MM-DD h:mm:ss.SSS';
-  
+
   var chart = new Chart(ctx, {
     // The type of chart we want to create
     type: 'line',
@@ -146,16 +154,16 @@
         display: false,
       },
       legend: {
-            display: true,
-            position: "right",
-            labels: {
-              usePointStyle: true,
-                fontColor: '#FFFFFF',
-                fontSize: 15,
-                padding: 20,
-                fontStyle: 'bold'
-            }
-        },
+        display: true,
+        position: "right",
+        labels: {
+          usePointStyle: true,
+          fontColor: '#FFFFFF',
+          fontSize: 15,
+          padding: 20,
+          fontStyle: 'bold'
+        }
+      },
       scales: {
         xAxes: [{
           type: "time",
