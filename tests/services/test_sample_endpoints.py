@@ -12,7 +12,8 @@ class TestSampleEndpoint(BaseTest):
     sample_json = {"barcode": "000000111-202009091449-4321",
                    "location": "4321",
                    "date": "2020-09-09T14:49:00+0000",
-                   "student_id": "000000111"}
+                   "student_id": "000000111",
+                   "computing_id": "abc12d"}
 
     def test_create_sample(self):
         # Test add sample
