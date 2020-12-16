@@ -9,6 +9,7 @@ from communicator.models.notification import Notification
 class Sample(db.Model):
     barcode = db.Column(db.String, primary_key=True)
     student_id = db.Column(db.Integer)
+    computing_id = db.Column(db.String)
     date = db.Column(db.DateTime)
     location = db.Column(db.Integer)
     phone = db.Column(db.String)
@@ -33,6 +34,8 @@ class Sample(db.Model):
             return notifications[0]
 
     def merge(self, sample):
+        if sample.computing_id:
+            self.computing_id = sample.computing_id
         if sample.phone:
             self.phone = sample.phone
         if sample.email:
