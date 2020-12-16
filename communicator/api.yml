@@ -143,6 +143,9 @@ components:
         student_id:
           type: string
           example: "000000111"
+        computing_id:
+          type: string
+          example: "abc2d"
         date:
           type: string
           format: date_time

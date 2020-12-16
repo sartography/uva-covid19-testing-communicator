@@ -17,6 +17,7 @@ def status():
 def add_sample(body):
     sample = Sample(barcode=body['barcode'],
                     student_id=body['student_id'],
+                    computing_id=body['computing_id'],
                     date=body['date'],
                     location=body['location'])
     SampleService().add_or_update_records([sample])
