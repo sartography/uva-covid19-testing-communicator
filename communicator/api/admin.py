@@ -4,10 +4,18 @@ from communicator import db, app, executor
 from communicator.models import Sample
 from communicator.models.invitation import Invitation
 from communicator.models.notification import Notification, EMAIL_TYPE, TEXT_TYPE
+from communicator.models.sample import SampleSchema
 from communicator.services.ivy_service import IvyService
 from communicator.services.notification_service import NotificationService
 from communicator.services.sample_service import SampleService
 from time import sleep
+
+
+def verify_token(token, required_scopes):
+    if token == app.config['API_TOKEN']:
+        return {'scope':['any']}
+    else:
+        raise Exception("permission_denied", "API Token information is not correct")
 
 
 def status():
@@ -17,9 +25,24 @@ def status():
 def add_sample(body):
     sample = Sample(barcode=body['barcode'],
                     student_id=body['student_id'],
+                    computing_id=body['computing_id'],
                     date=body['date'],
                     location=body['location'])
     SampleService().add_or_update_records([sample])
+
+
+def get_samples(bar_code=None):
+    query = db.session.query(Sample)
+    if bar_code:
+        last_sample = db.session.query(Sample).filter(Sample.barcode == bar_code).first()
+        if not last_sample:
+            app.logger.error(f'Someone queried for a barcode that does not exist: {bar_code} ', exc_info=True)
+            raise Exception("No such bar code.")
+        query = query.filter(Sample.date > last_sample.date)
+    samples = query.all()
+    response = SampleSchema(many=True).dump(samples)
+    return response
+
 
 
 def clear_samples():

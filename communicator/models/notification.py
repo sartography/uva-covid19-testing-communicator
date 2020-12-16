@@ -1,3 +1,5 @@
+from marshmallow import EXCLUDE
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from sqlalchemy import func
 
 from communicator import db
@@ -13,4 +15,5 @@ class Notification(db.Model):
     error_message = db.Column(db.String)
     sample_barcode = db.Column(db.String, db.ForeignKey('sample.barcode'), nullable=False)
     sample = db.relationship("Sample")
+
 

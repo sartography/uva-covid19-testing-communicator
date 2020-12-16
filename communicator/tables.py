@@ -20,7 +20,7 @@ class BetterDatetimeCol(Col):
             return ''
 
 
-class NotificationTAale(Table):
+class NotificationTable(Table):
     type = Col('type')
     date = BetterDatetimeCol('Date', "medium", tzinfo=get_timezone('US/Eastern'), locale='en')
     successful = BoolCol('Success?')
@@ -32,12 +32,13 @@ class SampleTable(Table):
         pass
     classes = ["table","align-items-center","table-flush"]
     barcode = Col('Barcode')
-    student_id = Col('Student Id')
+    student_id = Col('Student Id')  # TODO: Pad with leading 0s to 9 digits
+    computing_id = Col('Computing Id')
     date = BetterDatetimeCol('Date', "medium", tzinfo=get_timezone('US/Eastern'), locale='en')
-    location = Col('Location')
+    location = Col('Location')  # TODO: Pad with leading 0s to 4 digits
     phone = Col('Phone')
     email = Col('Email')
-    notifications = NestedTableCol('notifications', NotificationTAale)
+    notifications = NestedTableCol('notifications', NotificationTable)
 
 class IvyFileTable(Table):
     def sort_url(self, col_id, reverse=False):
