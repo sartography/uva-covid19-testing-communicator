@@ -1,5 +1,9 @@
+import marshmallow
+from marshmallow import EXCLUDE
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+
 from communicator import db
-from communicator.models.notification import Notification, EMAIL_TYPE
+from communicator.models.notification import Notification
 
 
 class Sample(db.Model):
@@ -41,4 +45,25 @@ class Sample(db.Model):
             self.in_ivy = True
         if sample.ivy_file:
             self.ivy_file = sample.ivy_file
+
+
+class NotificationSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Notification
+        load_instance = True
+        include_relationships = True
+        include_fk = True  # Includes foreign keys
+        unknown = EXCLUDE
+
+class SampleSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Sample
+        load_instance = True
+        include_relationships = True
+        include_fk = True  # Includes foreign keys
+        unknown = EXCLUDE
+        exclude = ["in_firebase", "in_ivy"]
+
+    notifications = marshmallow.fields.List(marshmallow.fields.Nested(NotificationSchema, dump_only=True,
+                                                                      exclude=['sample', 'sample_barcode']))
 

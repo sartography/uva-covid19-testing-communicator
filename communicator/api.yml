@@ -125,11 +125,41 @@ paths:
       operationId: communicator.api.admin.clear_samples
       summary: Removes the given samples completely.
       tags:
-        - Studies
+        - Samples
       responses:
         '204':
           description: All Samples removed.
+    get:
+      operationId: communicator.api.admin.get_samples
+      summary: Returns all the samples, can be restricted by sending a barcode for the last sample received.
+      tags:
+        - Samples
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: bar_code
+          required: false
+          description: Return all samples AFTER this bar code.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: a list of samples
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sample"
+
 components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-CR-API-KEY
+      x-apikeyInfoFunc: communicator.api.admin.verify_token
   schemas:
     Status:
       properties:

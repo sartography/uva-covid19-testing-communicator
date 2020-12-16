@@ -4,6 +4,7 @@ services:
     image: sartography/cr-connect-db
     volumes:
       - $HOME/docker/volumes/postgres_db_communicator:/var/lib/postgresql/data
+      - ./share:/tmp/cache
     ports:
       - 5433:5432
     environment:
