@@ -39,7 +39,7 @@ def get_samples(bar_code=None):
             app.logger.error(f'Someone queried for a barcode that does not exist: {bar_code} ', exc_info=True)
             raise Exception("No such bar code.")
         query = query.filter(Sample.date > last_sample.date)
-    samples = query.all()
+    samples = query.order_by(Sample.date).limit(200).all()
     response = SampleSchema(many=True).dump(samples)
     return response
 
