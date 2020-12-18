@@ -8,18 +8,6 @@
       <!-- Brand -->
       <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="./index.html">UVA Communicator
         Dashboard</a>
-      <!-- Form -->
-      <!-- <form class="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto">
-        <div class="form-group mb-0">
-          <div class="input-group input-group-alternative">
-            <div class="input-group-prepend">
-              <span class="input-group-text"><em class="fas fa-search"></em></span>
-            </div>
-            <input class="form-control" placeholder="Search" type="text">
-          </div>
-        </div>
-      </form> -->
-
     </div>
   </nav>
 
@@ -42,7 +30,7 @@
           <div class="card-body">
             <!-- Chart ########################## -->
             <div class="chart">
-              <canvas id="chart-sales" class="chart-canvas"></canvas>
+              <canvas id="data-chart" class="chart-canvas"></canvas>
             </div>
           </div>
         </div>
@@ -139,11 +127,13 @@
 
   </div>
 </div>
+
+</form>
 <script>
   var location_data = JSON.parse('{{ location_data | tojson | safe}}');
   var station_data = JSON.parse('{{ station_data | tojson | safe}}');
 
-  var ctx = document.getElementById('chart-sales').getContext('2d');
+  var ctx = document.getElementById('data-chart').getContext('2d');
   var timeFormat = 'YYYY-MM-DD h:mm:ss.SSS';
 
   //////////////////
@@ -207,9 +197,6 @@
     chart.update();
   };
 </script>
-
-</form>
-
 <script>
 
 var auto_refresh = setInterval(
