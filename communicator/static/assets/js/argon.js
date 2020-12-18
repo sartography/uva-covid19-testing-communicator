@@ -636,7 +636,7 @@ var Charts = (function() {
 								bodyLines.forEach(function(body, i) {
 									var colors = model.labelColors[i];
 									var styles = 'background-color: ' + colors.backgroundColor;
-									var indicator = '<span class="badge badge-dot"><i class="bg-primary"></i></span>';
+									var indicator = '<span class="badge badge-dot"><em class="bg-primary"></em></span>';
 									var align = (bodyLines.length > 1) ? 'justify-content-left' : 'justify-content-center';
 									html += '<div class="popover-body d-flex align-items-center ' + align + '">' + indicator + body + '</div>';
 								});
@@ -709,7 +709,7 @@ var Charts = (function() {
 							var bgColor = data.datasets[0].backgroundColor[index];
 
 							content += '<span class="chart-legend-item">';
-							content += '<i class="chart-legend-indicator" style="background-color: ' + bgColor + '"></i>';
+							content += '<em class="chart-legend-indicator" style="background-color: ' + bgColor + '"></em>';
 							content += label;
 							content += '</span>';
 						});
