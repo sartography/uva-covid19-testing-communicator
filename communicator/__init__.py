@@ -1,3 +1,4 @@
+
 import csv
 import io
 import json
@@ -5,6 +6,7 @@ import json
 import logging
 import os
 from datetime import datetime
+from datetime import date
 from functools import wraps
 
 import connexion
@@ -23,8 +25,6 @@ from webassets import Bundle
 from flask_executor import Executor
 
 import numpy as np
-import matplotlib.pyplot as plt
-
 logging.basicConfig(level=logging.INFO)
 
 # API, fully defined in api.yml
@@ -48,6 +48,7 @@ else:
 # Connexion Error handling
 def render_errors(exception):
     return Response(json.dumps({"error": str(exception)}), status=500, mimetype="application/json")
+
 
 connexion_app.add_error_handler(Exception, render_errors)
 
@@ -80,12 +81,10 @@ scss = Bundle(
     output='argon.css'
 )
 assets.register('app_scss', scss)
-
-from communicator import models
-from communicator import api
+import random
 from communicator import forms
-import random 
-# from communicator import scheduler
+from communicator import api
+from communicator import models
 
 connexion_app.add_api('api.yml', base_path='/v1.0')
 
@@ -105,7 +104,6 @@ if app.config['ENABLE_SENTRY']:
 # HTML Pages
 BASE_HREF = app.config['APPLICATION_ROOT'].strip('/')
 
-
 def superuser(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -118,6 +116,11 @@ def superuser(f):
         return f(*args, **kwargs)
     return decorated_function
 
+@app.errorhandler(404)
+@superuser
+def page_not_found(e):
+    # note that we set the 404 status explicitly
+    return render_template('pages/404.html')
 
 @app.route('/', methods=['GET', 'POST'])
 @superuser
@@ -130,17 +133,14 @@ def index():
     form = forms.SearchForm(request.form)
     action = BASE_HREF + "/"
     samples = db.session.query(Sample).order_by(Sample.date.desc())
-
+    
     if request.method == "POST" or request.args.get('cancel') == 'true':
         session["index_filter"] = {}  # Clear out the session if it is invalid.
-
+    
     if form.validate():
         session["index_filter"] = {}
         if form.startDate.data:
             session["index_filter"]["start_date"] = form.startDate.data
-        else:
-            from datetime import date
-            session["index_filter"]["start_date"] = date.today()
         if form.endDate.data:
             session["index_filter"]["end_date"] = form.endDate.data
         if form.studentId.data:
@@ -150,30 +150,48 @@ def index():
         if form.email.data:
             session["index_filter"]["email"] = form.email.data
         if form.download.data:
-            download = True
-
+            download = True  
     # # Store previous form submission settings in the session, so they are preseved through pagination.
+    filtered_samples = samples
     if "index_filter" in session:
         filters = session["index_filter"]
         try:
             if "start_date" in filters:
-                samples = samples.filter(Sample.date >= filters["start_date"])
+                filtered_samples = filtered_samples.filter(Sample.date >= filters["start_date"])  
+            else:
+                filtered_samples = filtered_samples.filter(Sample.date >= date.today())
             if "end_date" in filters:
-                samples = samples.filter(Sample.date <= filters["end_date"])
+                filtered_samples = filtered_samples.filter(Sample.date <= filters["end_date"])
             if "student_id" in filters:
-                samples = samples.filter(
+                filtered_samples = filtered_samples.filter(
                     Sample.student_id.in_(filters["student_id"].split()))
             if "location" in filters:
-                samples = samples.filter(
+                filtered_samples = filtered_samples.filter(
                     Sample.location.in_(filters["location"].split()))
             if "email" in filters:
-                samples = samples.filter(
+                filtered_samples = filtered_samples.filter(
                     Sample.email.ilike(filters["email"] + "%"))
         except Exception as e:
-            logging.error(
-                "Encountered an error building filters, so clearing. " + e)
+            logging.error("Encountered an error building filters, so clearing. " + str(e))
             session["index_filter"] = {}
-
+    else:
+        # Default to Todays Results
+        filtered_samples = filtered_samples.filter(Sample.date >= date.today())
+    ############# Daily Total #######################
+    from datetime import date, timedelta
+    stats = dict()
+    stats["today"] =  samples.filter(Sample.date >= date.today()).count()
+    ############# Last 2 Week Average ###############
+    today = date.today()
+    counts = [] # ! Could be calculated in a single pass since data is sorted 
+    for i in range(14): 
+        days_back_start = timedelta(i)
+        days_back_stop  = timedelta(i + 1)
+        temp = samples.filter(Sample.date <= today - days_back_start)
+        temp = temp.filter(Sample.date >= today - days_back_stop)
+        counts.append(temp.count())
+    stats["weeks"] = sum(counts)/len(counts)
+    #################################################
     # display results
     if download:
         csv = __make_csv(samples)
@@ -186,60 +204,86 @@ def index():
 
         table = SampleTable(samples.paginate(page, 10, error_out=False).items)
 
-        chart_data = {"datasets": []}
-        # Get Active Locations Info 
+    
+        # Get Active Locations Info
         active_stations = ["10", "20", "30", "40", "50", "60"]
-        # https://stackoverflow.com/questions/19442224/getting-information-for-bins-in-matplotlib-histogram-function
        
-
-        # Seperate Data
+        # Seperate Data by location and station
         location_data = dict()
         sample_times = dict()
+        active_stations = set()
 
-        for entry in samples:
+        for entry in filtered_samples:
             loc_code = str(entry.location)[:2]
+            stat_code= str(entry.location)[2:]
+            active_stations.add(stat_code)
+
             if loc_code not in location_data:
                 location_data[loc_code] = [entry]
                 sample_times[loc_code] = [entry.date.timestamp()]
-                logging.info(entry.date)
             else:
                 location_data[loc_code].append(entry)
                 sample_times[loc_code].append(entry.date.timestamp())
         # Analysis
-        i = 0
+        station_charts = []
+        location_chart = {"datasets": []}
         for loc_code in location_data.keys():
-            data_dict = dict({
+            #################################################
+            ############# Build histogram ###################
+            color = [hash(loc_code), 128, (hash(loc_code) % 256 + 128) % 256]
+            single_hist = dict({
                 "label": loc_code,
-                "borderColor": f'rgba(255,{i*50},{i*20},.7)',
-                "pointBorderColor": f'rgba(255,{i*50},{i*20},1)',
-                "borderWidth": 10,
+                "borderColor": f'rgba({color[0]},{color[1]},{color[2]},.7)',
+                "pointBorderColor": f'rgba({color[0]},{color[1]},{color[2]},1)',
+                "borderWidth": 8,
                 "data": [],
             })
-
-            hist, bin_edges = np.histogram(np.array(sample_times[loc_code]))#, dtype = np.int64))
-            #bin_edges = [datetime.fromtimestamp(date) for date in bin_edges]
-            bins = [bin_edges[i]+(bin_edges[i+1]-bin_edges[i])/2 for i in range(len(bin_edges)-1)]
-        
-            for cnt, date in zip(hist,bins):
-                data_dict["data"].append({
-                    "x": datetime.utcfromtimestamp(date), "y": int(cnt)
+            # https://stackoverflow.com/questions/19442224/getting-information-for-bins-in-matplotlib-histogram-function
+            hist, bin_edges = np.histogram(np.array(sample_times[loc_code]))
+            bins = [bin_edges[i]+(bin_edges[i+1]-bin_edges[i]) /
+                    2 for i in range(len(bin_edges)-1)]
+            for cnt, time in zip(hist, bins):
+                single_hist["data"].append({
+                    "x": datetime.utcfromtimestamp(time), "y": int(cnt)
                 })
+            location_chart["datasets"].append(single_hist)
+            ###### Build Rolling Averaging Graph ##############
 
-            chart_data["datasets"].append(data_dict)
-            i += 1
-        # Check for Unresponsive
-        for loc_code in active_stations:
-            if loc_code not in location_data:
-                chart_data["datasets"].append({
-                    "label": loc_code,
-                    "borderColor": f'rgba(128,128,128,.7)',
-                    "pointBorderColor": f'rgba(128,128,128,1)',
-                    "borderWidth": 10,
-                    "data": [{
-                        "x": session["index_filter"]["start_date"], "y": i
-                    }, ],
-                })
-            i += 1
+            #################################################
+            ############## Build Station Graph ##############
+            station_lines = []
+            # Read Data by station
+            i = 0
+            for stat_code in active_stations:
+                filtered_entries = [_entry for _entry in location_data[loc_code] if str(_entry.location)[2:] == stat_code] # ! Inefficient but works for rn
+                if len(filtered_entries) == 0: continue
+                station_line = {"label": stat_code,
+                                "borderColor": f'rgba(50,255,255,.7)',
+                                "pointBorderColor": f'rgba(50,255,255,1)',
+                                "borderWidth": 10,
+                                "data": [
+                                    {"x": filtered_entries[0].date, "y": i}, {"x": filtered_entries[-1].date, "y": i},
+                                    ],
+                                }
+                i += 1 
+                station_lines.append(station_line)
+            station_charts.append({"datasets": station_lines, "labels" : []})
+            #################################################
+
+
+        # # Check for Unresponsive
+        # for loc_code in active_stations:
+        #     if loc_code not in location_data:
+        #         location_dict["datasets"].append({
+        #             "label": loc_code,
+        #             "borderColor": f'rgba(128,128,128,.7)',
+        #             "pointBorderColor": f'rgba(128,128,128,1)',
+        #             "borderWidth": 10,
+        #             "data": [{
+        #                 "x": session["index_filter"]["start_date"], "y": i
+        #             }, ],
+        #         })
+        #     i += 1
         return render_template('layouts/default.html',
                                base_href=BASE_HREF,
                                content=render_template(
@@ -248,8 +292,9 @@ def index():
                                    table=table,
                                    action=action,
                                    pagination=pagination,
-                                   description_map={},
-                                   chart_data=chart_data
+                                   location_data=location_chart,
+                                   station_data=station_charts,
+                                   stats = stats
                                ))
 
 
