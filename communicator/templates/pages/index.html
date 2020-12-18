@@ -9,7 +9,7 @@
       <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="./index.html">UVA Communicator
         Dashboard</a>
       <!-- Form -->
-      <form class="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto">
+      <!-- <form class="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto">
         <div class="form-group mb-0">
           <div class="input-group input-group-alternative">
             <div class="input-group-prepend">
@@ -18,7 +18,7 @@
             <input class="form-control" placeholder="Search" type="text">
           </div>
         </div>
-      </form>
+      </form> -->
 
     </div>
   </nav>
@@ -35,7 +35,7 @@
             <div class="row align-items-center">
               <div class="col">
                 <h6 class="text-uppercase text-light ls-1 mb-1">Overview</h6>
-                <h2 class="text-white mb-0">Location Activity</h2>
+                <h2 id="chart-title" class="text-white mb-0">Location Activity</h2>
               </div>
             </div>
           </div>
@@ -51,12 +51,15 @@
 
       <div class="col-xl-4">
         <div class="card shadow">
-          <form action="{{ action }}" method="post">
+          <form action="{{ action }}" method="post" id="pageForm">
             {{ form.csrf_token() }}
             <div class="card-header border-0">
               <div class="row align-items-center">
                 <div class="col">
                   <h3 class="mb-0">Search</h3>
+                </div>
+                <div class="col text-right">
+                  <button class="btn btn-sm btn-primary">Search Today</button>
                 </div>
                 <div class="col text-right">
                   <button type="submit" class="btn btn-sm btn-primary">Run Search</button>
@@ -81,7 +84,7 @@
                         <input name="{{field.name}}" />
                         {%else%}
                         <div class="form-field-input">{{ field }}</div>
-                        <div class="form-field-help">{{ description_map[field.name] }}</div>
+                        
                         {% for error in field.errors %}
                         <div class="form-field-error">{{ error }}</div>
                         {% endfor %}
@@ -137,14 +140,17 @@
   </div>
 </div>
 <script>
-  var data = JSON.parse('{{ chart_data | tojson | safe}}');
+  var location_data = JSON.parse('{{ location_data | tojson | safe}}');
+  var station_data = JSON.parse('{{ station_data | tojson | safe}}');
+
   var ctx = document.getElementById('chart-sales').getContext('2d');
   var timeFormat = 'YYYY-MM-DD h:mm:ss.SSS';
 
+  //////////////////
   var chart = new Chart(ctx, {
     // The type of chart we want to create
     type: 'line',
-    data: data,
+    data: location_data,
 
     // Configuration options go here
     options: {
@@ -156,6 +162,7 @@
       legend: {
         display: true,
         position: "right",
+        onClick: location_legend,
         labels: {
           usePointStyle: true,
           fontColor: '#FFFFFF',
@@ -185,4 +192,34 @@
     }
   }
   );
+
+  function station_legend(e, legendItem) {
+    chart.config.data = location_data;
+    chart.config.options.legend.onClick= location_legend;
+    $('#chart-title').text("Location Activity");
+    chart.update();
+  };
+
+  function location_legend(e, legendItem) {
+    $('#chart-title').text("Station Activity @ " + chart.data.datasets[legendItem.datasetIndex].label);
+    chart.config.data = station_data[legendItem.datasetIndex];
+    chart.config.options.legend.onClick = station_legend;
+    chart.update();
+  };
+</script>
+
+</form>
+
+<script>
+
+var auto_refresh = setInterval(
+function()
+{
+submitform();
+}, 30000);
+
+function submitform()
+{
+  $("#pageForm").submit();
+}
 </script>
