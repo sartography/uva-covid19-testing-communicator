@@ -6922,7 +6922,7 @@ button.close
 
 .bg-primary
 {
-    background-color: #5e72e4 !important;
+    background-color: #c58b0d !important;
 }
 
 a.bg-primary:hover,
@@ -12079,7 +12079,7 @@ button.bg-lighter:focus
 
 .bg-gradient-primary
 {
-    background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%) !important;
+    background: linear-gradient(87deg, #0a4926 0, #27d492 100%) !important;
 }
 
 .bg-gradient-secondary
