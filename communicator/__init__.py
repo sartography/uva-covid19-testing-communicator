@@ -20,6 +20,7 @@ from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_paginate import Pagination, get_page_parameter
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
 from flask_executor import Executor
@@ -85,6 +86,7 @@ import random
 from communicator import forms
 from communicator import api
 from communicator import models
+from datetime import date, timedelta
 
 connexion_app.add_api('api.yml', base_path='/v1.0')
 
@@ -151,6 +153,7 @@ def index():
             session["index_filter"]["email"] = form.email.data
         if form.download.data:
             download = True  
+            
     # # Store previous form submission settings in the session, so they are preseved through pagination.
     filtered_samples = samples
     if "index_filter" in session:
@@ -160,6 +163,7 @@ def index():
                 filtered_samples = filtered_samples.filter(Sample.date >= filters["start_date"])  
             else:
                 filtered_samples = filtered_samples.filter(Sample.date >= date.today())
+                filters["start_date"] = date.today()
             if "end_date" in filters:
                 filtered_samples = filtered_samples.filter(Sample.date <= filters["end_date"])
             if "student_id" in filters:
@@ -177,125 +181,130 @@ def index():
     else:
         # Default to Todays Results
         filtered_samples = filtered_samples.filter(Sample.date >= date.today())
-    ############# Daily Total #######################
-    from datetime import date, timedelta
+    if download:
+        csv = __make_csv(filtered_samples)
+        return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
+    ############# Build Graphs ######################
+    ############# Helper Variables ##################
     stats = dict()
+    start_date = filters["start_date"] if "start_date" in filters else date.today()
+    end_date = filters["end_date"] if "end_date" in filters else date.today() + timedelta(7)
+    days = abs(start_date - end_date).days 
+    weeks_apart = days // 7 if days > 7 else 1
+    # Get Active Locations Info
+    active_stations = ["10", "20", "30", "40", "50", "60"]
+    
+    # Seperate Data by location and station
+    location_data = dict()
+    sample_times = dict()
+    active_stations = set()
+
+    for entry in filtered_samples:
+        loc_code = str(entry.location)[:2]
+        stat_code= str(entry.location)[2:]
+        active_stations.add(stat_code)
+
+        if loc_code not in location_data:
+            location_data[loc_code] = [entry]
+            sample_times[loc_code] = [entry.date.timestamp()]
+        else:
+            location_data[loc_code].append(entry)
+            sample_times[loc_code].append(entry.date.timestamp())
+    #############             #######################
+    stats["all"] = filtered_samples.count()
+    ############# Daily Total #######################
     stats["today"] =  samples.filter(Sample.date >= date.today()).count()
     ############# Last 2 Week Average ###############
-    today = date.today()
-    counts = [] # ! Could be calculated in a single pass since data is sorted 
-    for i in range(14): 
-        days_back_start = timedelta(i)
-        days_back_stop  = timedelta(i + 1)
-        temp = samples.filter(Sample.date <= today - days_back_start)
-        temp = temp.filter(Sample.date >= today - days_back_stop)
-        counts.append(temp.count())
-    stats["weeks"] = sum(counts)/len(counts)
-    #################################################
-    # display results
-    if download:
-        csv = __make_csv(samples)
-        return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
+    stats["weeks"] =  samples.filter(Sample.date >= date.today() - timedelta(14)).count() / 14
+    ################# Busiest Days/Hours ############
+    day_count = [0 for _ in range(7)] # Mon, Tues, ...
+    hour_count = [0 for _ in range(24)] # 12AM, 1AM, ...
+    for entry in filtered_samples:
+        day_count[entry.date.weekday()] += 1
+        # hour_count[entry.date.hour] += 1
+    logging.info(type(entry.date))
 
-    else:
-        page = request.args.get(get_page_parameter(), type=int, default=1)
-        pagination = Pagination(page=page, total=samples.count(
-        ), search=False, record_name='samples', css_framework='bootstrap4')
-
-        table = SampleTable(samples.paginate(page, 10, error_out=False).items)
 
     
-        # Get Active Locations Info
-        active_stations = ["10", "20", "30", "40", "50", "60"]
-       
-        # Seperate Data by location and station
-        location_data = dict()
-        sample_times = dict()
-        active_stations = set()
-
-        for entry in filtered_samples:
-            loc_code = str(entry.location)[:2]
-            stat_code= str(entry.location)[2:]
-            active_stations.add(stat_code)
-
-            if loc_code not in location_data:
-                location_data[loc_code] = [entry]
-                sample_times[loc_code] = [entry.date.timestamp()]
-            else:
-                location_data[loc_code].append(entry)
-                sample_times[loc_code].append(entry.date.timestamp())
-        # Analysis
-        station_charts = []
-        location_chart = {"datasets": []}
-        for loc_code in location_data.keys():
-            #################################################
-            ############# Build histogram ###################
-            color = [hash(loc_code), 128, (hash(loc_code) % 256 + 128) % 256]
-            single_hist = dict({
-                "label": loc_code,
-                "borderColor": f'rgba({color[0]},{color[1]},{color[2]},.7)',
-                "pointBorderColor": f'rgba({color[0]},{color[1]},{color[2]},1)',
-                "borderWidth": 8,
-                "data": [],
+    # Analysis
+    station_charts = []
+    location_chart = {"datasets": []}
+    for loc_code in location_data.keys():
+        #################################################
+        ############# Build histogram ###################
+        color = [hash(loc_code), 128, (hash(loc_code) % 256 + 128) % 256]
+        single_hist = dict({
+            "label": loc_code,
+            "borderColor": f'rgba({color[0]},{color[1]},{color[2]},.7)',
+            "pointBorderColor": f'rgba({color[0]},{color[1]},{color[2]},1)',
+            "borderWidth": 8,
+            "data": [],
+        })
+        # https://stackoverflow.com/questions/19442224/getting-information-for-bins-in-matplotlib-histogram-function
+        hist, bin_edges = np.histogram(np.array(sample_times[loc_code]))
+        bins = [bin_edges[i]+(bin_edges[i+1]-bin_edges[i]) /
+                2 for i in range(len(bin_edges)-1)]
+        for cnt, time in zip(hist, bins):
+            single_hist["data"].append({
+                "x": datetime.utcfromtimestamp(time), "y": int(cnt)
             })
-            # https://stackoverflow.com/questions/19442224/getting-information-for-bins-in-matplotlib-histogram-function
-            hist, bin_edges = np.histogram(np.array(sample_times[loc_code]))
-            bins = [bin_edges[i]+(bin_edges[i+1]-bin_edges[i]) /
-                    2 for i in range(len(bin_edges)-1)]
-            for cnt, time in zip(hist, bins):
-                single_hist["data"].append({
-                    "x": datetime.utcfromtimestamp(time), "y": int(cnt)
-                })
-            location_chart["datasets"].append(single_hist)
-            ###### Build Rolling Averaging Graph ##############
+        location_chart["datasets"].append(single_hist)
+        ###### Build Rolling Averaging Graph ##############
 
-            #################################################
-            ############## Build Station Graph ##############
-            station_lines = []
-            # Read Data by station
-            i = 0
-            for stat_code in active_stations:
-                filtered_entries = [_entry for _entry in location_data[loc_code] if str(_entry.location)[2:] == stat_code] # ! Inefficient but works for rn
-                if len(filtered_entries) == 0: continue
-                station_line = {"label": stat_code,
-                                "borderColor": f'rgba(50,255,255,.7)',
-                                "pointBorderColor": f'rgba(50,255,255,1)',
-                                "borderWidth": 10,
-                                "data": [
-                                    {"x": filtered_entries[0].date, "y": i}, {"x": filtered_entries[-1].date, "y": i},
-                                    ],
-                                }
-                i += 1 
-                station_lines.append(station_line)
-            station_charts.append({"datasets": station_lines, "labels" : []})
-            #################################################
+        #################################################
+        ############## Build Station Graph ##############
+        station_lines = []
+        # Read Data by station
+        i = 0
+        for stat_code in active_stations:
+            filtered_entries = [_entry for _entry in location_data[loc_code] if str(_entry.location)[2:] == stat_code] # ! Inefficient but works for rn
+            if len(filtered_entries) == 0: continue
+            station_line = {"label": stat_code,
+                            "borderColor": f'rgba(50,255,255,.7)',
+                            "pointBorderColor": f'rgba(50,255,255,1)',
+                            "borderWidth": 10,
+                            "data": [
+                                {"x": filtered_entries[0].date, "y": i}, {"x": filtered_entries[-1].date, "y": i},
+                                ],
+                            }
+            i += 1 
+            station_lines.append(station_line)
+        station_charts.append({"datasets": station_lines, "labels" : []})
+        #################################################
 
 
-        # # Check for Unresponsive
-        # for loc_code in active_stations:
-        #     if loc_code not in location_data:
-        #         location_dict["datasets"].append({
-        #             "label": loc_code,
-        #             "borderColor": f'rgba(128,128,128,.7)',
-        #             "pointBorderColor": f'rgba(128,128,128,1)',
-        #             "borderWidth": 10,
-        #             "data": [{
-        #                 "x": session["index_filter"]["start_date"], "y": i
-        #             }, ],
-        #         })
-        #     i += 1
-        return render_template('layouts/default.html',
-                               base_href=BASE_HREF,
-                               content=render_template(
-                                   'pages/index.html',
-                                   form=form,
-                                   table=table,
-                                   action=action,
-                                   pagination=pagination,
-                                   location_data=location_chart,
-                                   station_data=station_charts,
-                                   stats = stats
-                               ))
+    # # Check for Unresponsive
+    # for loc_code in active_stations:
+    #     if loc_code not in location_data:
+    #         location_dict["datasets"].append({
+    #             "label": loc_code,
+    #             "borderColor": f'rgba(128,128,128,.7)',
+    #             "pointBorderColor": f'rgba(128,128,128,1)',
+    #             "borderWidth": 10,
+    #             "data": [{
+    #                 "x": session["index_filter"]["start_date"], "y": i
+    #             }, ],
+    #         })
+    #     i += 1
+    ################# Raw Samples Table ##############
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    pagination = Pagination(page=page, total=filtered_samples.count(
+    ), search=False, record_name='samples', css_framework='bootstrap4')
+
+    table = SampleTable(filtered_samples.paginate(page, 10, error_out=False).items)
+
+    return render_template('layouts/default.html',
+                            base_href=BASE_HREF,
+                            content=render_template(
+                                'pages/index.html',
+                                form=form,
+                                table=table,
+                                action=action,
+                                pagination=pagination,
+                                location_data=location_chart,
+                                station_data=station_charts,
+                                stats = stats
+                            ))
 
 
 def __make_csv(sample_query):
