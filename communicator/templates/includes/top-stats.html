@@ -11,7 +11,7 @@
                     <div class="col">
                       <h5 class="card-title text-uppercase text-muted mb-0">Samples Today</h5>
 
-                      <span id="stats_traffic" class="h2 font-weight-bold mb-0">{{stats.today}}</span>
+                      <span id="stats_traffic" class="h2 font-weight-bold mb-0">{{stats.today|safe}}</span>
                     
                     </div>
                     <div class="col-auto">
@@ -34,7 +34,7 @@
                     <div class="col">
                       <h5 class="card-title text-uppercase text-muted mb-0">2 Week Average</h5>
 
-                      <span id="stats_users" class="h2 font-weight-bold mb-0">{{stats.weeks}}</span>
+                      <span id="stats_users" class="h2 font-weight-bold mb-0">{{stats.weeks|safe}}</span>
                     
                     </div>
                     <div class="col-auto">
@@ -58,7 +58,7 @@
                       <h5 class="card-title text-uppercase text-muted mb-0">Samples in Search
                       </h5>
 
-                      <span id="stats_sales" class="h2 font-weight-bold mb-0">{{stats.all}}</span>
+                      <span id="stats_sales" class="h2 font-weight-bold mb-0">{{stats.all|safe}}</span>
                     
                     </div>
                     <div class="col-auto">

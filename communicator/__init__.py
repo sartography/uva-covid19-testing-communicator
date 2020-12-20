@@ -151,8 +151,7 @@ def index():
             session["index_filter"]["location"] = form.location.data
         if form.email.data:
             session["index_filter"]["email"] = form.email.data
-        # if form.download.data:
-        #     download = True  
+
             
     # # Store previous form submission settings in the session, so they are preseved through pagination.
     filtered_samples = samples
@@ -181,9 +180,10 @@ def index():
     else:
         # Default to Todays Results
         filtered_samples = filtered_samples.filter(Sample.date >= date.today())
-    if download:
+    if request.args.get('download') == 'true':
         csv = __make_csv(filtered_samples)
         return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
+
     ############# Build Graphs ######################
     # Analysis
     station_charts = []
@@ -305,6 +305,13 @@ def index():
                                 stats = stats
                             ))
 
+@app.route('/activate', methods=['GET', 'POST'])
+@superuser
+def activate_station():
+    return render_template('layouts/default.html',
+                            base_href=BASE_HREF,
+                            content=render_template(
+                                'pages/stations.html'))
 
 def __make_csv(sample_query):
     csvfile = io.StringIO()
