@@ -15,7 +15,7 @@
   <!-- Page content -->
   <div class="container-fluid mt--7">
     <div class="row">
-      <div class="col-xl-8 mb-5 mb-xl-0">
+      <div class="col-xl-8 mb-4 mb-xl-0">
         <div class="card bg-gradient-default shadow">
           <div class="card-header bg-transparent">
             <div class="row align-items-center">
@@ -35,7 +35,7 @@
       </div>
 
 
-      <div class="col-xl-4">
+      <div class="col-xl-4 mb-xl-0">
         <div class="card shadow">
           <form action="{{ action }}" method="post" id="pageForm">
             {{ form.csrf_token() }}
@@ -44,10 +44,10 @@
                 <div class="col">
                   <h3 class="mb-0">Search</h3>
                 </div>
-                <div class="col text-right">
+                <div class="col text-right mr-2">
                   <button class="btn btn-sm btn-primary">Search Today</button>
                 </div>
-                <div class="col text-right">
+                <div class="col text-right mr-2">
                   <button type="submit" class="btn btn-sm btn-primary">Run Search</button>
                 </div>
               </div>
@@ -79,14 +79,7 @@
                     </td>
                   </tr>
                   {% endfor %}
-                  <script>
-                    $('.datepicker').datepicker({
-                      showButtonPanel: true,
-                      localToday: new Date(),    // This option determines the highlighted today date
-                      format: 'yyyy-mm-dd',
-                      todayHighlight: true,
-                    });
-                  </script>
+                 
                 </tbody>
               </table>
             </div>
@@ -95,16 +88,13 @@
       </div>
 
     </div>
-    <div class="row mt-5">
+    <div class="row mt-4">
       <div class="col mb-5 mb-xl-0">
         <div class="card shadow">
           <div class="card-header border-0">
             <div class="row align-items-center">
               <div class="col">
-                <h3 class="mb-0">Records to be processed</h3>
-              </div>
-              <div class="col text-right">
-                <button type="submit" href="#!" class="btn btn-sm btn-primary">Download all</a>
+                <h3 class="mb-0">Additional Stats:</h3>
               </div>
             </div>
           </div>
@@ -150,32 +140,55 @@
     </div>
   </div>
   </form>
+  <!-- <script src="{{url_for('static', filename='assets/js/graph.js')}}"></script> -->
 
   <script>
     var location_data = JSON.parse('{{ location_data | tojson | safe}}');
     var station_data = JSON.parse('{{ station_data | tojson | safe}}');
 
-    var ctx = document.getElementById('data-chart').getContext('2d');
-    var ctx2 = document.getElementById('week-chart').getContext('2d');
-    var ctx3 = document.getElementById('time-chart').getContext('2d');
+    var weekday_totals = JSON.parse('{{ weekday_totals | tojson | safe}}');
+    var hour_totals = JSON.parse('{{ hour_totals | tojson | safe}}');
+
     var timeFormat = 'YYYY-MM-DD h:mm:ss.SSS';
 
-    new Chart(ctx2, {
+    var per_week = new Chart(document.getElementById('week-chart').getContext('2d'), {
     type: 'horizontalBar',
     data: {
-      labels: ["Africa", "Asia", "Europe", "Latin America", "North America"],
+      labels: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
       datasets: [
         {
-          label: "Population (millions)",
-          backgroundColor: ["#3e95cd", "#8e5ea2","#3cba9f","#e8c3b9","#c45850"],
-          data: [2478,5267,734,784,433]
+          label: "Total Samples",
+          backgroundColor: ["#3e95cd", "#8e5ea2","#3cba9f","#e8c3b9","#c45850","#7e3eb2","#1c41bf"],
+          data: weekday_totals
         }
       ]
     },
     options: {
-
       responsive: true,
-        maintainAspectRatio: false,
+      maintainAspectRatio: false,
+      legend: { display: false 
+      },
+      title: {
+        display: true,
+        text: 'Predicted world population (millions) in 2050'
+      }
+    }});
+
+    var per_hour = new Chart(document.getElementById('time-chart').getContext('2d'), {
+    type: 'horizontalBar',
+    data: {
+      labels: ["1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM","11 AM", "12 AM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM","11 PM", "12 PM", ],
+      datasets: [
+        {
+          label: "Sample Count",
+          backgroundColor: ["#3e95cd", "#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd",],
+          data: hour_totals
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
       legend: { display: false 
       },
       title: {
@@ -184,32 +197,8 @@
       }
     }
 });
-new Chart(ctx3, {
-    type: 'horizontalBar',
-    data: {
-      labels: ["Africa", "Asia", "Europe", "Latin America", "North America"],
-      datasets: [
-        {
-          label: "Population (millions)",
-          backgroundColor: ["#3e95cd", "#8e5ea2","#3cba9f","#e8c3b9","#c45850"],
-          data: [2478,5267,734,784,433]
-        }
-      ]
-    },
-    options: {
-
-      responsive: true,
-        maintainAspectRatio: false,
-      legend: { display: false 
-      },
-      title: {
-        display: true,
-        text: 'Predicted world population (millions) in 2050'
-      }
-    }
-});
-    /////////Main Chart/////////
-    var chart = new Chart(ctx, {
+    
+    var per_location = new Chart(document.getElementById('data-chart').getContext('2d'), {
       // The type of chart we want to create
       type: 'line',
       data: location_data,
@@ -256,17 +245,17 @@ new Chart(ctx3, {
     );
 
     function station_legend(e, legendItem) {
-      chart.config.data = location_data;
-      chart.config.options.legend.onClick = location_legend;
+      per_location.config.data = location_data;
+      per_location.config.options.legend.onClick = location_legend;
       $('#chart-title').text("Location Activity");
-      chart.update();
+      per_location.update();
     };
 
     function location_legend(e, legendItem) {
-      $('#chart-title').text("Station Activity @ " + chart.data.datasets[legendItem.datasetIndex].label);
-      chart.config.data = station_data[legendItem.datasetIndex];
-      chart.config.options.legend.onClick = station_legend;
-      chart.update();
+      $('#chart-title').text("Station Activity @ " + per_location.data.datasets[legendItem.datasetIndex].label);
+      per_location.config.data = station_data[legendItem.datasetIndex];
+      per_location.config.options.legend.onClick = station_legend;
+      per_location.update();
     };
   </script>
   <script>
@@ -279,4 +268,12 @@ new Chart(ctx3, {
     function submitform() {
       $("#pageForm").submit();
     }
+  </script>
+   <script>
+    $('.datepicker').datepicker({
+      showButtonPanel: true,
+      localToday: new Date(),    // This option determines the highlighted today date
+      format: 'yyyy-mm-dd',
+      todayHighlight: true,
+    });
   </script>
