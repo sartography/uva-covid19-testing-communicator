@@ -28,4 +28,4 @@ class SearchForm(FlaskForm):
     studentId = TextAreaField('Student Id')
     location = TextAreaField('Location')
     email = TextAreaField('Email')
-    download = BooleanField('Download Results')
+    # download = BooleanField('Download Results')

@@ -151,8 +151,8 @@ def index():
             session["index_filter"]["location"] = form.location.data
         if form.email.data:
             session["index_filter"]["email"] = form.email.data
-        if form.download.data:
-            download = True  
+        # if form.download.data:
+        #     download = True  
             
     # # Store previous form submission settings in the session, so they are preseved through pagination.
     filtered_samples = samples
@@ -185,12 +185,18 @@ def index():
         csv = __make_csv(filtered_samples)
         return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
     ############# Build Graphs ######################
-    ############# Helper Variables ##################
+    # Analysis
+    station_charts = []
+    location_chart = {"datasets": []}
     stats = dict()
+    weekday_totals = [0 for _ in range(7)] # Mon, Tues, ...
+    hour_totals = [0 for _ in range(24)] # 12AM, 1AM, ...
+    ############# Helper Variables ##################
+    
     start_date = filters["start_date"] if "start_date" in filters else date.today()
     end_date = filters["end_date"] if "end_date" in filters else date.today() + timedelta(7)
-    days = abs(start_date - end_date).days 
-    weeks_apart = days // 7 if days > 7 else 1
+    # days = abs(start_date - end_date).days 
+    # weeks_apart = days // 7 if days > 7 else 1
     # Get Active Locations Info
     active_stations = ["10", "20", "30", "40", "50", "60"]
     
@@ -213,79 +219,70 @@ def index():
     #############             #######################
     stats["all"] = filtered_samples.count()
     ############# Daily Total #######################
-    stats["today"] =  samples.filter(Sample.date >= date.today()).count()
+    stats["today"] = samples.filter(Sample.date >= date.today()).count()
     ############# Last 2 Week Average ###############
-    stats["weeks"] =  samples.filter(Sample.date >= date.today() - timedelta(14)).count() / 14
+    stats["weeks"] = round(samples.filter(Sample.date >= (date.today() - timedelta(14))).count() / 14,2)
     ################# Busiest Days/Hours ############
-    day_count = [0 for _ in range(7)] # Mon, Tues, ...
-    hour_count = [0 for _ in range(24)] # 12AM, 1AM, ...
-    for entry in filtered_samples:
-        day_count[entry.date.weekday()] += 1
-        # hour_count[entry.date.hour] += 1
-    logging.info(type(entry.date))
+    if filtered_samples.count() > 0:
+        for entry in filtered_samples:
+            weekday_totals[entry.date.weekday()] += 1
+            hour_totals[entry.date.hour] += 1
 
-
-    
-    # Analysis
-    station_charts = []
-    location_chart = {"datasets": []}
-    for loc_code in location_data.keys():
-        #################################################
-        ############# Build histogram ###################
-        color = [hash(loc_code), 128, (hash(loc_code) % 256 + 128) % 256]
-        single_hist = dict({
-            "label": loc_code,
-            "borderColor": f'rgba({color[0]},{color[1]},{color[2]},.7)',
-            "pointBorderColor": f'rgba({color[0]},{color[1]},{color[2]},1)',
-            "borderWidth": 8,
-            "data": [],
-        })
-        # https://stackoverflow.com/questions/19442224/getting-information-for-bins-in-matplotlib-histogram-function
-        hist, bin_edges = np.histogram(np.array(sample_times[loc_code]))
-        bins = [bin_edges[i]+(bin_edges[i+1]-bin_edges[i]) /
-                2 for i in range(len(bin_edges)-1)]
-        for cnt, time in zip(hist, bins):
-            single_hist["data"].append({
-                "x": datetime.utcfromtimestamp(time), "y": int(cnt)
+        Range = (filtered_samples[-1].date.timestamp(),filtered_samples[0].date.timestamp())
+        for loc_code in location_data.keys():
+            ############# Build histogram ###################
+            color = [hash(loc_code), 128, (hash(loc_code) % 256 + 128) % 256]
+            single_hist = dict({
+                "label": loc_code,
+                "borderColor": f'rgba({color[0]},{color[1]},{color[2]},.7)',
+                "pointBorderColor": f'rgba({color[0]},{color[1]},{color[2]},1)',
+                "borderWidth": 8,
+                "data": [],
             })
-        location_chart["datasets"].append(single_hist)
-        ###### Build Rolling Averaging Graph ##############
+            # https://stackoverflow.com/questions/19442224/getting-information-for-bins-in-matplotlib-histogram-function
+            hist, bin_edges = np.histogram(np.array(sample_times[loc_code]),range=Range)
+            bins = [bin_edges[i]+(bin_edges[i+1]-bin_edges[i]) /
+                    2 for i in range(len(bin_edges)-1)]
+            for cnt, time in zip(hist, bins):
+                single_hist["data"].append({
+                    "x": datetime.utcfromtimestamp(time), "y": int(cnt)
+                })
+            location_chart["datasets"].append(single_hist)
 
-        #################################################
-        ############## Build Station Graph ##############
-        station_lines = []
-        # Read Data by station
-        i = 0
-        for stat_code in active_stations:
-            filtered_entries = [_entry for _entry in location_data[loc_code] if str(_entry.location)[2:] == stat_code] # ! Inefficient but works for rn
-            if len(filtered_entries) == 0: continue
-            station_line = {"label": stat_code,
-                            "borderColor": f'rgba(50,255,255,.7)',
-                            "pointBorderColor": f'rgba(50,255,255,1)',
-                            "borderWidth": 10,
-                            "data": [
-                                {"x": filtered_entries[0].date, "y": i}, {"x": filtered_entries[-1].date, "y": i},
-                                ],
-                            }
-            i += 1 
-            station_lines.append(station_line)
-        station_charts.append({"datasets": station_lines, "labels" : []})
-        #################################################
+            ############## Build Station Graph ##############
+            station_lines = []
+            # Read Data by station
+            i = 0
+            for stat_code in active_stations:
+                filtered_entries = [_entry for _entry in location_data[loc_code] if str(_entry.location)[2:] == stat_code] # ! Inefficient but works for rn
+                if len(filtered_entries) == 0: continue
+                station_line = {"label": stat_code,
+                                "borderColor": f'rgba(50,255,255,.7)',
+                                "pointBorderColor": f'rgba(50,255,255,1)',
+                                "borderWidth": 10,
+                                "data": [
+                                    {"x": filtered_entries[0].date, "y": i}, {"x": filtered_entries[-1].date, "y": i},
+                                    ],
+                                }
+                i += 1 
+                station_lines.append(station_line)
+            station_charts.append({"datasets": station_lines, "labels" : []})
+            #################################################
 
 
-    # # Check for Unresponsive
-    # for loc_code in active_stations:
-    #     if loc_code not in location_data:
-    #         location_dict["datasets"].append({
-    #             "label": loc_code,
-    #             "borderColor": f'rgba(128,128,128,.7)',
-    #             "pointBorderColor": f'rgba(128,128,128,1)',
-    #             "borderWidth": 10,
-    #             "data": [{
-    #                 "x": session["index_filter"]["start_date"], "y": i
-    #             }, ],
-    #         })
-    #     i += 1
+        # # Check for Unresponsive
+        # for loc_code in active_stations:
+        #     if loc_code not in location_data:
+        #         location_dict["datasets"].append({
+        #             "label": loc_code,
+        #             "borderColor": f'rgba(128,128,128,.7)',
+        #             "pointBorderColor": f'rgba(128,128,128,1)',
+        #             "borderWidth": 10,
+        #             "data": [{
+        #                 "x": session["index_filter"]["start_date"], "y": i
+        #             }, ],
+        #         })
+        #     i += 1
     ################# Raw Samples Table ##############
     page = request.args.get(get_page_parameter(), type=int, default=1)
     pagination = Pagination(page=page, total=filtered_samples.count(
@@ -303,6 +300,8 @@ def index():
                                 pagination=pagination,
                                 location_data=location_chart,
                                 station_data=station_charts,
+                                weekday_totals=weekday_totals,
+                                hour_totals=hour_totals,
                                 stats = stats
                             ))
 
