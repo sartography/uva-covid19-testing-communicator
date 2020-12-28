@@ -29,3 +29,4 @@ class SearchForm(FlaskForm):
     location = TextAreaField('Location')
     station = TextAreaField('Station')
     compute_id = TextAreaField('Compute ID')
+    currently_showing = HiddenField(id="currently_showing")
