@@ -27,5 +27,5 @@ class SearchForm(FlaskForm):
     endDate = DateField("End Date (YYYY-MM-DD)", id="endDate", validators=[validators.Optional()],render_kw={"class":"datepicker"})
     studentId = TextAreaField('Student Id')
     location = TextAreaField('Location')
-    email = TextAreaField('Email')
-    # download = BooleanField('Download Results')
+    station = TextAreaField('Station')
+    compute_id = TextAreaField('Compute ID')

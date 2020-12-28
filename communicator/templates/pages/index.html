@@ -54,10 +54,11 @@
             </div>
 
             <div class="table-responsive">
-
+        
               <!-- Projects table -->
               <table class="table align-items-center table-flush">
                 <tbody>
+                  <input type="hidden" id="currently_showing" name="currently_showing">
                   {% for field in form if field.name != "csrf_token" %}
                   <tr>
 
@@ -79,7 +80,7 @@
                     </td>
                   </tr>
                   {% endfor %}
-                 
+
                 </tbody>
               </table>
             </div>
@@ -112,53 +113,56 @@
       </div>
     </div>
 
-      <div class="row mt-2">
-        <div class="col mb-5 mb-xl-0">
-          <div class="card shadow">
-            <div class="card-header border-0">
-              <div class="row align-items-center">
-                <div class="col">
-                  <h3 class="mb-0">Records to be processed</h3>
-                </div>
-                <div class="col text-right">
-                  <a href="{{ url_for('index') }}?download=true" class="btn btn-sm btn-primary">Download all</a>
-                </div>
+    <div class="row mt-2">
+      <div class="col mb-5 mb-xl-0">
+        <div class="card shadow">
+          <div class="card-header border-0">
+            <div class="row align-items-center">
+              <div class="col">
+                <h3 class="mb-0">Records to be processed</h3>
               </div>
-            </div>
-
-            <div class="table-responsive">
-              <!-- Projects table -->
-              {{ table }}
-            </div>
-            <div class="row justify-content-center">
-              {{ pagination.links }}
+              <div class="col text-right">
+                <a href="{{ url_for('index') }}?download=true" class="btn btn-sm btn-primary">Download all</a>
+              </div>
             </div>
           </div>
 
+          <div class="table-responsive">
+            <!-- Projects table -->
+            {{ table }}
+          </div>
+          <div class="row justify-content-center">
+            {{ pagination.links }}
+          </div>
         </div>
+
       </div>
     </div>
   </div>
-  </form>
-  <!-- <script src="{{url_for('static', filename='assets/js/graph.js')}}"></script> -->
+</div>
+</form>
+<!-- <script src="{{url_for('static', filename='assets/js/graph.js')}}"></script> -->
 
-  <script>
-    var location_data = JSON.parse('{{ location_data | tojson | safe}}');
-    var station_data = JSON.parse('{{ station_data | tojson | safe}}');
+<script>
+  var location_data = JSON.parse('{{ location_data | tojson | safe}}');
+  var station_data = JSON.parse('{{ station_data | tojson | safe}}');
 
-    var weekday_totals = JSON.parse('{{ weekday_totals | tojson | safe}}');
-    var hour_totals = JSON.parse('{{ hour_totals | tojson | safe}}');
+  var weekday_totals = JSON.parse('{{ weekday_totals | tojson | safe}}');
+  var hour_totals = JSON.parse('{{ hour_totals | tojson | safe}}');
 
-    var timeFormat = 'YYYY-MM-DD h:mm:ss.SSS';
+  var location_stats = JSON.parse('{{ location_stats | tojson | safe}}');
+  var station_stats = JSON.parse('{{ station_stats | tojson | safe}}');
 
-    var per_week = new Chart(document.getElementById('week-chart').getContext('2d'), {
+  var timeFormat = 'YYYY-MM-DD h:mm:ss.SSS';
+
+  var per_week = new Chart(document.getElementById('week-chart').getContext('2d'), {
     type: 'horizontalBar',
     data: {
       labels: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
       datasets: [
         {
           label: "Total Samples",
-          backgroundColor: ["#3e95cd", "#8e5ea2","#3cba9f","#e8c3b9","#c45850","#7e3eb2","#1c41bf"],
+          backgroundColor: ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850", "#7e3eb2", "#1c41bf"],
           data: weekday_totals
         }
       ]
@@ -166,22 +170,24 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      legend: { display: false 
+      legend: {
+        display: false
       },
       title: {
         display: true,
-        text: 'Predicted world population (millions) in 2050'
+        text: 'Sample count by day'
       }
-    }});
+    }
+  });
 
-    var per_hour = new Chart(document.getElementById('time-chart').getContext('2d'), {
+  var per_hour = new Chart(document.getElementById('time-chart').getContext('2d'), {
     type: 'horizontalBar',
     data: {
-      labels: ["1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM","11 AM", "12 AM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM","11 PM", "12 PM", ],
+      labels: ["1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 AM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM", "12 PM",],
       datasets: [
         {
           label: "Sample Count",
-          backgroundColor: ["#3e95cd", "#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd","#3e95cd",],
+          backgroundColor: ["#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd",],
           data: hour_totals
         }
       ]
@@ -189,91 +195,109 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      legend: { display: false 
+      legend: {
+        display: false
       },
       title: {
         display: true,
-        text: 'Predicted world population (millions) in 2050'
+        text: 'Sample count by hour'
       }
     }
-});
-    
-    var per_location = new Chart(document.getElementById('data-chart').getContext('2d'), {
-      // The type of chart we want to create
-      type: 'line',
-      data: location_data,
+  });
 
-      // Configuration options go here
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        title: {
-          display: false,
-        },
-        legend: {
-          display: true,
-          position: "right",
-          onClick: location_legend,
-          labels: {
-            usePointStyle: true,
-            fontColor: '#FFFFFF',
-            fontSize: 15,
-            padding: 20,
-            fontStyle: 'bold'
-          }
-        },
-        scales: {
-          xAxes: [{
-            type: "time",
-            time: {
-              format: timeFormat,
-              tooltipFormat: 'll'
-            },
-            scaleLabel: {
-              display: true,
-              labelString: 'Date'
-            }
-          }],
-          yAxes: [{
-            scaleLabel: {
-              display: false,
-            }
-          }]
+  var per_location = new Chart(document.getElementById('data-chart').getContext('2d'), {
+    // The type of chart we want to create
+    type: 'line',
+    data: location_data,
+
+    // Configuration options go here
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      title: {
+        display: false,
+      },
+      legend: {
+        display: true,
+        position: "right",
+        onClick: location_legend,
+        labels: {
+          usePointStyle: true,
+          fontColor: '#FFFFFF',
+          fontSize: 15,
+          padding: 20,
+          fontStyle: 'bold'
         }
+      },
+      scales: {
+        xAxes: [{
+          type: "time",
+          time: {
+            format: timeFormat,
+            tooltipFormat: 'll'
+          },
+          scaleLabel: {
+            display: true,
+            labelString: 'Date'
+          }
+        }],
+        yAxes: [{
+          scaleLabel: {
+            display: false,
+          }
+        }]
       }
     }
-    );
+  });
 
-    function station_legend(e, legendItem) {
-      per_location.config.data = location_data;
-      per_location.config.options.legend.onClick = location_legend;
-      $('#chart-title').text("Location Activity");
-      per_location.update();
-    };
+  function station_legend(e, legendItem) { // Clicking out of station view
+    per_location.config.data = location_data;
+    per_location.config.options.legend.onClick = location_legend;
+    $('#stats_today').text(location_stats.today);
+    $('#stats_one_week').text(location_stats.one_week_ago);
+    $('#stats_two_weeks').text(location_stats.two_week_ago);
+    $('#stats_avg').text(location_stats.average);
+    $('input[name="currently_showing"]').val(-1);
+    per_location.update();
+  };
 
-    function location_legend(e, legendItem) {
-      $('#chart-title').text("Station Activity @ " + per_location.data.datasets[legendItem.datasetIndex].label);
-      per_location.config.data = station_data[legendItem.datasetIndex];
+  function location_legend(e, legendItem) {
+    showLocation(legendItem.datasetIndex);
+  };
+
+  function showLocation(num){
+    if (num != -1 & num != ""){
+      $('#chart-title').text("Station Activity @ " + per_location.data.datasets[num].label);
+      per_location.config.data = station_data[num];
       per_location.config.options.legend.onClick = station_legend;
+      $('#stats_today').text(station_stats[num].today);
+      $('#stats_one_week').text(station_stats[num].one_week_ago);
+      $('#stats_two_weeks').text(station_stats[num].two_week_ago);
+      $('#stats_avg').text(station_stats[num].average);
+      $('input[name="currently_showing"]').val(num);
       per_location.update();
-    };
-  </script>
-  <script>
-
-    var auto_refresh = setInterval(
-      function () {
-        submitform();
-      }, 30000);
-
-    function submitform() {
-      $("#pageForm").submit();
+    } else {
+      $('#stats_today').text(location_stats.today);
+    $('#stats_one_week').text(location_stats.one_week_ago);
+    $('#stats_two_weeks').text(location_stats.two_week_ago);
+    $('#stats_avg').text(location_stats.average);
+    $('input[name="currently_showing"]').val(-1);
     }
-  </script>
-   <script>
-    $('.datepicker').datepicker({
-      showButtonPanel: true,
-      localToday: new Date(),    // This option determines the highlighted today date
-      format: 'yyyy-mm-dd',
-      todayHighlight: true,
-    });
-  </script>
+  }
+  showLocation('{{show | safe}}');
+</script>
+<script>
+  var auto_refresh = setInterval(
+    function () {
+      submitform();
+    }, 30000);
+  function submitform() {
+    $("#pageForm").submit();
+  }
+  $('.datepicker').datepicker({
+    showButtonPanel: true,
+    localToday: new Date(),    // This option determines the highlighted today date
+    format: 'yyyy-mm-dd',
+    todayHighlight: true,
+  });
+</script>
