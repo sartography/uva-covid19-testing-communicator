@@ -283,7 +283,7 @@
     $('input[name="currently_showing"]').val(-1);
     }
   }
-  showLocation('{{show | safe}}');
+  showLocation($('input[name="currently_showing"]').val());
 </script>
 <script>
   var auto_refresh = setInterval(
