@@ -1,25 +1,11 @@
 <!-- Main content -->
-
 <div class="main-content">
-
   <!-- Top navbar -->
   <nav class="navbar navbar-top navbar-expand-md navbar-dark" id="navbar-main">
     <div class="container-fluid">
       <!-- Brand -->
       <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="./index.html">UVA Communicator
         Dashboard</a>
-      <!-- Form -->
-      <form class="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto">
-        <div class="form-group mb-0">
-          <div class="input-group input-group-alternative">
-            <div class="input-group-prepend">
-              <span class="input-group-text"><i class="fas fa-search"></i></span>
-            </div>
-            <input class="form-control" placeholder="Search" type="text">
-          </div>
-        </div>
-      </form>
-
     </div>
   </nav>
 
@@ -29,43 +15,46 @@
   <!-- Page content -->
   <div class="container-fluid mt--7">
     <div class="row">
-      <div class="col-xl-8 mb-5 mb-xl-0">
+      <div class="col-xl-8 mb-4 mb-xl-0">
         <div class="card bg-gradient-default shadow">
           <div class="card-header bg-transparent">
             <div class="row align-items-center">
               <div class="col">
                 <h6 class="text-uppercase text-light ls-1 mb-1">Overview</h6>
-                <h2 class="text-white mb-0">Location Activity</h2>
+                <h2 id="chart-title" class="text-white mb-0">Location Activity</h2>
               </div>
             </div>
           </div>
           <div class="card-body">
-            <!-- Chart ########################## -->
+            <!-- Chart  -->
             <div class="chart">
-              <canvas id="chart-sales" class="chart-canvas"></canvas>
+              <canvas id="data-chart" class="chart-canvas"></canvas>
             </div>
           </div>
         </div>
       </div>
 
 
-      <div class="col-xl-4">
+      <div class="col-xl-4 mb-xl-0">
         <div class="card shadow">
-          <form action="{{ action }}" method="post">
+          <form action="{{ action }}" method="post" id="pageForm">
             {{ form.csrf_token() }}
             <div class="card-header border-0">
               <div class="row align-items-center">
                 <div class="col">
                   <h3 class="mb-0">Search</h3>
                 </div>
-                <div class="col text-right">
+                <div class="col text-right mr-2">
+                  <button class="btn btn-sm btn-primary">Search Today</button>
+                </div>
+                <div class="col text-right mr-2">
                   <button type="submit" class="btn btn-sm btn-primary">Run Search</button>
                 </div>
               </div>
             </div>
 
             <div class="table-responsive">
-
+        
               <!-- Projects table -->
               <table class="table align-items-center table-flush">
                 <tbody>
@@ -81,7 +70,7 @@
                         <input name="{{field.name}}" />
                         {%else%}
                         <div class="form-field-input">{{ field }}</div>
-                        <div class="form-field-help">{{ description_map[field.name] }}</div>
+
                         {% for error in field.errors %}
                         <div class="form-field-error">{{ error }}</div>
                         {% endfor %}
@@ -90,23 +79,40 @@
                     </td>
                   </tr>
                   {% endfor %}
-                  <script>
-                    $('.datepicker').datepicker({
-                      showButtonPanel: true,
-                      localToday: new Date(),    // This option determines the highlighted today date
-                      format: 'yyyy-mm-dd',
-                      todayHighlight: true,
-                    });
-                  </script>
+
                 </tbody>
               </table>
             </div>
           </form>
         </div>
       </div>
+
+    </div>
+    <div class="row mt-4">
+      <div class="col mb-5 mb-xl-0">
+        <div class="card shadow">
+          <div class="card-header border-0">
+            <div class="row align-items-center">
+              <div class="col">
+                <h3 class="mb-0">Additional Stats:</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body row">
+            <div class="chart col">
+              <canvas id="week-chart" class="chart-canvas"></canvas>
+            </div>
+            <div class="chart col">
+              <canvas id="time-chart" class="chart-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
 
-    <div class="row mt-5">
+    <div class="row mt-2">
       <div class="col mb-5 mb-xl-0">
         <div class="card shadow">
           <div class="card-header border-0">
@@ -115,7 +121,7 @@
                 <h3 class="mb-0">Records to be processed</h3>
               </div>
               <div class="col text-right">
-                <button type="submit" href="#!" class="btn btn-sm btn-primary">Download all</a>
+                <a href="{{ url_for('index') }}?download=true" class="btn btn-sm btn-primary">Download all</a>
               </div>
             </div>
           </div>
@@ -131,20 +137,77 @@
 
       </div>
     </div>
-
-    {% include 'includes/footer.html' %}
-
   </div>
 </div>
+</form>
+<!-- <script src="{{url_for('static', filename='assets/js/graph.js')}}"></script> -->
+
 <script>
-  var data = JSON.parse('{{ chart_data | tojson | safe}}');
-  var ctx = document.getElementById('chart-sales').getContext('2d');
+  var location_data = JSON.parse('{{ location_data | tojson | safe}}');
+  var station_data = JSON.parse('{{ station_data | tojson | safe}}');
+
+  var weekday_totals = JSON.parse('{{ weekday_totals | tojson | safe}}');
+  var hour_totals = JSON.parse('{{ hour_totals | tojson | safe}}');
+
+  var location_stats = JSON.parse('{{ location_stats | tojson | safe}}');
+  var station_stats = JSON.parse('{{ station_stats | tojson | safe}}');
+
   var timeFormat = 'YYYY-MM-DD h:mm:ss.SSS';
 
-  var chart = new Chart(ctx, {
+  var per_week = new Chart(document.getElementById('week-chart').getContext('2d'), {
+    type: 'horizontalBar',
+    data: {
+      labels: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      datasets: [
+        {
+          label: "Total Samples",
+          backgroundColor: ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850", "#7e3eb2", "#1c41bf"],
+          data: weekday_totals
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      legend: {
+        display: false
+      },
+      title: {
+        display: true,
+        text: 'Sample count by day'
+      }
+    }
+  });
+
+  var per_hour = new Chart(document.getElementById('time-chart').getContext('2d'), {
+    type: 'horizontalBar',
+    data: {
+      labels: ["1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 AM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM", "12 PM",],
+      datasets: [
+        {
+          label: "Sample Count",
+          backgroundColor: ["#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd",],
+          data: hour_totals
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      legend: {
+        display: false
+      },
+      title: {
+        display: true,
+        text: 'Sample count by hour'
+      }
+    }
+  });
+
+  var per_location = new Chart(document.getElementById('data-chart').getContext('2d'), {
     // The type of chart we want to create
     type: 'line',
-    data: data,
+    data: location_data,
 
     // Configuration options go here
     options: {
@@ -156,6 +219,7 @@
       legend: {
         display: true,
         position: "right",
+        onClick: location_legend,
         labels: {
           usePointStyle: true,
           fontColor: '#FFFFFF',
@@ -183,6 +247,56 @@
         }]
       }
     }
+  });
+
+  function station_legend(e, legendItem) { // Clicking out of station view
+    per_location.config.data = location_data;
+    per_location.config.options.legend.onClick = location_legend;
+    $('#stats_today').text(location_stats.today);
+    $('#stats_one_week').text(location_stats.one_week_ago);
+    $('#stats_two_weeks').text(location_stats.two_week_ago);
+    $('#stats_avg').text(location_stats.average);
+    $('input[name="currently_showing"]').val(-1);
+    per_location.update();
+  };
+
+  function location_legend(e, legendItem) {
+    showLocation(legendItem.datasetIndex);
+  };
+
+  function showLocation(num){
+    if (num != -1 & num != ""){
+      $('#chart-title').text("Station Activity @ " + per_location.data.datasets[num].label);
+      per_location.config.data = station_data[num];
+      per_location.config.options.legend.onClick = station_legend;
+      $('#stats_today').text(station_stats[num].today);
+      $('#stats_one_week').text(station_stats[num].one_week_ago);
+      $('#stats_two_weeks').text(station_stats[num].two_week_ago);
+      $('#stats_avg').text(station_stats[num].average);
+      $('input[name="currently_showing"]').val(num);
+      per_location.update();
+    } else {
+      $('#stats_today').text(location_stats.today);
+    $('#stats_one_week').text(location_stats.one_week_ago);
+    $('#stats_two_weeks').text(location_stats.two_week_ago);
+    $('#stats_avg').text(location_stats.average);
+    $('input[name="currently_showing"]').val(-1);
+    }
   }
-  );
+  showLocation($('input[name="currently_showing"]').val());
+</script>
+<script>
+  var auto_refresh = setInterval(
+    function () {
+      submitform();
+    }, 30000);
+  function submitform() {
+    $("#pageForm").submit();
+  }
+  $('.datepicker').datepicker({
+    showButtonPanel: true,
+    localToday: new Date(),    // This option determines the highlighted today date
+    format: 'yyyy-mm-dd',
+    todayHighlight: true,
+  });
 </script>
