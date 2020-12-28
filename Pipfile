@@ -42,6 +42,8 @@ flask-assets = "*"
 pyscss = "*"
 pyzt = "*"
 phonenumbers = "*"
+numpy = "*"
+flask-bower = "*"
 
 [requires]
 python_version = "3.8"
