@@ -128,6 +128,10 @@ def page_not_found(e):
 
 def date2datetime(_date):
     return datetime.combine(_date, datetime.min.time())
+def make_sample_histogram(samples, range, bins=10):
+    base = datetime.datetime.today()
+    date_list = [base - datetime.timedelta(days=x) for x in range(numdays)]
+    pass
 @app.route('/', methods=['GET', 'POST'])
 @superuser
 def index():
@@ -306,10 +310,7 @@ def index():
                                hour_totals=hour_totals,
                            ))
 
-    def make_sample_histogram(samples, range, bins=10):
-        base = datetime.datetime.today()
-        date_list = [base - datetime.timedelta(days=x) for x in range(numdays)]
-        pass
+ 
     # # Check for Unresponsive
     # for loc_code in active_stations:
     #     if loc_code not in location_data:
