@@ -1,8 +1,10 @@
 <!-- Main content -->
 <div class="main-content">
+
   <!-- Top navbar -->
   <nav class="navbar navbar-top navbar-expand-md navbar-dark" id="navbar-main">
     <div class="container-fluid">
+
       <!-- Brand -->
       <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="./index.html">UVA Communicator
         Dashboard</a>
@@ -11,6 +13,7 @@
 
   <!-- Header -->
   {% include 'includes/top-stats.html' %}
+  <script src="{{url_for('static', filename='assets/js/graph.js')}}"></script> 
 
   <!-- Page content -->
   <div class="container-fluid mt--7">
@@ -26,6 +29,7 @@
             </div>
           </div>
           <div class="card-body">
+
             <!-- Chart  -->
             <div class="chart">
               <canvas id="data-chart" class="chart-canvas"></canvas>
@@ -33,8 +37,6 @@
           </div>
         </div>
       </div>
-
-
       <div class="col-xl-4 mb-xl-0">
         <div class="card shadow">
           <form action="{{ action }}" method="post" id="pageForm">
@@ -45,16 +47,15 @@
                   <h3 class="mb-0">Search</h3>
                 </div>
                 <div class="col text-right mr-2">
-                  <button class="btn btn-sm btn-primary">Search Today</button>
+                  <button class="btn btn-sm btn-primary" onclick="$('input[name=\'dateRange\']').val('');submitform();">Search Today</button>
                 </div>
                 <div class="col text-right mr-2">
                   <button type="submit" class="btn btn-sm btn-primary">Run Search</button>
                 </div>
               </div>
             </div>
-
             <div class="table-responsive">
-        
+
               <!-- Projects table -->
               <table class="table align-items-center table-flush">
                 <tbody>
@@ -66,8 +67,8 @@
                         <div class="form-field-label">{{ field.label() }}:</div>
                       </td>
                       <td>
-                        {% if field.type == "date" %}
-                        <input name="{{field.name}}" />
+                        {% if field.name == "dateRange" %}
+                        <input type="text" name="{{field.name}}" />
                         {%else%}
                         <div class="form-field-input">{{ field }}</div>
 
@@ -79,7 +80,6 @@
                     </td>
                   </tr>
                   {% endfor %}
-
                 </tbody>
               </table>
             </div>
@@ -127,6 +127,7 @@
           </div>
 
           <div class="table-responsive">
+
             <!-- Projects table -->
             {{ table }}
           </div>
@@ -140,21 +141,50 @@
   </div>
 </div>
 </form>
-<!-- <script src="{{url_for('static', filename='assets/js/graph.js')}}"></script> -->
+
 
 <script>
-  var location_data = JSON.parse('{{ location_data | tojson | safe}}');
-  var station_data = JSON.parse('{{ station_data | tojson | safe}}');
+function random_rgba() {
+  var o = Math.round, r = Math.random, s = 255;
+  return 'rgba(' + o(r()*s) + ',' + o(r()*s) + ',' + o(r()*s) + ',1)';
+}
 
-  var weekday_totals = JSON.parse('{{ weekday_totals | tojson | safe}}');
-  var hour_totals = JSON.parse('{{ hour_totals | tojson | safe}}');
+function dict2datasets(data) {
+  var datasets = [];
+  Object.keys(data).forEach(function (key) {
+    datasets.push(
+      {
+        label: key,
+        fill: true,
+        borderColor: random_rgba(),
+        borderSkipped: "bottom",
+        borderWidth: 4,
+        borderCapStyle: 'butt',
+        data: data[key],
+      })
+  });
+  return datasets;
+}
 
-  var location_stats = JSON.parse('{{ location_stats | tojson | safe}}');
-  var station_stats = JSON.parse('{{ station_stats | tojson | safe}}');
+  var overall_chart_data = JSON.parse('{{overall_chart_data | tojson }}');
+  var overall_chart = dict2datasets(overall_chart_data);
 
-  var timeFormat = 'YYYY-MM-DD h:mm:ss.SSS';
 
-  var per_week = new Chart(document.getElementById('week-chart').getContext('2d'), {
+  var  location_charts = {};
+  var location_chart_data = JSON.parse('{{location_charts_data | tojson}}');
+  
+  Object.keys(location_chart_data).forEach(function (station) {
+    location_charts[station] = dict2datasets(location_chart_data[station])
+  });
+
+  var overall_stat_data = JSON.parse('{{overall_stat_data | tojson }}');
+
+  var location_stats_data = JSON.parse('{{location_stats_data | tojson }}');
+
+  var weekday_totals = JSON.parse('{{ weekday_totals | tojson }}');
+  var hour_totals = JSON.parse('{{ hour_totals | tojson }}');
+
+  var per_weekday = new Chart(document.getElementById('week-chart').getContext('2d'), {
     type: 'horizontalBar',
     data: {
       labels: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
@@ -206,8 +236,10 @@
 
   var per_location = new Chart(document.getElementById('data-chart').getContext('2d'), {
     // The type of chart we want to create
-    type: 'line',
-    data: location_data,
+    type: 'bar',
+    data: {datasets: overall_chart,
+      labels: JSON.parse('{{chart_ticks | tojson }}')
+    },
 
     // Configuration options go here
     options: {
@@ -216,6 +248,15 @@
       title: {
         display: false,
       },
+      scales: {
+                xAxes: [{ stacked: true }],
+                yAxes: [{
+                        ticks: {
+                            beginAtZero:true
+                        },
+                        stacked: false
+                }]
+              },
       legend: {
         display: true,
         position: "right",
@@ -228,61 +269,44 @@
           fontStyle: 'bold'
         }
       },
-      scales: {
-        xAxes: [{
-          type: "time",
-          time: {
-            format: timeFormat,
-            tooltipFormat: 'll'
-          },
-          scaleLabel: {
-            display: true,
-            labelString: 'Date'
-          }
-        }],
-        yAxes: [{
-          scaleLabel: {
-            display: false,
-          }
-        }]
-      }
     }
   });
 
-  function station_legend(e, legendItem) { // Clicking out of station view
-    per_location.config.data = location_data;
+  function station_legend(e, legendItem) {
+    per_location.config.data.datasets = overall_chart;
+
+    
     per_location.config.options.legend.onClick = location_legend;
-    $('#stats_today').text(location_stats.today);
-    $('#stats_one_week').text(location_stats.one_week_ago);
-    $('#stats_two_weeks').text(location_stats.two_week_ago);
-    $('#stats_avg').text(location_stats.average);
-    $('input[name="currently_showing"]').val(-1);
+    $('#stats_today').text(overall_stat_data.today);
+    $('#stats_one_week').text(overall_stat_data.one_week_ago);
+    $('#stats_two_weeks').text(overall_stat_data.two_week_ago);
+    $('#chart-title').text("Location Activity");
+    $('#location').val("");
+    //$('#stats_avg').text(overall_stat_data.average);
+    $('input[name="currently_showing"]').val("");
     per_location.update();
   };
 
   function location_legend(e, legendItem) {
-    showLocation(legendItem.datasetIndex);
+    showLocation(per_location.data.datasets[legendItem.datasetIndex].label);
   };
 
-  function showLocation(num){
-    if (num != -1 & num != ""){
-      $('#chart-title').text("Station Activity @ " + per_location.data.datasets[num].label);
-      per_location.config.data = station_data[num];
+  function showLocation(loc_code) {
+    if (loc_code != ""){
+      $('#chart-title').text("Station Activity @ " + loc_code);
+      per_location.config.data.datasets = location_charts[loc_code];
       per_location.config.options.legend.onClick = station_legend;
-      $('#stats_today').text(station_stats[num].today);
-      $('#stats_one_week').text(station_stats[num].one_week_ago);
-      $('#stats_two_weeks').text(station_stats[num].two_week_ago);
-      $('#stats_avg').text(station_stats[num].average);
-      $('input[name="currently_showing"]').val(num);
+      $('#stats_today').text(location_stats_data[loc_code].today);
+      $('#stats_one_week').text(location_stats_data[loc_code].one_week_ago);
+      $('#stats_two_weeks').text(location_stats_data[loc_code].two_week_ago);
+      // $('#stats_avg').text(location_stats_data[num].average);
+
+      $('#location').val(loc_code);
+      $('input[name="currently_showing"]').val(loc_code);
       per_location.update();
-    } else {
-      $('#stats_today').text(location_stats.today);
-    $('#stats_one_week').text(location_stats.one_week_ago);
-    $('#stats_two_weeks').text(location_stats.two_week_ago);
-    $('#stats_avg').text(location_stats.average);
-    $('input[name="currently_showing"]').val(-1);
     }
   }
+
   showLocation($('input[name="currently_showing"]').val());
 </script>
 <script>
@@ -293,10 +317,11 @@
   function submitform() {
     $("#pageForm").submit();
   }
-  $('.datepicker').datepicker({
-    showButtonPanel: true,
-    localToday: new Date(),    // This option determines the highlighted today date
-    format: 'yyyy-mm-dd',
-    todayHighlight: true,
+  
+  $(function() {
+  $('input[name="dateRange"]').daterangepicker({
+    opens: 'left',
   });
+});
+console.log($('input[name="dateRange"]').val('{{range}}'));
 </script>

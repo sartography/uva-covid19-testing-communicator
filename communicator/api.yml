@@ -43,6 +43,18 @@ paths:
             text/plain:
               schema:
                 type: string
+  /split_location_column:
+    get:
+      operationId: communicator.api.admin.split_location_column
+      summary: Checks the local file system and firecloud for data and loads it into the db.
+      security: []  # Disable security for this endpoint only.
+      responses:
+        '200':
+          description: Status indicator that the app is up and alive.
+          content:
+            text/plain:
+              schema:
+                type: string
   /update_and_notify:
     get:
       operationId: communicator.api.admin.update_and_notify

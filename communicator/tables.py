@@ -36,6 +36,7 @@ class SampleTable(Table):
     computing_id = Col('Computing Id')
     date = BetterDatetimeCol('Date', "medium", tzinfo=get_timezone('US/Eastern'), locale='en')
     location = Col('Location')  # TODO: Pad with leading 0s to 4 digits
+    station = Col('Station')  # TODO: Pad with leading 0s to 4 digits
     phone = Col('Phone')
     email = Col('Email')
     notifications = NestedTableCol('notifications', NotificationTable)

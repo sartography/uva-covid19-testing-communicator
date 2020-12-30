@@ -12,6 +12,7 @@ class Sample(db.Model):
     computing_id = db.Column(db.String)
     date = db.Column(db.DateTime)
     location = db.Column(db.Integer)
+    station = db.Column(db.Integer)
     phone = db.Column(db.String)
     email = db.Column(db.String)
     result_code = db.Column(db.String)

@@ -82,7 +82,10 @@ def _update_data():
             app.logger.info("Not Deleting Files, per DELETE_IVY_FILES flag")
     db.session.commit()
 
-
+def split_location_column():
+    sample_service = SampleService()
+    sample_service.split_location_column()
+    
 def merge_similar_records():
     sample_service = SampleService()
     sample_service.merge_similar_records()

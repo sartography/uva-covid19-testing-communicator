@@ -86,11 +86,10 @@ assets.register('app_scss', scss)
 
 connexion_app.add_api('api.yml', base_path='/v1.0')
 
-from communicator import forms
-from communicator import api
-from communicator import models
 from datetime import date, timedelta
-
+from communicator import models
+from communicator import api
+from communicator import forms
 # Convert list of allowed origins to list of regexes
 origins_re = [r"^https?:\/\/%s(.*)" % o.replace('.', '\.')
               for o in app.config['CORS_ALLOW_ORIGINS']]
@@ -127,7 +126,8 @@ def page_not_found(e):
     # note that we set the 404 status explicitly
     return render_template('pages/404.html')
 
-
+def date2datetime(_date):
+    return datetime.combine(_date, datetime.min.time())
 @app.route('/', methods=['GET', 'POST'])
 @superuser
 def index():
@@ -140,13 +140,13 @@ def index():
 
     if request.method == "POST" or request.args.get('cancel') == 'true':
         session["index_filter"] = {}  # Clear out the session if it is invalid.
-
+    
     if form.validate():
         session["index_filter"] = {}
-        if form.startDate.data:
-            session["index_filter"]["start_date"] = form.startDate.data
-        if form.endDate.data:
-            session["index_filter"]["end_date"] = form.endDate.data
+        if form.dateRange.data:
+            start, end = form.dateRange.data.split("-")
+            session["index_filter"]["start_date"] = datetime.strptime(start.strip(), "%m/%d/%Y").date()
+            session["index_filter"]["end_date"] =  datetime.strptime(end.strip(), "%m/%d/%Y").date() + timedelta(1)
         if form.studentId.data:
             session["index_filter"]["student_id"] = form.studentId.data
         if form.location.data:
@@ -163,9 +163,9 @@ def index():
                 filtered_samples = filtered_samples.filter(
                     Sample.date >= filters["start_date"])
             else:
-                filtered_samples = filtered_samples.filter(
-                    Sample.date >= date.today())
                 filters["start_date"] = date.today()
+                filtered_samples = filtered_samples.filter(
+                    Sample.date >= filters["start_date"])
             if "end_date" in filters:
                 filtered_samples = filtered_samples.filter(
                     Sample.date <= filters["end_date"])
@@ -195,137 +195,88 @@ def index():
         filtered_samples = filtered_samples.filter(
             Sample.date >= filters["start_date"])
 
+    if type(filters["start_date"]) == str:
+        filters["start_date"] = datetime.strptime(filters["start_date"].strip(), "%Y-%m-%d").date()
+    if type(filters["end_date"]) == str:
+        filters["end_date"] = datetime.strptime(filters["end_date"].strip(), "%Y-%m-%d").date()
+
     if request.args.get('download') == 'true':
         csv = __make_csv(filtered_samples)
         return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
-
-    ############# Build Graphs ######################
-    # Analysis
-    station_charts = []
-    location_chart = {"datasets": []}
-    loc_sat_data = dict()
-    station_stats = dict()  # {dict(), ...}
-
-    today = date.today()
-    one_week_ago = filters["end_date"] - timedelta(7)
-    two_weeks_ago = one_week_ago - timedelta(7)
-
+    
     weekday_totals = [0 for _ in range(7)]  # Mon, Tues, ...
     hour_totals = [0 for _ in range(24)]  # 12AM, 1AM, ...
-    ############# Helper Variables ################## 
+    
+    location_charts_data = {}
+    overall_chart_data = {}
+    
+    overall_stat_data = {
+                    "one_week_ago":0,
+                    "two_week_ago":0,
+                    "today":0,
+                }
+    location_stats_data = {}
+    
+    today = filters["end_date"] - timedelta(1)
+    days_in_search = (filters["end_date"] - filters["start_date"]).days
+    one_week_ago = filters["end_date"] - timedelta(7)
+    two_weeks_ago = one_week_ago - timedelta(7)
+    chart_ticks = [] 
+
     if filtered_samples.count() > 0:
-        date_range = (
-            filtered_samples[-1].date.timestamp(), filtered_samples[0].date.timestamp())
-        
-    # Get Active Locations Info
-    active_stations = ["10", "20", "30", "40", "50", "60"]
-    location_stats = dict()
+        date_range = (date2datetime(filters["start_date"]).timestamp(), date2datetime( filters["end_date"]).timestamp())
+        if days_in_search <= 2: 
+            bins = 9 * days_in_search
+            timeFormat = "%b %e, %I:%M %p"
+        else:
+            bins =  days_in_search * 3
+            timeFormat = "%m/%d/%Y"
 
-    # Seperate Data by location and station
-    loc_sat_data = dict()
-    sample_times = dict()
+        _, bin_edges = np.histogram(np.array([]),range= date_range, bins = bins)
+        for i in range(len(bin_edges) - 1):
+            start = datetime.utcfromtimestamp(bin_edges[i])
+            stop = datetime.utcfromtimestamp(bin_edges[i+1])
+            
+            chart_ticks.append(start.strftime(timeFormat) + " - " + stop.strftime(timeFormat))
 
-    # Sort Data
-    for entry in filtered_samples:
-        loc_code = str(entry.location)[:2]
-        stat_code = str(entry.location)[2:]
+        for entry in filtered_samples:
+            if entry.location not in location_charts_data:
+                location_charts_data[entry.location] = dict()
+                location_stats_data[entry.location] = {
+                    "one_week_ago" : 0,
+                    "two_week_ago" : 0,
+                    "today" : 0,
+                }
 
-        weekday_totals[entry.date.weekday()] += 1
-        hour_totals[entry.date.hour] += 1
-        # When iterating through the initial quarry if this
-        # location has yet to be seen add it to the data set and if it has continue to update it
-        if loc_code not in loc_sat_data:
-            loc_sat_data[loc_code] = dict()
-            sample_times[loc_code] = []
+            if entry.station not in location_charts_data[entry.location]:
+                samples_at_station = filtered_samples\
+                            .filter(Sample.location == entry.location)\
+                            .filter(Sample.station == entry.station)
 
-        if stat_code not in loc_sat_data[loc_code]:
-            loc_sat_data[loc_code][stat_code] = dict()
-            loc_sat_data[loc_code][stat_code]["two_week_ago"] = 0
-            loc_sat_data[loc_code][stat_code]["one_week_ago"] = 0
-            loc_sat_data[loc_code][stat_code]["today"] = 0
-            loc_sat_data[loc_code][stat_code]["total"] = 0
-            loc_sat_data[loc_code][stat_code]["entries"] = []
+                counts, _ = np.histogram(np.array([_entry.date.timestamp() for _entry in samples_at_station]),\
+                                            range= date_range,\
+                                            bins = bins)
 
-        # The previous if statement has guaranteed that this will not return a key error
-        #  as if the location code or station code or not present in the loc_sat_data dictionary
-        # they will have been added by this point
-        loc_sat_data[loc_code][stat_code]["total"] += 1
-        loc_sat_data[loc_code][stat_code]["entries"].append(entry)
-        sample_times[loc_code].append(entry.date.timestamp())
-        if entry.date.date() >= two_weeks_ago:
-            loc_sat_data[loc_code][stat_code]["two_week_ago"] += 1
-            if entry.date.date() >= one_week_ago:
-                loc_sat_data[loc_code][stat_code]["one_week_ago"] += 1
-                if entry.date.date() >= today:
-                    loc_sat_data[loc_code][stat_code]["today"] += 1
+                location_charts_data[entry.location][entry.station] = counts.tolist()
+                
+            weekday_totals[entry.date.weekday()] += 1
+            hour_totals[entry.date.hour] += 1
 
-    station_stats = []
-    general_today = 0
-    general_one_week_ago = 0 
-    general_two_week_ago = 0 
-    general_total = 0 
-    for loc_code in loc_sat_data:
-        ############# Build histogram ###################
-        color = [hash(loc_code), 128, (hash(loc_code) % 256 + 128) % 256]
-        single_hist = dict({
-            "label": loc_code,
-            "borderColor": f'rgba({color[0]},{color[1]},{color[2]},.7)',
-            "pointBorderColor": f'rgba({color[0]},{color[1]},{color[2]},1)',
-            "borderWidth": 8,
-            "data": [],
-        })
-        # https://stackoverflow.com/questions/19442224/getting-information-for-bins-in-matplotlib-histogram-function
-        hist, bin_edges = np.histogram(
-            np.array(sample_times[loc_code]), range=date_range)
-        bins = [bin_edges[i]+(bin_edges[i+1]-bin_edges[i]) /
-                2 for i in range(len(bin_edges)-1)]
-        for cnt, time in zip(hist, bins):
-            single_hist["data"].append({
-                "x": datetime.utcfromtimestamp(time), "y": int(cnt)
-            })
-        location_chart["datasets"].append(single_hist)
-        
-        
-        station_lines = []
-        i = 0
-        today = 0
-        one_week_ago = 0 
-        two_week_ago = 0 
-        total = 0 
-        for stat_code in loc_sat_data[loc_code]:
-            ############## Station Stats ##############
-            today += loc_sat_data[loc_code][stat_code]["today"] 
-            one_week_ago += loc_sat_data[loc_code][stat_code]["one_week_ago"] 
-            two_week_ago += loc_sat_data[loc_code][stat_code]["two_week_ago"] 
-            total += loc_sat_data[loc_code][stat_code]["total"] 
-            ############## Build Station Uptime Graph ##############
-            i += 1
-            station_lines.append({
-                "label": stat_code,
-                "borderColor": f'rgba(50,255,255,.7)',
-                "pointBorderColor": f'rgba(50,255,255,1)',
-                "borderWidth": 10,
-                "data": [
-                    {"x": loc_sat_data[loc_code][stat_code]["entries"][0].date, "y": i}, {
-                        "x": loc_sat_data[loc_code][stat_code]["entries"][-1].date, "y": i},
-                ]})
-        station_charts.append({"datasets": station_lines, "labels": []})
-        station_stats.append({
-            "today":today,            
-            "one_week_ago":round(one_week_ago/7,2),
-            "two_week_ago":round(two_week_ago/14,2),
-            "average":round(total/len(loc_sat_data[loc_code]),2),
-        })
-        general_today = today
-        general_one_week_ago = one_week_ago
-        general_two_week_ago += two_week_ago
-        general_total += total 
-    location_stats = {
-            "today":general_today,            
-            "one_week_ago":round(general_one_week_ago/7,2),
-            "two_week_ago":round(general_two_week_ago/14,2),
-            "average":general_total #round(total/len(loc_sat_data[loc_code]),2),
-        }
+            if entry.date.date() >= two_weeks_ago:
+                location_stats_data[entry.location]["two_week_ago"] += 1
+                if entry.date.date() >= one_week_ago:
+                    location_stats_data[entry.location]["one_week_ago"] += 1
+                    if entry.date.date() >= today:
+                        location_stats_data[entry.location]["today"] += 1
+
+        for location in location_charts_data:            
+            overall_stat_data["one_week_ago"] += location_stats_data[entry.location]["one_week_ago"]
+            overall_stat_data["two_week_ago"] += location_stats_data[entry.location]["two_week_ago"]
+            overall_stat_data["today"] += location_stats_data[entry.location]["today"]
+            overall_chart_data[location] = []
+            
+            overall_chart_data[location] = np.sum([location_charts_data[location][station] for station in location_charts_data[location]],axis=0).tolist()
+
     ################# Raw Samples Table ##############
     page = request.args.get(get_page_parameter(), type=int, default=1)
     pagination = Pagination(page=page, total=filtered_samples.count(
@@ -339,21 +290,39 @@ def index():
                            content=render_template(
                                'pages/index.html',
                                form=form,
-                               show = request.args.get('currently_showing',-1), 
+                               range=filters["start_date"].strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(1)).strftime("%m/%d/%Y"),
                                table=table,
                                action=action,
                                pagination=pagination,
 
-                               location_data=location_chart,
-                               station_data=station_charts,
+                               chart_ticks = chart_ticks,
+                               overall_chart_data = overall_chart_data,
+                               location_charts_data = location_charts_data,
 
-                               station_stats=station_stats,  # List<dict>
-                               location_stats=location_stats,
+                               overall_stat_data = overall_stat_data,
+                               location_stats_data = location_stats_data,
 
                                weekday_totals=weekday_totals,
                                hour_totals=hour_totals,
                            ))
 
+    def make_sample_histogram(samples, range, bins=10):
+        base = datetime.datetime.today()
+        date_list = [base - datetime.timedelta(days=x) for x in range(numdays)]
+        pass
+    # # Check for Unresponsive
+    # for loc_code in active_stations:
+    #     if loc_code not in location_data:
+    #         location_dict["datasets"].append({
+    #             "label": loc_code,
+    #             "borderColor": f'rgba(128,128,128,.7)',
+    #             "pointBorderColor": f'rgba(128,128,128,1)',
+    #             "borderWidth": 10,
+    #             "data": [{
+    #                 "x": session["index_filter"]["start_date"], "y": i
+    #             }, ],
+    #         })
+    #     i += 1
 
 @app.route('/activate', methods=['GET', 'POST'])
 @superuser
