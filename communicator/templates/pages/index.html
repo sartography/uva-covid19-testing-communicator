@@ -148,10 +148,11 @@ function random_rgba() {
   var o = Math.round, r = Math.random, s = 255;
   return 'rgba(' + o(r()*s) + ',' + o(r()*s) + ',' + o(r()*s) + ',1)';
 }
-
+var color_idx = 0;
 function dict2datasets(data) {
   var datasets = [];
   Object.keys(data).forEach(function (key) {
+    color_idx += 1;
     datasets.push(
       {
         label: key,
