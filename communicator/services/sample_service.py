@@ -1,6 +1,6 @@
 from communicator import db, app
 from communicator.models.sample import Sample
-
+import random
 
 class SampleService(object):
     """Handles the collection and syncing of data from various sources. """
@@ -15,8 +15,17 @@ class SampleService(object):
                 db.session.add(sample)
         db.session.commit()
 
+    def split_location_column(self):
+        samples = db.session.query(Sample).filter(Sample.station == None).all()
+        for sample in samples:
+            loc_code = str(sample.location)
+            if len(loc_code) == 4:
+                location, station = int(loc_code[:2]), int(loc_code[2:])
+                sample.location, sample.station = location, station
+        db.session.commit()
+
     def merge_similar_records(self):
-        """We have samples that are duplicates of each other because of the way the data was coming in
+        """ We have samples that are duplicates of each other because of the way the data was coming in
         earlier on.  This is a onetime fix that will compare all records based on the studient id, location
         and date, and merge them together using the new and correct bar code."""
 

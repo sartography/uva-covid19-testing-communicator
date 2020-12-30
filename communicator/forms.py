@@ -23,10 +23,8 @@ class InvitationForm(FlaskForm):
 
 
 class SearchForm(FlaskForm):
-    startDate = DateField("Start Date (YYYY-MM-DD)",id="startDate", validators=[validators.Optional()],render_kw={"class":"datepicker"})
-    endDate = DateField("End Date (YYYY-MM-DD)", id="endDate", validators=[validators.Optional()],render_kw={"class":"datepicker"})
+    dateRange = TextAreaField('Search Range', id="dateRange")
     studentId = TextAreaField('Student Id')
     location = TextAreaField('Location')
-    station = TextAreaField('Station')
     compute_id = TextAreaField('Compute ID')
     currently_showing = HiddenField(id="currently_showing")
