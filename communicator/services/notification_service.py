@@ -81,13 +81,13 @@ class NotificationService(object):
         link = self.get_link(sample)
         subject = "UVA: BE SAFE Notification"
         tracking_code = self._tracking_code()
-        text_body = render_template("result_email.txt",
+        text_body = render_template("pages/result_email.txt",
                                     link=link,
                                     base_url=self.URL_ROOT,
                                     sample=sample,
                                     tracking_code=tracking_code)
 
-        html_body = render_template("result_email.html",
+        html_body = render_template("pages/result_email.html",
                                     link=link,
                                     base_url=self.URL_ROOT,
                                     sample=sample,
@@ -162,7 +162,7 @@ class NotificationService(object):
 
         # Embed the logo image
         # This example assumes the image is in the current directory
-        fp = open(join(app.root_path, 'static', 'uva_logo.png'), 'rb')
+        fp = open(join(app.root_path, 'static', 'assets', 'img', 'brand', 'uva_logo.png'), 'rb')
         msgImage = MIMEImage(fp.read())
         fp.close()
         # Define the image's ID as referenced above
