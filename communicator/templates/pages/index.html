@@ -58,7 +58,9 @@
               <!-- Projects table -->
               <table class="table align-items-center table-flush">
                 <tbody>
+                  <input type="hidden" name = "currently_showing" />
                   {% for field in form if field.name != "csrf_token" %}
+                  {% if field.name != "currently_showing" %}
                   <tr>
 
                     <div class="form-field {{ field.widget.input_type }}">
@@ -73,11 +75,13 @@
 
                         {% for error in field.errors %}
                         <div class="form-field-error">{{ error }}</div>
+                        
                         {% endfor %}
                         {% endif %}
                     </div>
                     </td>
                   </tr>
+                  {% endif %}
                   {% endfor %}
                 </tbody>
               </table>
@@ -204,7 +208,7 @@
       },
       title: {
         display: true,
-        text: 'Sample count by day'
+        text: 'Average Count By Day For {{dates.range}}'
       }
     }
   });
@@ -229,7 +233,7 @@
       },
       title: {
         display: true,
-        text: 'Sample count by hour'
+        text: 'Average Count By Hour For {{dates.range}}'
       }
     }
   });
@@ -254,7 +258,7 @@
                         ticks: {
                             beginAtZero:true
                         },
-                        stacked: false
+                        stacked: true
                 }]
               },
       legend: {
@@ -313,10 +317,10 @@
   showLocation($('input[name="currently_showing"]').val());
 </script>
 <script>
-  var auto_refresh = setInterval(
-    function () {
-      submitform();
-    }, 30000);
+  // var auto_refresh = setInterval(
+  //   function () {
+  //     submitform();
+  //   }, 30000);
   function submitform() {
     $("#pageForm").submit();
   }
