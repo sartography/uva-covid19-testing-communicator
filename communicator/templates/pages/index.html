@@ -144,42 +144,42 @@
 
 
 <script>
-function random_rgba() {
-  var o = Math.round, r = Math.random, s = 255;
-  return 'rgba(' + o(r()*s) + ',' + o(r()*s) + ',' + o(r()*s) + ',1)';
-}
-var color_idx = 0;
-function dict2datasets(data) {
-  var datasets = [];
-  Object.keys(data).forEach(function (key) {
-    color_idx += 1;
-    datasets.push(
-      {
-        label: key,
-        fill: true,
-        borderColor: random_rgba(),
-        borderSkipped: "bottom",
-        borderWidth: 4,
-        borderCapStyle: 'butt',
-        data: data[key],
-      })
-  });
-  return datasets;
-}
+  function random_rgba() {
+    var o = Math.round, r = Math.random, s = 255;
+    return 'rgba(' + o(r()*s) + ',' + o(r()*s) + ',' + o(r()*s) + ',1)';
+  }
+  var dat = JSON.parse('{{dates | tojson }}');
+  var color_idx = 0;
+  function dict2datasets(data) {
+    var datasets = [];
+    Object.keys(data).forEach(function (key) {
+      color_idx += 1;
+      datasets.push(
+        {
+          label: key,
+          fill: true,
+          borderColor: random_rgba(),
+          borderSkipped: "bottom",
+          borderWidth: 4,
+          borderCapStyle: 'butt',
+          data: data[key],
+        })
+    });
+    return datasets;
+  }
 
   var overall_chart_data = JSON.parse('{{overall_chart_data | tojson }}');
   var overall_chart = dict2datasets(overall_chart_data);
 
 
   var  location_charts = {};
-  var location_chart_data = JSON.parse('{{location_charts_data | tojson}}');
+  var location_chart_data = JSON.parse('{{location_charts_data | tojson }}');
   
   Object.keys(location_chart_data).forEach(function (station) {
     location_charts[station] = dict2datasets(location_chart_data[station])
   });
 
   var overall_stat_data = JSON.parse('{{overall_stat_data | tojson }}');
-
   var location_stats_data = JSON.parse('{{location_stats_data | tojson }}');
 
   var weekday_totals = JSON.parse('{{ weekday_totals | tojson }}');
@@ -274,25 +274,15 @@ function dict2datasets(data) {
   });
 
   function station_legend(e, legendItem) {
-    per_location.config.data.datasets = overall_chart;
-
-    
-    per_location.config.options.legend.onClick = location_legend;
-    $('#stats_today').text(overall_stat_data.today);
-    $('#stats_one_week').text(overall_stat_data.one_week_ago);
-    $('#stats_two_weeks').text(overall_stat_data.two_week_ago);
-    $('#chart-title').text("Location Activity");
-    $('#location').val("");
-    //$('#stats_avg').text(overall_stat_data.average);
-    $('input[name="currently_showing"]').val("");
-    per_location.update();
-  };
+    showLocation("");
+    };
 
   function location_legend(e, legendItem) {
     showLocation(per_location.data.datasets[legendItem.datasetIndex].label);
   };
 
   function showLocation(loc_code) {
+    console.log(loc_code);
     if (loc_code != ""){
       $('#chart-title').text("Station Activity @ " + loc_code);
       per_location.config.data.datasets = location_charts[loc_code];
@@ -300,10 +290,23 @@ function dict2datasets(data) {
       $('#stats_today').text(location_stats_data[loc_code].today);
       $('#stats_one_week').text(location_stats_data[loc_code].one_week_ago);
       $('#stats_two_weeks').text(location_stats_data[loc_code].two_week_ago);
-      // $('#stats_avg').text(location_stats_data[num].average);
+      // $('#stats_avg').text(location_stats_data[loc_code].average);
 
       $('#location').val(loc_code);
       $('input[name="currently_showing"]').val(loc_code);
+      per_location.update();
+    } else {
+      per_location.config.data.datasets = overall_chart;
+      per_location.config.options.legend.onClick = location_legend;
+      
+      $('#stats_today').text(overall_stat_data.today);
+      $('#stats_one_week').text(overall_stat_data.one_week_ago);
+      $('#stats_two_weeks').text(overall_stat_data.two_week_ago);
+
+      $('#chart-title').text("Location Activity");
+      $('#location').val("");
+      
+      $('input[name="currently_showing"]').val("");
       per_location.update();
     }
   }
@@ -324,5 +327,5 @@ function dict2datasets(data) {
     opens: 'left',
   });
 });
-console.log($('input[name="dateRange"]').val('{{range}}'));
+$('input[name="dateRange"]').val('{{dates.range}}');
 </script>
