@@ -126,12 +126,39 @@ def page_not_found(e):
     # note that we set the 404 status explicitly
     return render_template('pages/404.html')
 
+def daterange(start, stop, days = 1, hours =  0):
+    if (type(start) == date):
+        start = date2datetime(start)
+    if (type(stop) == date):
+        stop = date2datetime(stop)
+    time = start
+    date_list = []
+    while time <= stop:
+        date_list.append(time)
+        time += timedelta(days=days,hours=hours)
+    return date_list
+    
 def date2datetime(_date):
     return datetime.combine(_date, datetime.min.time())
-def make_sample_histogram(samples, range, bins=10):
-    base = datetime.datetime.today()
-    date_list = [base - datetime.timedelta(days=x) for x in range(numdays)]
-    pass
+
+def make_sample_histogram(samples, _range=None):
+    if _range == None:
+        start = None
+        end = None
+        _range = (start,end)
+    days_in_search = (_range[0] - _range[1]).days
+    
+    days = 0
+    hours = 6 
+    bounds = daterange(_range[0], _range[1], days=days, hours=hours)
+    counts = [0 for i in range(len(bounds))]
+    for entry in samples:
+        for i in range(len(bounds) - 1):
+            if entry.date > bounds[i] and entry.date < bounds[i+1]:
+                counts[i] += 1
+                break
+    return bounds, counts
+
 @app.route('/', methods=['GET', 'POST'])
 @superuser
 def index():
@@ -213,7 +240,7 @@ def index():
     
     location_charts_data = {}
     overall_chart_data = {}
-    
+    dates = {}
     overall_stat_data = {
                     "one_week_ago":0,
                     "two_week_ago":0,
@@ -226,42 +253,30 @@ def index():
     one_week_ago = filters["end_date"] - timedelta(7)
     two_weeks_ago = one_week_ago - timedelta(7)
     chart_ticks = [] 
-
+    
     if filtered_samples.count() > 0:
-        date_range = (date2datetime(filters["start_date"]).timestamp(), date2datetime( filters["end_date"]).timestamp())
         if days_in_search <= 2: 
             bins = 9 * days_in_search
             timeFormat = "%b %e, %I:%M %p"
         else:
             bins =  days_in_search * 3
             timeFormat = "%m/%d/%Y"
-
-        _, bin_edges = np.histogram(np.array([]),range= date_range, bins = bins)
-        for i in range(len(bin_edges) - 1):
-            start = datetime.utcfromtimestamp(bin_edges[i])
-            stop = datetime.utcfromtimestamp(bin_edges[i+1])
-            
-            chart_ticks.append(start.strftime(timeFormat) + " - " + stop.strftime(timeFormat))
+        bounds = []
 
         for entry in filtered_samples:
             if entry.location not in location_charts_data:
                 location_charts_data[entry.location] = dict()
-                location_stats_data[entry.location] = {
-                    "one_week_ago" : 0,
-                    "two_week_ago" : 0,
-                    "today" : 0,
-                }
+                location_stats_data[entry.location] = { "one_week_ago" : 0,
+                                                        "two_week_ago" : 0,
+                                                        "today" : 0 }
 
             if entry.station not in location_charts_data[entry.location]:
                 samples_at_station = filtered_samples\
                             .filter(Sample.location == entry.location)\
                             .filter(Sample.station == entry.station)
 
-                counts, _ = np.histogram(np.array([_entry.date.timestamp() for _entry in samples_at_station]),\
-                                            range= date_range,\
-                                            bins = bins)
-
-                location_charts_data[entry.location][entry.station] = counts.tolist()
+                bounds, counts = make_sample_histogram(samples_at_station, (filters["start_date"],filters["end_date"]))
+                location_charts_data[entry.location][entry.station] = counts
                 
             weekday_totals[entry.date.weekday()] += 1
             hour_totals[entry.date.hour] += 1
@@ -272,15 +287,23 @@ def index():
                     location_stats_data[entry.location]["one_week_ago"] += 1
                     if entry.date.date() >= today:
                         location_stats_data[entry.location]["today"] += 1
+        chart_ticks = []
+        for i in range(len(bounds) - 1):
+            chart_ticks.append(f"{bounds[i].strftime(timeFormat)} - {bounds[i+1].strftime(timeFormat)}")
 
         for location in location_charts_data:            
             overall_stat_data["one_week_ago"] += location_stats_data[entry.location]["one_week_ago"]
             overall_stat_data["two_week_ago"] += location_stats_data[entry.location]["two_week_ago"]
             overall_stat_data["today"] += location_stats_data[entry.location]["today"]
-            overall_chart_data[location] = []
-            
-            overall_chart_data[location] = np.sum([location_charts_data[location][station] for station in location_charts_data[location]],axis=0).tolist()
 
+            overall_chart_data[location] = np.sum([location_charts_data[location][station] for station in location_charts_data[location]],axis=0).tolist()
+        
+        dates = {
+        "today" : filters["end_date"].strftime("%m/%d/%Y"),
+        "range" : filters["start_date"].strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(1)).strftime("%m/%d/%Y"),
+        "one_week_ago" : one_week_ago.strftime("%m/%d/%Y"),
+        "two_weeks_ago" : two_weeks_ago.strftime("%m/%d/%Y"),
+        }
     ################# Raw Samples Table ##############
     page = request.args.get(get_page_parameter(), type=int, default=1)
     pagination = Pagination(page=page, total=filtered_samples.count(
@@ -293,11 +316,11 @@ def index():
                            base_href=BASE_HREF,
                            content=render_template(
                                'pages/index.html',
-                               form=form,
-                               range=filters["start_date"].strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(1)).strftime("%m/%d/%Y"),
-                               table=table,
-                               action=action,
-                               pagination=pagination,
+                               form = form,
+                               dates = dates,
+                               table = table,
+                               action = action,
+                               pagination = pagination,
 
                                chart_ticks = chart_ticks,
                                overall_chart_data = overall_chart_data,
@@ -306,8 +329,8 @@ def index():
                                overall_stat_data = overall_stat_data,
                                location_stats_data = location_stats_data,
 
-                               weekday_totals=weekday_totals,
-                               hour_totals=hour_totals,
+                               weekday_totals = weekday_totals,
+                               hour_totals = hour_totals,
                            ))
 
  
