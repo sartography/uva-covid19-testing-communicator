@@ -287,6 +287,7 @@ def index():
                     location_stats_data[entry.location]["one_week_ago"] += 1
                     if entry.date.date() >= today:
                         location_stats_data[entry.location]["today"] += 1
+                        
         chart_ticks = []
         for i in range(len(bounds) - 1):
             chart_ticks.append(f"{bounds[i].strftime(timeFormat)} - {bounds[i+1].strftime(timeFormat)}")
