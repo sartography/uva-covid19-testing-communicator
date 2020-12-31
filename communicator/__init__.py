@@ -146,10 +146,16 @@ def make_sample_histogram(samples, _range=None):
         start = None
         end = None
         _range = (start,end)
-    days_in_search = (_range[0] - _range[1]).days
-    
-    days = 0
-    hours = 6 
+    days_in_search = (_range[1] - _range[0]).days
+    if days_in_search <= 1: 
+        hours = 2
+        days = 0
+    elif days_in_search <= 3:
+        hours = 4
+        days = 0
+    else:
+        hours = 0
+        days = 1
     bounds = daterange(_range[0], _range[1], days=days, hours=hours)
     counts = [0 for i in range(len(bounds))]
     for entry in samples:
@@ -255,12 +261,12 @@ def index():
     chart_ticks = [] 
     
     if filtered_samples.count() > 0:
-        if days_in_search <= 2: 
-            bins = 9 * days_in_search
-            timeFormat = "%b %e, %I:%M %p"
+        if days_in_search == 1: 
+            timeFormat = "%I:%M %p"
+        elif days_in_search <= 3:
+            timeFormat = "%m/%d %I %p"
         else:
-            bins =  days_in_search * 3
-            timeFormat = "%m/%d/%Y"
+            timeFormat = "%m/%d"
         bounds = []
 
         for entry in filtered_samples:
