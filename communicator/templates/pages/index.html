@@ -151,17 +151,25 @@
     var o = Math.round, r = Math.random, s = 255;
     return 'rgba(' + o(r()*s) + ',' + o(r()*s) + ',' + o(r()*s) + ',1)';
   }
-  var dat = JSON.parse('{{dates | tojson }}');
-  var color_idx = 0;
+  var color_idx = 1;
+  function getColor() {
+  const hue = color_idx * 137.508; // use golden angle approximation
+  if (color_idx == 10){
+    color_idx = 1;
+  } else {
+    color_idx += 1;
+  }
+  return `hsl(${Math.floor(hue)},100%,75%)`;
+}
+  
   function dict2datasets(data) {
     var datasets = [];
     Object.keys(data).forEach(function (key) {
-      color_idx += 1;
       datasets.push(
         {
           label: key,
           fill: true,
-          borderColor: random_rgba(),
+          borderColor: getColor(),
           borderSkipped: "bottom",
           borderWidth: 4,
           borderCapStyle: 'butt',
@@ -173,7 +181,6 @@
 
   var overall_chart_data = JSON.parse('{{overall_chart_data | tojson }}');
   var overall_chart = dict2datasets(overall_chart_data);
-
 
   var  location_charts = {};
   var location_chart_data = JSON.parse('{{location_charts_data | tojson }}');

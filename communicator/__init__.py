@@ -21,7 +21,7 @@ from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_paginate import Pagination, get_page_parameter
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
+from sqlalchemy import func, and_, case
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
 from flask_executor import Executor
@@ -119,7 +119,6 @@ def superuser(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
 @app.errorhandler(404)
 @superuser
 def page_not_found(e):
@@ -141,30 +140,6 @@ def daterange(start, stop, days = 1, hours =  0):
 def date2datetime(_date):
     return datetime.combine(_date, datetime.min.time())
 
-def make_sample_histogram(samples, _range=None):
-    if _range == None:
-        start = None
-        end = None
-        _range = (start,end)
-    days_in_search = (_range[1] - _range[0]).days
-    if days_in_search <= 1: 
-        hours = 2
-        days = 0
-    elif days_in_search <= 3:
-        hours = 4
-        days = 0
-    else:
-        hours = 0
-        days = 1
-    bounds = daterange(_range[0], _range[1], days=days, hours=hours)
-    counts = [0 for i in range(len(bounds))]
-    for entry in samples:
-        for i in range(len(bounds) - 1):
-            if entry.date > bounds[i] and entry.date < bounds[i+1]:
-                counts[i] += 1
-                break
-    return bounds, counts
-
 @app.route('/', methods=['GET', 'POST'])
 @superuser
 def index():
@@ -173,8 +148,7 @@ def index():
 
     form = forms.SearchForm(request.form)
     action = BASE_HREF + "/"
-    samples = db.session.query(Sample).order_by(Sample.date.desc())
-
+    
     if request.method == "POST" or request.args.get('cancel') == 'true':
         session["index_filter"] = {}  # Clear out the session if it is invalid.
     
@@ -190,7 +164,7 @@ def index():
             session["index_filter"]["location"] = form.location.data
         if form.compute_id.data:
             session["index_filter"]["compute_id"] = form.compute_id.data
-
+    samples = db.session.query(Sample).order_by(Sample.date.desc())
     # Store previous form submission settings in the session, so they are preseved through pagination.
     filtered_samples = samples
     if "index_filter" in session:
@@ -241,6 +215,7 @@ def index():
         csv = __make_csv(filtered_samples)
         return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
     
+    
     weekday_totals = [0 for _ in range(7)]  # Mon, Tues, ...
     hour_totals = [0 for _ in range(24)]  # 12AM, 1AM, ...
     
@@ -260,53 +235,67 @@ def index():
     two_weeks_ago = one_week_ago - timedelta(7)
     chart_ticks = [] 
     
-    if filtered_samples.count() > 0:
-        if days_in_search == 1: 
-            timeFormat = "%I:%M %p"
-        elif days_in_search <= 3:
-            timeFormat = "%m/%d %I %p"
-        else:
-            timeFormat = "%m/%d"
-        bounds = []
+    if days_in_search <= 1: 
+        timeFormat = "%I:%M %p"
+        hours = 2
+        days = 0
+    elif days_in_search <= 3:
+        timeFormat = "%m/%d %I %p"
+        hours = 4
+        days = 0
+    else:
+        timeFormat = "%m/%d"
+        hours = 0
+        days = 1
 
-        for entry in filtered_samples:
-            if entry.location not in location_charts_data:
-                location_charts_data[entry.location] = dict()
-                location_stats_data[entry.location] = { "one_week_ago" : 0,
-                                                        "two_week_ago" : 0,
-                                                        "today" : 0 }
+    bounds = daterange(filters["start_date"], filters["end_date"], days=days, hours=hours)
+    cases = [ ]  
+    
+    for i in range(len(bounds) - 1):
+        cases.append(func.count(case([(and_(Sample.date >= bounds[i], Sample.date <= bounds[i+1]), 1)])))
+    
+    q = db.session.query(Sample.location, Sample.station,
+        *cases\
+        ).group_by(Sample.location, Sample.station)
 
-            if entry.station not in location_charts_data[entry.location]:
-                samples_at_station = filtered_samples\
-                            .filter(Sample.location == entry.location)\
-                            .filter(Sample.station == entry.station)
+    for result in q:
+        location, station = result[0], result[1]
+        if any(x > 0 for x in result[2:]):
+            if location not in location_charts_data: location_charts_data[location] = dict()
+            location_charts_data[location][station] = result[2:]
 
-                bounds, counts = make_sample_histogram(samples_at_station, (filters["start_date"],filters["end_date"]))
-                location_charts_data[entry.location][entry.station] = counts
-                
-            weekday_totals[entry.date.weekday()] += 1
-            hour_totals[entry.date.hour] += 1
+    # from sqlalchemy.dialects import postgresql
+    # logging.info(str(q.statement.compile(dialect=postgresql.dialect())))
 
-            if entry.date.date() >= two_weeks_ago:
-                location_stats_data[entry.location]["two_week_ago"] += 1
-                if entry.date.date() >= one_week_ago:
-                    location_stats_data[entry.location]["one_week_ago"] += 1
-                    if entry.date.date() >= today:
-                        location_stats_data[entry.location]["today"] += 1
-                        
-        chart_ticks = []
-        for i in range(len(bounds) - 1):
-            chart_ticks.append(f"{bounds[i].strftime(timeFormat)} - {bounds[i+1].strftime(timeFormat)}")
+    for location in location_charts_data: 
+        location_stats_data[location] = {
+                                        "one_week_ago" : 23, 
+                                        "two_week_ago" : 543, 
+                                        "today" : 2623 
+                                        }
+        for station in location_charts_data[location]:
+            pass
+            
+    chart_ticks = []
+    for i in range(len(bounds) - 1):
+        chart_ticks.append(f"{bounds[i].strftime(timeFormat)} - {bounds[i+1].strftime(timeFormat)}")
 
-        for location in location_charts_data:            
-            overall_stat_data["one_week_ago"] += location_stats_data[entry.location]["one_week_ago"]
-            overall_stat_data["two_week_ago"] += location_stats_data[entry.location]["two_week_ago"]
-            overall_stat_data["today"] += location_stats_data[entry.location]["today"]
+    for location in location_stats_data:     
+        overall_chart_data[location] = np.sum([location_charts_data[location][station] for station in location_charts_data[location]],axis=0).tolist()
+       
+        # overall_stat_data["one_week_ago"] += location_stats_data[entry.location]["one_week_ago"]
+        # overall_stat_data["two_week_ago"] += location_stats_data[entry.location]["two_week_ago"]
+        # overall_stat_data["today"] += location_stats_data[entry.location]["today"]
+    
+    for entry in filtered_samples:
+        weekday_totals[entry.date.weekday()] += 1
+        hour_totals[entry.date.hour] += 1
 
-            overall_chart_data[location] = np.sum([location_charts_data[location][station] for station in location_charts_data[location]],axis=0).tolist()
-        
-        dates = {
-        "today" : filters["end_date"].strftime("%m/%d/%Y"),
+    weekday_totals = [round(i/days_in_search,2) for i in weekday_totals]  # Mon, Tues, ...
+    hour_totals = [round(i/days_in_search,2) for i in hour_totals]  # 12AM, 1AM, ...
+    
+    dates = {
+        "today" : (filters["end_date"] - timedelta(1)).strftime("%m/%d/%Y"),
         "range" : filters["start_date"].strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(1)).strftime("%m/%d/%Y"),
         "one_week_ago" : one_week_ago.strftime("%m/%d/%Y"),
         "two_weeks_ago" : two_weeks_ago.strftime("%m/%d/%Y"),
@@ -339,21 +328,6 @@ def index():
                                weekday_totals = weekday_totals,
                                hour_totals = hour_totals,
                            ))
-
- 
-    # # Check for Unresponsive
-    # for loc_code in active_stations:
-    #     if loc_code not in location_data:
-    #         location_dict["datasets"].append({
-    #             "label": loc_code,
-    #             "borderColor": f'rgba(128,128,128,.7)',
-    #             "pointBorderColor": f'rgba(128,128,128,1)',
-    #             "borderWidth": 10,
-    #             "data": [{
-    #                 "x": session["index_filter"]["start_date"], "y": i
-    #             }, ],
-    #         })
-    #     i += 1
 
 @app.route('/activate', methods=['GET', 'POST'])
 @superuser

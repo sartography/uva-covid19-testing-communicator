@@ -102,7 +102,7 @@ body
     text-align: left;
 
     color: #525f7f;
-    background-color: #f8f9fe;
+    background-color: #393b83;
 }
 
 [tabindex='-1']:focus
@@ -7927,7 +7927,7 @@ button.close
 
 .bg-primary
 {
-    background-color: #5e72e4 !important;
+    background-color: #e27406 !important
 }
 
 a.bg-primary:hover,
