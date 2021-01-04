@@ -191,6 +191,7 @@ def apply_filters(query, session):
 
 def ingest_form(form):
     pass
+
 def group_columns(data):
     grouped_data = []
     for entry in data:
@@ -244,10 +245,15 @@ def index():
         csv = __make_csv(filtered_samples)
         return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
     
-    location_charts_data = {}
+    daily_charts_data = {}
     hourly_chart_data = {}
     weekday_chart_data = {}
-    overall_chart_data = {}
+
+    overall_chart_data = {
+        "daily":{},
+        "hourly":{},
+        "weekday":{}
+    }
 
     important_dates = {}
     overall_stat_data = {
@@ -278,7 +284,6 @@ def index():
     
     # Count by Day
     bounds = daterange(filters["start_date"], filters["end_date"], days=days, hours=hours)
-    chart_ticks = []
     for i in range(len(bounds) - 1):
         chart_ticks.append(f"{bounds[i].strftime(timeFormat)} - {bounds[i+1].strftime(timeFormat)}")
 
@@ -290,12 +295,12 @@ def index():
         *cases\
         ).group_by(Sample.location, Sample.station)
 
-    q, filters = apply_filters(q , session)
+    q, filters = apply_filters(q, session)
 
     for result in q:
         location, station = result[0], result[1]
-        if location not in location_charts_data: location_charts_data[location] = dict()
-        location_charts_data[location][station] = result[2:]
+        if location not in daily_charts_data: daily_charts_data[location] = dict()
+        daily_charts_data[location][station] = result[2:]
 
     # Count by hour
     cases = [ ]  
@@ -309,8 +314,10 @@ def index():
     q, filters = apply_filters(q, session)
 
     for result in q:
-        location = result[0]
-        hourly_chart_data[location] = result[1:]
+        location, station = result[0], result[1]
+        if location not in hourly_chart_data: hourly_chart_data[location] = dict()
+        hourly_chart_data[location][station] = [i/days_in_search for i in result[2:]]
+        # logging.info(hourly_chart_data[location][station])
     
     # Count by weekday
     cases = [ ]  
@@ -324,8 +331,9 @@ def index():
     q, filters = apply_filters(q , session)
 
     for result in q:
-        location = result[0]
-        weekday_chart_data[location] = [i/days_in_search for i in result[1:]]
+        location, station = result[0], result[1]
+        if location not in weekday_chart_data: weekday_chart_data[location] = dict()
+        weekday_chart_data[location][station] = [i/days_in_search for i in result[1:]]
     # Count by range
     cases = [func.count(case([(and_(Sample.date >= two_weeks_ago, Sample.date <= filters["end_date"]), 1)])),
             func.count(case([(and_(Sample.date >= one_week_ago, Sample.date <= filters["end_date"]), 1)])),
@@ -346,7 +354,9 @@ def index():
 
     # Aggregate results 
     for location in location_stats_data:     
-        overall_chart_data[location] = np.sum([location_charts_data[location][station] for station in location_charts_data[location]],axis=0).tolist()
+        overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0).tolist()
+        overall_chart_data["hourly"][location] = np.sum([hourly_chart_data[location][station] for station in hourly_chart_data[location]],axis=0).tolist()
+        overall_chart_data["weekday"][location] = np.sum([weekday_chart_data[location][station] for station in weekday_chart_data[location]],axis=0).tolist()
     
         overall_stat_data["one_week_ago"] += location_stats_data[location]["one_week_ago"]
         overall_stat_data["two_week_ago"] += location_stats_data[location]["two_week_ago"]
@@ -378,7 +388,7 @@ def index():
 
                                chart_ticks = chart_ticks,
                                overall_chart_data = overall_chart_data,
-                               location_charts_data = location_charts_data,
+                               daily_charts_data = daily_charts_data,
                                hourly_chart_data = hourly_chart_data,
                                weekday_chart_data = weekday_chart_data,
 
