@@ -94,7 +94,7 @@ from communicator.models import Sample
 from flask_table import Table, Col, DatetimeCol, BoolCol, NestedTableCol
 from communicator.tables import SampleTable
 # Convert list of allowed origins to list of regexes
-origins_re = [r"^https?:\/\/%s(.*)" % o.replace('.', '\.')
+origins_re = [r"^https?:\/\/%s(.*)" % o.replace('.', r'\.')
               for o in app.config['CORS_ALLOW_ORIGINS']]
 cors = CORS(connexion_app.app, origins=origins_re)
 
@@ -191,9 +191,28 @@ def apply_filters(query, session):
 
 def ingest_form(form):
     pass
+def group_columns(data):
+    grouped_data = []
+    for entry in data:
+        grouped_data.append({"barcode":entry.barcode,
+                             "date":entry.date,
+                             "notifications":entry.notifications,
 
-def group_columns(table):
-    pass 
+                             "ids":[dict(type = "computing_id",
+                                         data = entry.computing_id),
+                                    dict(type = "student_id",
+                                         data = entry.student_id)],
+                             "contacts":[dict(type="phone",
+                                              data=entry.phone),
+                                         dict(type="email",
+                                              data=entry.email)],
+                             "taken_at":[dict(type="location",
+                                              data=entry.location),
+                                         dict(type="station",
+                                              data=entry.station)],
+                             }
+                             )
+    return grouped_data
 
 @app.route('/', methods=['GET', 'POST'])
 @superuser
@@ -343,28 +362,8 @@ def index():
     page = request.args.get(get_page_parameter(), type=int, default=1)
     pagination = Pagination(page=page, total=filtered_samples.count(
     ), search=False, record_name='samples', css_framework='bootstrap4')
-    grouped_data = []
-    for entry in filtered_samples[page * 10:(page * 10) + 10]:
-        logging.info(entry.notifications)
-        grouped_data.append({"barcode":entry.barcode,
-                             "date":entry.date,
-                             "notifications":entry.notifications,
-
-                             "ids":[dict(type = "computing_id",
-                                         data = entry.computing_id),
-                                    dict(type = "student_id",
-                                         data = entry.student_id)],
-                             "contacts":[dict(type="phone",
-                                              data=entry.phone),
-                                         dict(type="email",
-                                              data=entry.email)],
-                             "taken_at":[dict(type="location",
-                                              data=entry.location),
-                                         dict(type="station",
-                                              data=entry.station)],
-                             }
-                             )
-    table = SampleTable(grouped_data)
+    
+    table = SampleTable(group_columns(filtered_samples[page * 10:(page * 10) + 10]))
     
 
     return render_template('layouts/default.html',
