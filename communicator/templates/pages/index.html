@@ -1,4 +1,5 @@
 <!-- Main content -->
+
 <div class="main-content">
 
   <!-- Top navbar -->
@@ -182,6 +183,12 @@
   var overall_chart_data = JSON.parse('{{overall_chart_data | tojson }}');
   var overall_chart = dict2datasets(overall_chart_data);
 
+  var hourly_chart_data = JSON.parse('{{hourly_chart_data | tojson }}');
+  var hourly_chart = dict2datasets(hourly_chart_data);
+
+  var weekday_chart_data = JSON.parse('{{weekday_chart_data | tojson }}');
+  var weekday_chart = dict2datasets(weekday_chart_data);
+
   var  location_charts = {};
   var location_chart_data = JSON.parse('{{location_charts_data | tojson }}');
   
@@ -199,13 +206,7 @@
     type: 'horizontalBar',
     data: {
       labels: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      datasets: [
-        {
-          label: "Total Samples",
-          backgroundColor: ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850", "#7e3eb2", "#1c41bf"],
-          data: weekday_totals
-        }
-      ]
+      datasets: weekday_chart
     },
     options: {
       responsive: true,
@@ -213,6 +214,15 @@
       legend: {
         display: false
       },
+      scales: {
+                xAxes: [{ stacked: true }],
+                yAxes: [{
+                        ticks: {
+                            beginAtZero:true
+                        },
+                        stacked: true
+                }]
+              },
       title: {
         display: true,
         text: 'Average Count By Day For {{dates.range}}'
@@ -224,13 +234,7 @@
     type: 'horizontalBar',
     data: {
       labels: ["1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 AM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM", "12 PM",],
-      datasets: [
-        {
-          label: "Sample Count",
-          backgroundColor: ["#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd", "#3e95cd",],
-          data: hour_totals
-        }
-      ]
+      datasets: hourly_chart
     },
     options: {
       responsive: true,
@@ -238,6 +242,15 @@
       legend: {
         display: false
       },
+      scales: {
+                xAxes: [{ stacked: true }],
+                yAxes: [{
+                        ticks: {
+                            beginAtZero:true
+                        },
+                        stacked: true
+                }]
+              },
       title: {
         display: true,
         text: 'Average Count By Hour For {{dates.range}}'
