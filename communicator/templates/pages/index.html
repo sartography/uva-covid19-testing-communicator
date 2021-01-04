@@ -116,7 +116,7 @@
       </div>
     </div>
 
-    <div class="row mt-2">
+    <div class="row mt-4">
       <div class="col mb-5 mb-xl-0">
         <div class="card shadow">
           <div class="card-header border-0">
@@ -198,9 +198,6 @@
 
   var overall_stat_data = JSON.parse('{{overall_stat_data | tojson }}');
   var location_stats_data = JSON.parse('{{location_stats_data | tojson }}');
-
-  var weekday_totals = JSON.parse('{{ weekday_totals | tojson }}');
-  var hour_totals = JSON.parse('{{ hour_totals | tojson }}');
 
   var per_weekday = new Chart(document.getElementById('week-chart').getContext('2d'), {
     type: 'horizontalBar',

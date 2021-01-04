@@ -91,6 +91,7 @@ from communicator import models
 from communicator import api
 from communicator import forms
 from communicator.models import Sample
+from flask_table import Table, Col, DatetimeCol, BoolCol, NestedTableCol
 from communicator.tables import SampleTable
 # Convert list of allowed origins to list of regexes
 origins_re = [r"^https?:\/\/%s(.*)" % o.replace('.', '\.')
@@ -190,6 +191,10 @@ def apply_filters(query, session):
 
 def ingest_form(form):
     pass
+
+def group_columns(table):
+    pass 
+
 @app.route('/', methods=['GET', 'POST'])
 @superuser
 def index():
@@ -216,19 +221,16 @@ def index():
     # Store previous form submission settings in the session, so they are preseved through pagination.
     filtered_samples, filters = apply_filters(samples, session)
 
-    # if request.args.get('download') == 'true':
-    #     csv = __make_csv(filtered_samples)
-    #     return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
-    
-    weekday_totals = [0 for _ in range(7)]  # Mon, Tues, ...
-    hour_totals = [0 for _ in range(24)]  # 12AM, 1AM, ...
+    if request.args.get('download') == 'true':
+        csv = __make_csv(filtered_samples)
+        return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
     
     location_charts_data = {}
     hourly_chart_data = {}
     weekday_chart_data = {}
-
     overall_chart_data = {}
-    dates = {}
+
+    important_dates = {}
     overall_stat_data = {
                     "one_week_ago":0,
                     "two_week_ago":0,
@@ -257,8 +259,11 @@ def index():
     
     # Count by Day
     bounds = daterange(filters["start_date"], filters["end_date"], days=days, hours=hours)
+    chart_ticks = []
+    for i in range(len(bounds) - 1):
+        chart_ticks.append(f"{bounds[i].strftime(timeFormat)} - {bounds[i+1].strftime(timeFormat)}")
+
     cases = [ ]  
-    
     for i in range(len(bounds) - 1):
         cases.append(func.count(case([(and_(Sample.date >= bounds[i], Sample.date <= bounds[i+1]), 1)])))
     
@@ -272,11 +277,6 @@ def index():
         location, station = result[0], result[1]
         if location not in location_charts_data: location_charts_data[location] = dict()
         location_charts_data[location][station] = result[2:]
-        bounds = daterange(filters["start_date"], filters["end_date"], days=days, hours=hours)
-    
-    chart_ticks = []
-    for i in range(len(bounds) - 1):
-        chart_ticks.append(f"{bounds[i].strftime(timeFormat)} - {bounds[i+1].strftime(timeFormat)}")
 
     # Count by hour
     cases = [ ]  
@@ -306,8 +306,8 @@ def index():
 
     for result in q:
         location = result[0]
-        weekday_chart_data[location] = result[1:]
-    # Count by sfs
+        weekday_chart_data[location] = [i/days_in_search for i in result[1:]]
+    # Count by range
     cases = [func.count(case([(and_(Sample.date >= two_weeks_ago, Sample.date <= filters["end_date"]), 1)])),
             func.count(case([(and_(Sample.date >= one_week_ago, Sample.date <= filters["end_date"]), 1)])),
             func.count(case([(and_(Sample.date >= today, Sample.date <= filters["end_date"]), 1)]))]  
@@ -320,13 +320,10 @@ def index():
 
     for result in q:
         location = result[0]
-        logging.info(result)
         if location not in location_stats_data: location_stats_data[location] = dict()
         location_stats_data[location]["two_week_ago"] = result[1]
         location_stats_data[location]["one_week_ago"] = result[2]
         location_stats_data[location]["today"] = result[3]
-        
-        weekday_chart_data[location] = result[1:]
 
     # Aggregate results 
     for location in location_stats_data:     
@@ -346,9 +343,29 @@ def index():
     page = request.args.get(get_page_parameter(), type=int, default=1)
     pagination = Pagination(page=page, total=filtered_samples.count(
     ), search=False, record_name='samples', css_framework='bootstrap4')
+    grouped_data = []
+    for entry in filtered_samples[page * 10:(page * 10) + 10]:
+        logging.info(entry.notifications)
+        grouped_data.append({"barcode":entry.barcode,
+                             "date":entry.date,
+                             "notifications":entry.notifications,
 
-    table = SampleTable(filtered_samples.paginate(
-        page, 10, error_out=False).items)
+                             "ids":[dict(type = "computing_id",
+                                         data = entry.computing_id),
+                                    dict(type = "student_id",
+                                         data = entry.student_id)],
+                             "contacts":[dict(type="phone",
+                                              data=entry.phone),
+                                         dict(type="email",
+                                              data=entry.email)],
+                             "taken_at":[dict(type="location",
+                                              data=entry.location),
+                                         dict(type="station",
+                                              data=entry.station)],
+                             }
+                             )
+    table = SampleTable(grouped_data)
+    
 
     return render_template('layouts/default.html',
                            base_href=BASE_HREF,
@@ -368,9 +385,6 @@ def index():
 
                                overall_stat_data = overall_stat_data,
                                location_stats_data = location_stats_data,
-
-                               weekday_totals = weekday_totals,
-                               hour_totals = hour_totals,
                            ))
 
 @app.route('/activate', methods=['GET', 'POST'])

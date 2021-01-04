@@ -26,19 +26,20 @@ class NotificationTable(Table):
     successful = BoolCol('Success?')
     error_message = Col('error')
 
+class NestedDataColumn(Table):
+    type = Col('Type')
+    data = Col('Data')
 
 class SampleTable(Table):
     def sort_url(self, col_id, reverse=False):
         pass
     classes = ["table","align-items-center","table-flush"]
     barcode = Col('Barcode')
-    student_id = Col('Student Id')  # TODO: Pad with leading 0s to 9 digits
-    computing_id = Col('Computing Id')
     date = BetterDatetimeCol('Date', "medium", tzinfo=get_timezone('US/Eastern'), locale='en')
-    location = Col('Location')  # TODO: Pad with leading 0s to 4 digits
-    station = Col('Station')  # TODO: Pad with leading 0s to 4 digits
-    phone = Col('Phone')
-    email = Col('Email')
+    # station = Col('Station')  # TODO: Pad with leading 0s to 4 digits
+    ids = NestedTableCol('IDs', NestedDataColumn)
+    taken_at = NestedTableCol('Taken at', NestedDataColumn)  # TODO: Pad with leading 0s to 4 digits
+    contacts = NestedTableCol('contacts', NestedDataColumn)
     notifications = NestedTableCol('notifications', NotificationTable)
 
 class IvyFileTable(Table):
