@@ -317,7 +317,6 @@ def index():
         location, station = result[0], result[1]
         if location not in hourly_charts_data: hourly_charts_data[location] = dict()
         hourly_charts_data[location][station] = [i/days_in_search for i in result[2:]]
-        # logging.info(hourly_charts_data[location][station])
     
     # Count by weekday
     cases = [ ]  
@@ -373,7 +372,7 @@ def index():
     pagination = Pagination(page=page, total=filtered_samples.count(
     ), search=False, record_name='samples', css_framework='bootstrap4')
     
-    table = SampleTable(group_columns(filtered_samples[page * 10:(page * 10) + 10]))
+    table = SampleTable(group_columns(filtered_samples[(page - 1) * 10:((page - 1) * 10) + 10]))
     
 
     return render_template('layouts/default.html',
