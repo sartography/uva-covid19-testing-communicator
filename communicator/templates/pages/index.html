@@ -180,17 +180,17 @@
     return datasets;
   }
 
-  var overall_chart_data = JSON.parse('{{overall_chart_data | tojson }}');
+  var overall_chart_data = JSON.parse('{{overall_chart_data.daily | tojson }}');
   var overall_chart = dict2datasets(overall_chart_data);
 
-  var hourly_chart_data = JSON.parse('{{hourly_chart_data | tojson }}');
+  var hourly_chart_data = JSON.parse('{{overall_chart_data.hourly | tojson }}');
   var hourly_chart = dict2datasets(hourly_chart_data);
 
-  var weekday_chart_data = JSON.parse('{{weekday_chart_data | tojson }}');
+  var weekday_chart_data = JSON.parse('{{overall_chart_data.weekday | tojson }}');
   var weekday_chart = dict2datasets(weekday_chart_data);
 
   var  location_charts = {};
-  var location_chart_data = JSON.parse('{{location_charts_data | tojson }}');
+  var location_chart_data = JSON.parse('{{daily_charts_data | tojson }}');
   
   Object.keys(location_chart_data).forEach(function (station) {
     location_charts[station] = dict2datasets(location_chart_data[station])
@@ -334,10 +334,6 @@
   showLocation($('input[name="currently_showing"]').val());
 </script>
 <script>
-  // var auto_refresh = setInterval(
-  //   function () {
-  //     submitform();
-  //   }, 30000);
   function submitform() {
     $("#pageForm").submit();
   }
