@@ -180,16 +180,26 @@
     return datasets;
   }
 
-  var overall_chart_data = JSON.parse('{{overall_chart_data.daily | tojson }}');
-  var overall_chart = dict2datasets(overall_chart_data);
+  var overall_charts = {};
+  overall_charts.daily = dict2datasets(JSON.parse('{{overall_chart_data.daily  | tojson }}'));
+  overall_charts.hourly = dict2datasets(JSON.parse('{{overall_chart_data.hourly | tojson }}'));
+  overall_charts.weekday = dict2datasets(JSON.parse('{{overall_chart_data.weekday | tojson }}'));
 
-  var hourly_chart_data = JSON.parse('{{overall_chart_data.hourly | tojson }}');
-  var hourly_chart = dict2datasets(hourly_chart_data);
+  var hourly_charts = {};
+  var hourly_charts_data = JSON.parse('{{hourly_charts_data | tojson }}');
 
-  var weekday_chart_data = JSON.parse('{{overall_chart_data.weekday | tojson }}');
-  var weekday_chart = dict2datasets(weekday_chart_data);
+  Object.keys(hourly_charts_data).forEach(function (location) {
+    hourly_charts[location] = dict2datasets(hourly_charts_data[location])
+  });
 
-  var  location_charts = {};
+  var weekday_charts = {}; 
+  var weekday_charts_data = JSON.parse('{{weekday_charts_data | tojson }}');
+  
+  Object.keys(weekday_charts_data).forEach(function (location) {
+    weekday_charts[location] = dict2datasets(weekday_charts_data[location])
+  });
+
+  var location_charts = {};
   var location_chart_data = JSON.parse('{{daily_charts_data | tojson }}');
   
   Object.keys(location_chart_data).forEach(function (station) {
@@ -203,7 +213,7 @@
     type: 'horizontalBar',
     data: {
       labels: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      datasets: weekday_chart
+      datasets: overall_charts.weekday
     },
     options: {
       responsive: true,
@@ -231,7 +241,7 @@
     type: 'horizontalBar',
     data: {
       labels: ["1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 AM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM", "12 PM",],
-      datasets: hourly_chart
+      datasets: overall_charts.hourly
     },
     options: {
       responsive: true,
@@ -258,7 +268,7 @@
   var per_location = new Chart(document.getElementById('data-chart').getContext('2d'), {
     // The type of chart we want to create
     type: 'bar',
-    data: {datasets: overall_chart,
+    data: {datasets: overall_charts.daily,
       labels: JSON.parse('{{chart_ticks | tojson }}')
     },
 
@@ -302,21 +312,23 @@
   };
 
   function showLocation(loc_code) {
-    console.log(loc_code);
     if (loc_code != ""){
       $('#chart-title').text("Station Activity @ " + loc_code);
       per_location.config.data.datasets = location_charts[loc_code];
+      per_hour.config.data.datasets = hourly_charts[loc_code];
+      per_weekday.config.data.datasets = weekday_charts[loc_code];
+
       per_location.config.options.legend.onClick = station_legend;
       $('#stats_today').text(location_stats_data[loc_code].today);
       $('#stats_one_week').text(location_stats_data[loc_code].one_week_ago);
       $('#stats_two_weeks').text(location_stats_data[loc_code].two_week_ago);
-      // $('#stats_avg').text(location_stats_data[loc_code].average);
 
       $('#location').val(loc_code);
-      $('input[name="currently_showing"]').val(loc_code);
-      per_location.update();
+      // $('input[name="currently_showing"]').val(loc_code);
     } else {
-      per_location.config.data.datasets = overall_chart;
+      per_location.config.data.datasets = overall_charts.daily;
+      per_hour.config.data.datasets = overall_charts.hourly;
+      per_weekday.config.data.datasets = overall_charts.weekday;
       per_location.config.options.legend.onClick = location_legend;
       
       $('#stats_today').text(overall_stat_data.today);
@@ -326,9 +338,11 @@
       $('#chart-title').text("Location Activity");
       $('#location').val("");
       
-      $('input[name="currently_showing"]').val("");
-      per_location.update();
+      // $('input[name="currently_showing"]').val("");
     }
+      per_location.update();
+      per_hour.update();
+      per_weekday.update();
   }
 
   showLocation($('input[name="currently_showing"]').val());

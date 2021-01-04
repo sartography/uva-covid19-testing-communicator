@@ -246,8 +246,8 @@ def index():
         return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
     
     daily_charts_data = {}
-    hourly_chart_data = {}
-    weekday_chart_data = {}
+    hourly_charts_data = {}
+    weekday_charts_data = {}
 
     overall_chart_data = {
         "daily":{},
@@ -315,25 +315,25 @@ def index():
 
     for result in q:
         location, station = result[0], result[1]
-        if location not in hourly_chart_data: hourly_chart_data[location] = dict()
-        hourly_chart_data[location][station] = [i/days_in_search for i in result[2:]]
-        # logging.info(hourly_chart_data[location][station])
+        if location not in hourly_charts_data: hourly_charts_data[location] = dict()
+        hourly_charts_data[location][station] = [i/days_in_search for i in result[2:]]
+        # logging.info(hourly_charts_data[location][station])
     
     # Count by weekday
     cases = [ ]  
     for i in range(7):
         cases.append(func.count(case([(func.extract('dow', Sample.date) == i, 1)])))
     
-    q = db.session.query(Sample.location,
+    q = db.session.query(Sample.location, Sample.station,
         *cases\
-        ).group_by(Sample.location)
+        ).group_by(Sample.location,Sample.station)
 
     q, filters = apply_filters(q , session)
 
     for result in q:
         location, station = result[0], result[1]
-        if location not in weekday_chart_data: weekday_chart_data[location] = dict()
-        weekday_chart_data[location][station] = [i/days_in_search for i in result[1:]]
+        if location not in weekday_charts_data: weekday_charts_data[location] = dict()
+        weekday_charts_data[location][station] = [i/days_in_search for i in result[2:]]
     # Count by range
     cases = [func.count(case([(and_(Sample.date >= two_weeks_ago, Sample.date <= filters["end_date"]), 1)])),
             func.count(case([(and_(Sample.date >= one_week_ago, Sample.date <= filters["end_date"]), 1)])),
@@ -355,8 +355,8 @@ def index():
     # Aggregate results 
     for location in location_stats_data:     
         overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0).tolist()
-        overall_chart_data["hourly"][location] = np.sum([hourly_chart_data[location][station] for station in hourly_chart_data[location]],axis=0).tolist()
-        overall_chart_data["weekday"][location] = np.sum([weekday_chart_data[location][station] for station in weekday_chart_data[location]],axis=0).tolist()
+        overall_chart_data["hourly"][location] = np.sum([hourly_charts_data[location][station] for station in hourly_charts_data[location]],axis=0).tolist()
+        overall_chart_data["weekday"][location] = np.sum([weekday_charts_data[location][station] for station in weekday_charts_data[location]],axis=0).tolist()
     
         overall_stat_data["one_week_ago"] += location_stats_data[location]["one_week_ago"]
         overall_stat_data["two_week_ago"] += location_stats_data[location]["two_week_ago"]
@@ -389,8 +389,8 @@ def index():
                                chart_ticks = chart_ticks,
                                overall_chart_data = overall_chart_data,
                                daily_charts_data = daily_charts_data,
-                               hourly_chart_data = hourly_chart_data,
-                               weekday_chart_data = weekday_chart_data,
+                               hourly_charts_data = hourly_charts_data,
+                               weekday_charts_data = weekday_charts_data,
 
                                overall_stat_data = overall_stat_data,
                                location_stats_data = location_stats_data,
