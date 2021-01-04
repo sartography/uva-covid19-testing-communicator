@@ -14,7 +14,7 @@
 
   <!-- Header -->
   {% include 'includes/top-stats.html' %}
-  <script src="{{url_for('static', filename='assets/js/graph.js')}}"></script> 
+  <script src="{{url_for('static', filename='assets/js/graph.js')}}"></script>
 
   <!-- Page content -->
   <div class="container-fluid mt--7">
@@ -48,7 +48,8 @@
                   <h3 class="mb-0">Search</h3>
                 </div>
                 <div class="col text-right mr-2">
-                  <button class="btn btn-sm btn-primary" onclick="$('input[name=\'dateRange\']').val('');submitform();">Search Today</button>
+                  <button class="btn btn-sm btn-primary"
+                    onclick="$('input[name=\'dateRange\']').val('');submitform();">Search Today</button>
                 </div>
                 <div class="col text-right mr-2">
                   <button type="submit" class="btn btn-sm btn-primary">Run Search</button>
@@ -59,7 +60,7 @@
               <!-- Projects table -->
               <table class="table align-items-center table-flush">
                 <tbody>
-                  <input type="hidden" name = "currently_showing" />
+                  <input type="hidden" name="currently_showing" />
                   {% for field in form if field.name != "csrf_token" %}
                   {% if field.name != "currently_showing" %}
                   <tr>
@@ -76,7 +77,7 @@
 
                         {% for error in field.errors %}
                         <div class="form-field-error">{{ error }}</div>
-                        
+
                         {% endfor %}
                         {% endif %}
                     </div>
@@ -150,19 +151,24 @@
 <script>
   function random_rgba() {
     var o = Math.round, r = Math.random, s = 255;
-    return 'rgba(' + o(r()*s) + ',' + o(r()*s) + ',' + o(r()*s) + ',1)';
+    return 'rgba(' + o(r() * s) + ',' + o(r() * s) + ',' + o(r() * s) + ',1)';
   }
   var color_idx = 1;
-  function getColor() {
-  const hue = color_idx * 137.508; // use golden angle approximation
-  if (color_idx == 10){
-    color_idx = 1;
-  } else {
-    color_idx += 1;
+  var colors = {};
+  function getColor(key) {
+    if (!(key in colors)){
+      const hue = color_idx * 137.508; // use golden angle approximation
+      if (color_idx == 15) {
+        color_idx = 1;
+      } else {
+        color_idx += 1;
+      }
+      colors[key] = `hsl(${Math.floor(hue)},100%,75%)`;
+    }
+    return colors[key];
   }
-  return `hsl(${Math.floor(hue)},100%,75%)`;
-}
-  
+
+
   function dict2datasets(data) {
     var datasets = [];
     Object.keys(data).forEach(function (key) {
@@ -170,7 +176,7 @@
         {
           label: key,
           fill: true,
-          borderColor: getColor(),
+          borderColor: getColor(key),
           borderSkipped: "bottom",
           borderWidth: 4,
           borderCapStyle: 'butt',
@@ -192,16 +198,16 @@
     hourly_charts[location] = dict2datasets(hourly_charts_data[location])
   });
 
-  var weekday_charts = {}; 
+  var weekday_charts = {};
   var weekday_charts_data = JSON.parse('{{weekday_charts_data | tojson }}');
-  
+
   Object.keys(weekday_charts_data).forEach(function (location) {
     weekday_charts[location] = dict2datasets(weekday_charts_data[location])
   });
 
   var location_charts = {};
   var location_chart_data = JSON.parse('{{daily_charts_data | tojson }}');
-  
+
   Object.keys(location_chart_data).forEach(function (station) {
     location_charts[station] = dict2datasets(location_chart_data[station])
   });
@@ -222,14 +228,14 @@
         display: false
       },
       scales: {
-                xAxes: [{ stacked: true }],
-                yAxes: [{
-                        ticks: {
-                            beginAtZero:true
-                        },
-                        stacked: true
-                }]
-              },
+        xAxes: [{ stacked: true }],
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          },
+          stacked: true
+        }]
+      },
       title: {
         display: true,
         text: 'Average Count By Day For {{dates.range}}'
@@ -250,14 +256,14 @@
         display: false
       },
       scales: {
-                xAxes: [{ stacked: true }],
-                yAxes: [{
-                        ticks: {
-                            beginAtZero:true
-                        },
-                        stacked: true
-                }]
-              },
+        xAxes: [{ stacked: true }],
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          },
+          stacked: true
+        }]
+      },
       title: {
         display: true,
         text: 'Average Count By Hour For {{dates.range}}'
@@ -268,7 +274,8 @@
   var per_location = new Chart(document.getElementById('data-chart').getContext('2d'), {
     // The type of chart we want to create
     type: 'bar',
-    data: {datasets: overall_charts.daily,
+    data: {
+      datasets: overall_charts.daily,
       labels: JSON.parse('{{chart_ticks | tojson }}')
     },
 
@@ -280,14 +287,14 @@
         display: false,
       },
       scales: {
-                xAxes: [{ stacked: true }],
-                yAxes: [{
-                        ticks: {
-                            beginAtZero:true
-                        },
-                        stacked: true
-                }]
-              },
+        xAxes: [{ stacked: true }],
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          },
+          stacked: true
+        }]
+      },
       legend: {
         display: true,
         position: "right",
@@ -305,14 +312,14 @@
 
   function station_legend(e, legendItem) {
     showLocation("");
-    };
+  };
 
   function location_legend(e, legendItem) {
     showLocation(per_location.data.datasets[legendItem.datasetIndex].label);
   };
 
   function showLocation(loc_code) {
-    if (loc_code != ""){
+    if (loc_code != "") {
       $('#chart-title').text("Station Activity @ " + loc_code);
       per_location.config.data.datasets = location_charts[loc_code];
       per_hour.config.data.datasets = hourly_charts[loc_code];
@@ -330,19 +337,19 @@
       per_hour.config.data.datasets = overall_charts.hourly;
       per_weekday.config.data.datasets = overall_charts.weekday;
       per_location.config.options.legend.onClick = location_legend;
-      
+
       $('#stats_today').text(overall_stat_data.today);
       $('#stats_one_week').text(overall_stat_data.one_week_ago);
       $('#stats_two_weeks').text(overall_stat_data.two_week_ago);
 
       $('#chart-title').text("Location Activity");
       $('#location').val("");
-      
+
       // $('input[name="currently_showing"]').val("");
     }
-      per_location.update();
-      per_hour.update();
-      per_weekday.update();
+    per_location.update();
+    per_hour.update();
+    per_weekday.update();
   }
 
   showLocation($('input[name="currently_showing"]').val());
@@ -351,11 +358,11 @@
   function submitform() {
     $("#pageForm").submit();
   }
-  
-  $(function() {
-  $('input[name="dateRange"]').daterangepicker({
-    opens: 'left',
+
+  $(function () {
+    $('input[name="dateRange"]').daterangepicker({
+      opens: 'left',
+    });
   });
-});
-$('input[name="dateRange"]').val('{{dates.range}}');
+  $('input[name="dateRange"]').val('{{dates.range}}');
 </script>
