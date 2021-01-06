@@ -163,6 +163,10 @@ def apply_filters(query, session):
             logging.error(
                 "Encountered an error building filters, so clearing. " + str(e))
             session["index_filter"] = {}
+    else:
+        filters = dict()
+        filters["start_date"] = date.today()
+        filters["end_date"] = date.today() + timedelta(1)
 
     return query, filters
 
@@ -203,7 +207,6 @@ def ingest_form(form):
 @app.route('/', methods=['GET', 'POST'])
 @superuser
 def index():
-
     form = forms.SearchForm(request.form)
     action = BASE_HREF + "/"
     
@@ -229,6 +232,7 @@ def index():
     if type(filters["start_date"]) == str:
         filters["start_date"] = datetime.strptime(filters["start_date"].strip(), "%Y-%m-%d").date()
     if type(filters["end_date"]) == str:
+        logging.info(24352643)
         filters["end_date"] = datetime.strptime(filters["end_date"].strip(), "%Y-%m-%d").date()
 
     filtered_samples = filtered_samples\
@@ -255,10 +259,12 @@ def index():
                     "two_week_ago":0,
                     "search":0,
                 }
+
     location_stats_data = {}
     
     days_in_search = (filters["end_date"] - filters["start_date"]).days
-    dow_counts = dow_count(filters["start_date"], filters["end_date"])
+    dow_counts = dow_count(filters["start_date"], filters["end_date"] - timedelta(1))
+    logging.info(dow_counts)
     chart_ticks = [] 
     
     timeFormat = "%m/%d"
@@ -307,7 +313,7 @@ def index():
         offset = 6 
         counts = result[2:]
         counts = counts[offset:] + counts[:offset]
-        hourly_charts_data[location][station] = [round(i/days_in_search,2) for i in counts]
+        hourly_charts_data[location][station] = [round(i/days_in_search, 2) for i in counts]
     
     # Count by weekday
     cases = [ ]  
@@ -316,7 +322,7 @@ def index():
     
     q = db.session.query(Sample.location, Sample.station,
         *cases\
-        ).group_by(Sample.location,Sample.station)\
+        ).group_by(Sample.location, Sample.station)\
          .filter(Sample.date >= filters["start_date"])\
          .filter(Sample.date <= filters["end_date"])
 
@@ -330,7 +336,7 @@ def index():
             if dow_counts[dow] > 0:
                 weekday_charts_data[location][station].append(round(total/dow_counts[dow],2))
             else:
-                weekday_charts_data[location][station].append(0)
+                weekday_charts_data[location][station].append(total)
     # Count by range
     cases = [func.count(case([(and_(Sample.date >= filters["start_date"] - timedelta(14), Sample.date <= filters["end_date"] - timedelta(14)), 1)])),
             func.count(case([(and_(Sample.date >= filters["start_date"] - timedelta(7), Sample.date <= filters["end_date"] - timedelta(7)), 1)])),
@@ -345,7 +351,6 @@ def index():
     for result in q:
         location = result[0]
         if location not in location_stats_data: location_stats_data[location] = dict()
-        logging.info(result)
         location_stats_data[location]["two_week_ago"] = result[1]
         location_stats_data[location]["one_week_ago"] = result[2]
         location_stats_data[location]["search"] = result[3]
@@ -353,9 +358,9 @@ def index():
     # Aggregate results 
     for location in location_stats_data:     
         if location in daily_charts_data:
-            overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0).tolist()
-            overall_chart_data["hourly"][location] = np.sum([hourly_charts_data[location][station] for station in hourly_charts_data[location]],axis=0).tolist()
-            overall_chart_data["weekday"][location] = np.sum([weekday_charts_data[location][station] for station in weekday_charts_data[location]],axis=0).tolist()
+            overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0,dtype=np.float16).tolist()
+            overall_chart_data["hourly"][location] = np.sum([hourly_charts_data[location][station] for station in hourly_charts_data[location]],axis=0,dtype=np.float16).tolist()
+            overall_chart_data["weekday"][location] = np.sum([weekday_charts_data[location][station] for station in weekday_charts_data[location]],axis=0,dtype=np.float16).tolist()
         
         overall_totals_data["one_week_ago"] += location_stats_data[location]["one_week_ago"]
         overall_totals_data["two_week_ago"] += location_stats_data[location]["two_week_ago"]
