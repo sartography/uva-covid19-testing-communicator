@@ -267,7 +267,7 @@
       },
       title: {
         display: true,
-        text: 'Average Count By Weekday For {{dates.range}}'
+        text: 'Average Count By Weekday For {{dates.search}}'
       },
       plugins: {
         datalabels: stacked_sum_labels
@@ -299,7 +299,7 @@
       },
       title: {
         display: true,
-        text: 'Average Count By Hour For {{dates.range}}'
+        text: 'Average Count By Hour For {{dates.search}}'
       },
       plugins: {
         datalabels: stacked_sum_labels
@@ -399,5 +399,5 @@
       opens: 'left',
     });
   });
-  $('input[name="dateRange"]').val('{{dates.range}}');
+  $('input[name="dateRange"]').val('{{dates.search}}');
 </script>

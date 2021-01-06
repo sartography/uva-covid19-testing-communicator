@@ -311,7 +311,12 @@ def index():
     for result in q:
         location, station = result[0], result[1]
         if location not in hourly_charts_data: hourly_charts_data[location] = dict()
-        hourly_charts_data[location][station] = [round(i/days_in_search,2) for i in result[2:]]
+        # Here I'm accounting for the difference in UTC and GMT time zones 
+        # by moving the five results from the start to the end. 
+        offset = 6 
+        counts = result[2:]
+        counts = counts[offset:] + counts[:offset]
+        hourly_charts_data[location][station] = [round(i/days_in_search,2) for i in counts]
     
     # Count by weekday
     cases = [ ]  
@@ -362,7 +367,7 @@ def index():
         overall_totals_data["search"] += location_stats_data[location]["search"]
 
     important_dates = {
-        "range" : filters["start_date"].strftime("%m/%d/%Y") + " - " + (filters["end_date"]  - timedelta(1)).strftime("%m/%d/%Y"),
+        "search" : filters["start_date"].strftime("%m/%d/%Y") + " - " + (filters["end_date"]  - timedelta(1)).strftime("%m/%d/%Y"),
         "one_week_ago" : (filters["start_date"] - timedelta(7)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(7) - timedelta(1)).strftime("%m/%d/%Y"),
         "two_weeks_ago" : (filters["start_date"] - timedelta(14)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(14) - timedelta(1)).strftime("%m/%d/%Y"),
         }
