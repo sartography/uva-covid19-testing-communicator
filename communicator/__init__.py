@@ -147,18 +147,6 @@ def apply_filters(query, session):
     if "index_filter" in session:
         filters = session["index_filter"]
         try:
-            if "start_date" in filters:
-                query = query.filter(
-                    Sample.date >= filters["start_date"])
-            else:
-                filters["start_date"] = date.today()
-                query = query.filter(
-                    Sample.date >= filters["start_date"])
-            if "end_date" in filters:
-                query = query.filter(
-                    Sample.date <= filters["end_date"])
-            else:
-                filters["end_date"] = date.today() + timedelta(1)
             if "student_id" in filters:
                 query = query.filter(
                     Sample.student_id.in_(filters["student_id"].split()))
@@ -175,17 +163,6 @@ def apply_filters(query, session):
             logging.error(
                 "Encountered an error building filters, so clearing. " + str(e))
             session["index_filter"] = {}
-    else:
-        # Default to Todays Results
-        filters = dict()
-        filters["start_date"] = date.today()
-        filters["end_date"] = date.today() + timedelta(1)
-        query = query.filter(
-            Sample.date >= filters["start_date"])
-    if type(filters["start_date"]) == str:
-        filters["start_date"] = datetime.strptime(filters["start_date"].strip(), "%Y-%m-%d").date()
-    if type(filters["end_date"]) == str:
-        filters["end_date"] = datetime.strptime(filters["end_date"].strip(), "%Y-%m-%d").date()
 
     return query, filters
 
@@ -248,6 +225,17 @@ def index():
     samples = db.session.query(Sample).order_by(Sample.date.desc())
     # Store previous form submission settings in the session, so they are preseved through pagination.
     filtered_samples, filters = apply_filters(samples, session)
+    
+    if type(filters["start_date"]) == str:
+        filters["start_date"] = datetime.strptime(filters["start_date"].strip(), "%Y-%m-%d").date()
+    if type(filters["end_date"]) == str:
+        filters["end_date"] = datetime.strptime(filters["end_date"].strip(), "%Y-%m-%d").date()
+
+    filtered_samples = filtered_samples\
+                        .filter(Sample.date >= filters["start_date"])\
+                        .filter(Sample.date <= filters["end_date"] + timedelta(1))
+
+
 
     if request.args.get('download') == 'true':
         csv = __make_csv(filtered_samples)
@@ -288,9 +276,12 @@ def index():
     
     q = db.session.query(Sample.location, Sample.station,
         *cases\
-        ).group_by(Sample.location, Sample.station)
+        ).group_by(Sample.location, Sample.station)\
+         .filter(Sample.date >= filters["start_date"])\
+         .filter(Sample.date <= filters["end_date"] + timedelta(1))
 
-    q, filters = apply_filters(q, session)
+
+    q, filters = apply_filters(q, session)\
 
     for result in q:
         location, station = result[0], result[1]
@@ -304,7 +295,9 @@ def index():
     
     q = db.session.query(Sample.location, Sample.station,
         *cases\
-        ).group_by(Sample.location, Sample.station)
+        ).group_by(Sample.location, Sample.station)\
+         .filter(Sample.date >= filters["start_date"])\
+         .filter(Sample.date <= filters["end_date"] + timedelta(1))
 
     q, filters = apply_filters(q, session)
 
@@ -325,7 +318,9 @@ def index():
     
     q = db.session.query(Sample.location, Sample.station,
         *cases\
-        ).group_by(Sample.location,Sample.station)
+        ).group_by(Sample.location,Sample.station)\
+         .filter(Sample.date >= filters["start_date"])\
+         .filter(Sample.date <= filters["end_date"] + timedelta(1))
 
     q, filters = apply_filters(q , session)
 
@@ -352,6 +347,7 @@ def index():
     for result in q:
         location = result[0]
         if location not in location_stats_data: location_stats_data[location] = dict()
+        logging.info(result)
         location_stats_data[location]["two_week_ago"] = result[1]
         location_stats_data[location]["one_week_ago"] = result[2]
         location_stats_data[location]["search"] = result[3]
@@ -368,8 +364,8 @@ def index():
 
     important_dates = {
         "search" : filters["start_date"].strftime("%m/%d/%Y") + " - " + (filters["end_date"]  - timedelta(1)).strftime("%m/%d/%Y"),
-        "one_week_ago" : (filters["start_date"] - timedelta(7)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(7) - timedelta(1)).strftime("%m/%d/%Y"),
-        "two_weeks_ago" : (filters["start_date"] - timedelta(14)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(14) - timedelta(1)).strftime("%m/%d/%Y"),
+        "one_week_ago" : (filters["start_date"] - timedelta(7)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(7)).strftime("%m/%d/%Y"),
+        "two_weeks_ago" : (filters["start_date"] - timedelta(14)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(14)).strftime("%m/%d/%Y"),
         }
     ################# Raw Samples Table ##############
     page = request.args.get(get_page_parameter(), type=int, default=1)
