@@ -316,7 +316,7 @@ def index():
     # Count by weekday
     cases = [ ]  
     for i in range(7):
-        cases.append(func.count(case([(func.extract('dow', Sample.date) == i, 1)])))
+        cases.append(func.count(case([(func.extract('isodow', Sample.date) == i + 1, 1)])))
     
     q = db.session.query(Sample.location, Sample.station,
         *cases\
