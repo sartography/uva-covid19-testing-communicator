@@ -52,6 +52,10 @@
                     onclick="$('input[name=\'dateRange\']').val('');submitform();">Search Today</button>
                 </div>
                 <div class="col text-right mr-2">
+                  <button class="btn btn-sm btn-primary"
+                    onclick="$('input[name=\'dateRange\']').val('01/01/2019 - ' + getToday());submitform();">Search All</button>
+                </div>
+                <div class="col text-right mr-2">
                   <button type="submit" class="btn btn-sm btn-primary">Run Search</button>
                 </div>
               </div>
@@ -62,7 +66,6 @@
                 <tbody>
                   <input type="hidden" name="currently_showing" />
                   {% for field in form if field.name != "csrf_token" %}
-                  {% if field.name != "currently_showing" %}
                   <tr>
 
                     <div class="form-field {{ field.widget.input_type }}">
@@ -83,7 +86,6 @@
                     </div>
                     </td>
                   </tr>
-                  {% endif %}
                   {% endfor %}
                 </tbody>
               </table>
@@ -156,7 +158,7 @@
   var color_idx = 1;
   var colors = {};
   function getColor(key) {
-    if (!(key in colors)){
+    if (!(key in colors)) {
       const hue = color_idx * 137.508; // use golden angle approximation
       if (color_idx == 15) {
         color_idx = 1;
@@ -167,7 +169,6 @@
     }
     return colors[key];
   }
-
 
   function dict2datasets(data) {
     var datasets = [];
@@ -186,6 +187,34 @@
     return datasets;
   }
 
+  var stacked_sum_labels = {
+    formatter: (value, ctx) => {
+      let datasets = ctx.chart.data.datasets;
+      if (datasets.indexOf(ctx.dataset) === datasets.length - 1) {
+        let sum = 0;
+        datasets.map(dataset => {
+          sum += dataset.data[ctx.dataIndex];
+        });
+        return sum;
+      }
+      else {
+        return '';
+      }
+    },
+    anchor: 'end',
+    align: 'end'
+  }
+
+  function getToday() {
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+
+    today = mm + '/' + dd + '/' + yyyy;
+    return today
+  }
+  /////////////////////////////
   var overall_charts = {};
   overall_charts.daily = dict2datasets(JSON.parse('{{overall_chart_data.daily  | tojson }}'));
   overall_charts.hourly = dict2datasets(JSON.parse('{{overall_chart_data.hourly | tojson }}'));
@@ -212,7 +241,7 @@
     location_charts[station] = dict2datasets(location_chart_data[station])
   });
 
-  var overall_stat_data = JSON.parse('{{overall_stat_data | tojson }}');
+  var overall_totals_data = JSON.parse('{{overall_totals_data | tojson }}');
   var location_stats_data = JSON.parse('{{location_stats_data | tojson }}');
 
   var per_weekday = new Chart(document.getElementById('week-chart').getContext('2d'), {
@@ -238,8 +267,12 @@
       },
       title: {
         display: true,
-        text: 'Average Count By Day For {{dates.range}}'
+        text: 'Average Count By Weekday For {{dates.range}}'
+      },
+      plugins: {
+        datalabels: stacked_sum_labels
       }
+
     }
   });
 
@@ -267,6 +300,9 @@
       title: {
         display: true,
         text: 'Average Count By Hour For {{dates.range}}'
+      },
+      plugins: {
+        datalabels: stacked_sum_labels
       }
     }
   });
@@ -307,6 +343,9 @@
           fontStyle: 'bold'
         }
       },
+      plugins: {
+        datalabels: stacked_sum_labels
+      }
     }
   });
 
@@ -320,39 +359,35 @@
 
   function showLocation(loc_code) {
     if (loc_code != "") {
-      $('#chart-title').text("Station Activity @ " + loc_code);
+      $('#chart-title').text("Station Activity @ Location " + loc_code);
       per_location.config.data.datasets = location_charts[loc_code];
       per_hour.config.data.datasets = hourly_charts[loc_code];
       per_weekday.config.data.datasets = weekday_charts[loc_code];
 
       per_location.config.options.legend.onClick = station_legend;
-      $('#stats_today').text(location_stats_data[loc_code].today);
+      $('#stats_today').text(location_stats_data[loc_code].search);
       $('#stats_one_week').text(location_stats_data[loc_code].one_week_ago);
       $('#stats_two_weeks').text(location_stats_data[loc_code].two_week_ago);
 
       $('#location').val(loc_code);
-      // $('input[name="currently_showing"]').val(loc_code);
     } else {
       per_location.config.data.datasets = overall_charts.daily;
       per_hour.config.data.datasets = overall_charts.hourly;
       per_weekday.config.data.datasets = overall_charts.weekday;
       per_location.config.options.legend.onClick = location_legend;
 
-      $('#stats_today').text(overall_stat_data.today);
-      $('#stats_one_week').text(overall_stat_data.one_week_ago);
-      $('#stats_two_weeks').text(overall_stat_data.two_week_ago);
+      $('#stats_today').text(overall_totals_data.search);
+      $('#stats_one_week').text(overall_totals_data.one_week_ago);
+      $('#stats_two_weeks').text(overall_totals_data.two_week_ago);
 
       $('#chart-title').text("Location Activity");
       $('#location').val("");
 
-      // $('input[name="currently_showing"]').val("");
     }
     per_location.update();
     per_hour.update();
     per_weekday.update();
   }
-
-  showLocation($('input[name="currently_showing"]').val());
 </script>
 <script>
   function submitform() {

@@ -189,8 +189,13 @@ def apply_filters(query, session):
 
     return query, filters
 
-def ingest_form(form):
-    pass
+def dow_count(start, end):
+    counts = [0 for _ in range(7)]
+    curr = start 
+    while curr <= end:
+        counts[curr.weekday()] += 1
+        curr += timedelta(1) 
+    return counts
 
 def group_columns(data):
     grouped_data = []
@@ -214,6 +219,9 @@ def group_columns(data):
                              }
                              )
     return grouped_data
+
+def ingest_form(form):
+    pass
 
 @app.route('/', methods=['GET', 'POST'])
 @superuser
@@ -256,36 +264,23 @@ def index():
     }
 
     important_dates = {}
-    overall_stat_data = {
+    overall_totals_data = {
                     "one_week_ago":0,
                     "two_week_ago":0,
-                    "today":0,
+                    "search":0,
                 }
     location_stats_data = {}
     
-    today = filters["end_date"] - timedelta(1)
     days_in_search = (filters["end_date"] - filters["start_date"]).days
-    one_week_ago = filters["end_date"] - timedelta(7)
-    two_weeks_ago = one_week_ago - timedelta(7)
+    dow_counts = dow_count(filters["start_date"],filters["end_date"])
     chart_ticks = [] 
     
-    if days_in_search <= 1: 
-        timeFormat = "%I:%M %p"
-        hours = 2
-        days = 0
-    elif days_in_search <= 3:
-        timeFormat = "%m/%d %I %p"
-        hours = 4
-        days = 0
-    else:
-        timeFormat = "%m/%d"
-        hours = 0
-        days = 1
+    timeFormat = "%m/%d"
     
     # Count by Day
-    bounds = daterange(filters["start_date"], filters["end_date"], days=days, hours=hours)
+    bounds = daterange(filters["start_date"], filters["end_date"], days=1, hours=0)
     for i in range(len(bounds) - 1):
-        chart_ticks.append(f"{bounds[i].strftime(timeFormat)} - {bounds[i+1].strftime(timeFormat)}")
+        chart_ticks.append(f"{bounds[i].strftime(timeFormat)}")
 
     cases = [ ]  
     for i in range(len(bounds) - 1):
@@ -316,7 +311,7 @@ def index():
     for result in q:
         location, station = result[0], result[1]
         if location not in hourly_charts_data: hourly_charts_data[location] = dict()
-        hourly_charts_data[location][station] = [i/days_in_search for i in result[2:]]
+        hourly_charts_data[location][station] = [round(i/days_in_search,2) for i in result[2:]]
     
     # Count by weekday
     cases = [ ]  
@@ -332,11 +327,16 @@ def index():
     for result in q:
         location, station = result[0], result[1]
         if location not in weekday_charts_data: weekday_charts_data[location] = dict()
-        weekday_charts_data[location][station] = [i/days_in_search for i in result[2:]]
+        weekday_charts_data[location][station] = []
+        for dow, total in zip(range(7),result[2:]):
+            if dow_counts[dow] > 0:
+                weekday_charts_data[location][station].append(round(total/dow_counts[dow],2))
+            else:
+                weekday_charts_data[location][station].append(0)
     # Count by range
-    cases = [func.count(case([(and_(Sample.date >= two_weeks_ago, Sample.date <= filters["end_date"]), 1)])),
-            func.count(case([(and_(Sample.date >= one_week_ago, Sample.date <= filters["end_date"]), 1)])),
-            func.count(case([(and_(Sample.date >= today, Sample.date <= filters["end_date"]), 1)]))]  
+    cases = [func.count(case([(and_(Sample.date >= filters["start_date"] - timedelta(14), Sample.date <= filters["end_date"] - timedelta(14)), 1)])),
+            func.count(case([(and_(Sample.date >= filters["start_date"] - timedelta(7), Sample.date <= filters["end_date"] - timedelta(7)), 1)])),
+            func.count(case([(and_(Sample.date >= filters["start_date"], Sample.date <= filters["end_date"]), 1)]))]
     
     q = db.session.query(Sample.location,
         *cases\
@@ -349,7 +349,7 @@ def index():
         if location not in location_stats_data: location_stats_data[location] = dict()
         location_stats_data[location]["two_week_ago"] = result[1]
         location_stats_data[location]["one_week_ago"] = result[2]
-        location_stats_data[location]["today"] = result[3]
+        location_stats_data[location]["search"] = result[3]
 
     # Aggregate results 
     for location in location_stats_data:     
@@ -357,15 +357,14 @@ def index():
         overall_chart_data["hourly"][location] = np.sum([hourly_charts_data[location][station] for station in hourly_charts_data[location]],axis=0).tolist()
         overall_chart_data["weekday"][location] = np.sum([weekday_charts_data[location][station] for station in weekday_charts_data[location]],axis=0).tolist()
     
-        overall_stat_data["one_week_ago"] += location_stats_data[location]["one_week_ago"]
-        overall_stat_data["two_week_ago"] += location_stats_data[location]["two_week_ago"]
-        overall_stat_data["today"] += location_stats_data[location]["today"]
+        overall_totals_data["one_week_ago"] += location_stats_data[location]["one_week_ago"]
+        overall_totals_data["two_week_ago"] += location_stats_data[location]["two_week_ago"]
+        overall_totals_data["search"] += location_stats_data[location]["search"]
 
     important_dates = {
-        "today" : (filters["end_date"] - timedelta(1)).strftime("%m/%d/%Y"),
-        "range" : filters["start_date"].strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(1)).strftime("%m/%d/%Y"),
-        "one_week_ago" : one_week_ago.strftime("%m/%d/%Y"),
-        "two_weeks_ago" : two_weeks_ago.strftime("%m/%d/%Y"),
+        "range" : filters["start_date"].strftime("%m/%d/%Y") + " - " + (filters["end_date"]  - timedelta(1)).strftime("%m/%d/%Y"),
+        "one_week_ago" : (filters["start_date"] - timedelta(7)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(7) - timedelta(1)).strftime("%m/%d/%Y"),
+        "two_weeks_ago" : (filters["start_date"] - timedelta(14)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(14) - timedelta(1)).strftime("%m/%d/%Y"),
         }
     ################# Raw Samples Table ##############
     page = request.args.get(get_page_parameter(), type=int, default=1)
@@ -391,7 +390,7 @@ def index():
                                hourly_charts_data = hourly_charts_data,
                                weekday_charts_data = weekday_charts_data,
 
-                               overall_stat_data = overall_stat_data,
+                               overall_totals_data = overall_totals_data,
                                location_stats_data = location_stats_data,
                            ))
 

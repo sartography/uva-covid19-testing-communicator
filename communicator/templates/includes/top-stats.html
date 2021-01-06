@@ -8,9 +8,8 @@
             <div class="card-body">
               <div class="row">
                 <div class="col">
-                  <h5 class="card-title text-uppercase text-muted mb-0">Total Samples For {{dates.today}}</h5>
-
-                  <span id="stats_today" class="h2 font-weight-bold mb-0">N/A</span>
+                  <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within {{dates.range}}</h5>
+                  <span id="stats_today" class="h2 font-weight-bold mb-0">{{overall_totals_data.search}}</span>
 
                 </div>
                 <div class="col-auto">
@@ -27,9 +26,9 @@
             <div class="card-body">
               <div class="row">
                 <div class="col">
-                  <h5 class="card-title text-uppercase text-muted mb-0">{{dates.one_week_ago}} - {{dates.today}} <br> (1 Week Back)</h5>
+                  <h5 class="card-title text-uppercase text-muted mb-0">{{dates.one_week_ago}}<br> (1 Week Back)</h5>
 
-                  <span id="stats_one_week" class="h2 font-weight-bold mb-0">N/A</span>
+                  <span id="stats_one_week" class="h2 font-weight-bold mb-0">{{overall_totals_data.one_week_ago}}</span>
 
                 </div>
                 <div class="col-auto">
@@ -46,10 +45,10 @@
             <div class="card-body">
               <div class="row">
                 <div class="col">
-                  <h5 class="card-title text-uppercase text-muted mb-0">{{dates.two_weeks_ago}} - {{dates.today}} <br>(2 Weeks Back)
+                  <h5 class="card-title text-uppercase text-muted mb-0">{{dates.two_weeks_ago}}<br>(2 Weeks Back)
                   </h5>
 
-                  <span id="stats_two_weeks" class="h2 font-weight-bold mb-0">N/A</span>
+                  <span id="stats_two_weeks" class="h2 font-weight-bold mb-0">{{overall_totals_data.two_week_ago}}</span>
 
                 </div>
                 <div class="col-auto">
