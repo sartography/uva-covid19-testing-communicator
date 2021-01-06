@@ -16,15 +16,16 @@ class SampleService(object):
         db.session.commit()
 
     def split_location_column(self):
-        samples = db.session.query(Sample).filter(Sample.station == None).all()
+        samples = db.session.query(Sample).all()
         for sample in samples:
             loc_code = str(sample.location)
             if len(loc_code) == 4:
                 location, station = int(loc_code[:2]), int(loc_code[2:])
-                sample.location, sample.station = location, station
+                sample.station = station
             elif len(loc_code) == 3:
                 location, station = int(loc_code[:1]), int(loc_code[1:])
-                sample.location, sample.station = location, station
+                sample.station = station
+            sample.location = 1 
         db.session.commit()
 
     def merge_similar_records(self):
