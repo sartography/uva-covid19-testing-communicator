@@ -354,10 +354,11 @@ def index():
 
     # Aggregate results 
     for location in location_stats_data:     
-        overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0).tolist()
-        overall_chart_data["hourly"][location] = np.sum([hourly_charts_data[location][station] for station in hourly_charts_data[location]],axis=0).tolist()
-        overall_chart_data["weekday"][location] = np.sum([weekday_charts_data[location][station] for station in weekday_charts_data[location]],axis=0).tolist()
-    
+        if location in daily_charts_data:
+            overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0).tolist()
+            overall_chart_data["hourly"][location] = np.sum([hourly_charts_data[location][station] for station in hourly_charts_data[location]],axis=0).tolist()
+            overall_chart_data["weekday"][location] = np.sum([weekday_charts_data[location][station] for station in weekday_charts_data[location]],axis=0).tolist()
+        
         overall_totals_data["one_week_ago"] += location_stats_data[location]["one_week_ago"]
         overall_totals_data["two_week_ago"] += location_stats_data[location]["two_week_ago"]
         overall_totals_data["search"] += location_stats_data[location]["search"]
