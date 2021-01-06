@@ -232,7 +232,6 @@ def index():
     if type(filters["start_date"]) == str:
         filters["start_date"] = datetime.strptime(filters["start_date"].strip(), "%Y-%m-%d").date()
     if type(filters["end_date"]) == str:
-        logging.info(24352643)
         filters["end_date"] = datetime.strptime(filters["end_date"].strip(), "%Y-%m-%d").date()
 
     filtered_samples = filtered_samples\
@@ -264,7 +263,6 @@ def index():
     
     days_in_search = (filters["end_date"] - filters["start_date"]).days
     dow_counts = dow_count(filters["start_date"], filters["end_date"] - timedelta(1))
-    logging.info(dow_counts)
     chart_ticks = [] 
     
     timeFormat = "%m/%d"
