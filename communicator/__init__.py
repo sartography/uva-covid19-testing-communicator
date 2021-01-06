@@ -233,9 +233,7 @@ def index():
 
     filtered_samples = filtered_samples\
                         .filter(Sample.date >= filters["start_date"])\
-                        .filter(Sample.date <= filters["end_date"] + timedelta(1))
-
-
+                        .filter(Sample.date <= filters["end_date"])
 
     if request.args.get('download') == 'true':
         csv = __make_csv(filtered_samples)
@@ -260,7 +258,7 @@ def index():
     location_stats_data = {}
     
     days_in_search = (filters["end_date"] - filters["start_date"]).days
-    dow_counts = dow_count(filters["start_date"],filters["end_date"])
+    dow_counts = dow_count(filters["start_date"], filters["end_date"])
     chart_ticks = [] 
     
     timeFormat = "%m/%d"
@@ -278,7 +276,7 @@ def index():
         *cases\
         ).group_by(Sample.location, Sample.station)\
          .filter(Sample.date >= filters["start_date"])\
-         .filter(Sample.date <= filters["end_date"] + timedelta(1))
+         .filter(Sample.date <= filters["end_date"])
 
 
     q, filters = apply_filters(q, session)\
@@ -297,7 +295,7 @@ def index():
         *cases\
         ).group_by(Sample.location, Sample.station)\
          .filter(Sample.date >= filters["start_date"])\
-         .filter(Sample.date <= filters["end_date"] + timedelta(1))
+         .filter(Sample.date <= filters["end_date"])
 
     q, filters = apply_filters(q, session)
 
@@ -320,7 +318,7 @@ def index():
         *cases\
         ).group_by(Sample.location,Sample.station)\
          .filter(Sample.date >= filters["start_date"])\
-         .filter(Sample.date <= filters["end_date"] + timedelta(1))
+         .filter(Sample.date <= filters["end_date"])
 
     q, filters = apply_filters(q , session)
 
@@ -364,7 +362,7 @@ def index():
         overall_totals_data["search"] += location_stats_data[location]["search"]
 
     important_dates = {
-        "search" : filters["start_date"].strftime("%m/%d/%Y") + " - " + (filters["end_date"]  - timedelta(1)).strftime("%m/%d/%Y"),
+        "search" : filters["start_date"].strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(1)).strftime("%m/%d/%Y"),
         "one_week_ago" : (filters["start_date"] - timedelta(7)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(7)).strftime("%m/%d/%Y"),
         "two_weeks_ago" : (filters["start_date"] - timedelta(14)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(14)).strftime("%m/%d/%Y"),
         }
