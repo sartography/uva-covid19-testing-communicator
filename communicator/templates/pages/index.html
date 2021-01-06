@@ -49,7 +49,7 @@
                 </div>
                 <div class="col text-right mr-2">
                   <button class="btn btn-sm btn-primary"
-                    onclick="$('input[name=\'dateRange\']').val('');submitform();">Search Today</button>
+                    onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Search Today</button>
                 </div>
                 <div class="col text-right mr-2">
                   <button class="btn btn-sm btn-primary"
@@ -247,7 +247,7 @@
   var per_weekday = new Chart(document.getElementById('week-chart').getContext('2d'), {
     type: 'horizontalBar',
     data: {
-      labels: ["Sunday","Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      labels: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday"],
       datasets: overall_charts.weekday
     },
     options: {
