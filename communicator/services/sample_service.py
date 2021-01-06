@@ -22,6 +22,9 @@ class SampleService(object):
             if len(loc_code) == 4:
                 location, station = int(loc_code[:2]), int(loc_code[2:])
                 sample.location, sample.station = location, station
+            elif len(loc_code) == 3:
+                location, station = int(loc_code[:1]), int(loc_code[1:])
+                sample.location, sample.station = location, station
         db.session.commit()
 
     def merge_similar_records(self):

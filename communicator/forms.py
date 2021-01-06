@@ -27,4 +27,3 @@ class SearchForm(FlaskForm):
     studentId = TextAreaField('Student Id')
     location = TextAreaField('Location')
     compute_id = TextAreaField('Compute ID')
-    currently_showing = HiddenField(id="currently_showing")
