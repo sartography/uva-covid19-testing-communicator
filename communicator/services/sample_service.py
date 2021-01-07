@@ -22,8 +22,7 @@ class SampleService(object):
     def split_all_location_columns(self):
         # Only fix records where the station isn't already set.
         samples = db.session.query(Sample).\
-            filter(Sample.station != None).\
-            filter(Sample.station != "").all()
+            filter(Sample.station.is_(None)).all()
         for sample in samples:
             loc_code = str(sample.location)
             if len(loc_code) == 4:
