@@ -32,6 +32,7 @@ class SampleService(object):
             elif len(loc_code) == 3:
                 # more recent records, use the location provided.
                 location, station = int(loc_code[:1]), int(loc_code[1:])
+                sample.location = location
                 sample.station = station
         db.session.commit()
 
