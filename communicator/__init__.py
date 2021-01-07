@@ -12,6 +12,7 @@ from functools import wraps
 
 import connexion
 import sentry_sdk
+from babel.dates import format_datetime, get_timezone
 from connexion import ProblemException
 from flask import render_template, request, redirect, url_for, flash, abort, Response, send_file, session
 from flask_assets import Environment
@@ -144,29 +145,32 @@ def date2datetime(_date):
     return datetime.combine(_date, datetime.min.time())
 
 def apply_filters(query, session):
-    if "index_filter" in session:
-        filters = session["index_filter"]
-        try:
-            if "student_id" in filters:
-                query = query.filter(
-                    Sample.student_id.in_(filters["student_id"].split()))
-            if "location" in filters:
-                query = query.filter(
-                    Sample.location.in_(filters["location"].split()))
-            if "station" in filters:
-                query = query.filter(
-                    Sample.station.in_(filters["station"].split()))
-            if "compute_id" in filters:
-                filtered_samples = filtered_samples.filter(
-                    Sample.compute_id.in_(filters["compute_id"].split()))
-        except Exception as e:
-            logging.error(
-                "Encountered an error building filters, so clearing. " + str(e))
-            session["index_filter"] = {}
-    else:
+    if "index_filter" not in session:
         filters = dict()
-        filters["start_date"] = date.today()
-        filters["end_date"] = date.today() + timedelta(1)
+    else:
+        filters = session["index_filter"]
+
+    try:
+        if "start_date" not in filters:
+            filters["start_date"] = date.today()
+        if "end_date" not in filters:
+            filters["end_date"] = date.today() + timedelta(1)
+        if "student_id" in filters:
+            query = query.filter(
+                Sample.student_id.in_(filters["student_id"].split()))
+        if "location" in filters:
+            query = query.filter(
+                Sample.location.in_(filters["location"].split()))
+        if "station" in filters:
+            query = query.filter(
+                Sample.station.in_(filters["station"].split()))
+        if "compute_id" in filters:
+            query = query.filter(
+                Sample.compute_id.in_(filters["compute_id"].split()))
+    except Exception as e:
+        logging.error(
+            "Encountered an error building filters, so clearing. " + str(e))
+        session["index_filter"] = {}
 
     return query, filters
 
@@ -228,7 +232,8 @@ def index():
     samples = db.session.query(Sample).order_by(Sample.date.desc())
     # Store previous form submission settings in the session, so they are preseved through pagination.
     filtered_samples, filters = apply_filters(samples, session)
-    
+
+
     if type(filters["start_date"]) == str:
         filters["start_date"] = datetime.strptime(filters["start_date"].strip(), "%Y-%m-%d").date()
     if type(filters["end_date"]) == str:
@@ -412,6 +417,7 @@ def __make_csv(sample_query):
         'barcode',
         'student_id',
         'date',
+        'time',
         'location',
         'phone',
         'email',
@@ -427,7 +433,7 @@ def __make_csv(sample_query):
             {
                 'barcode': sample.barcode,
                 'student_id': sample.student_id,
-                'date': sample.date,
+                'date':  format_datetime(sample.date, 'YYYY-MM-dd hh:mm:ss a', get_timezone('US/Eastern'), 'en'),
                 'location': sample.location,
                 'phone': sample.phone,
                 'email': sample.email,
