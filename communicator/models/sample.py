@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import marshmallow
 from marshmallow import EXCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
@@ -11,6 +13,7 @@ class Sample(db.Model):
     student_id = db.Column(db.Integer)
     computing_id = db.Column(db.String)
     date = db.Column(db.DateTime)
+    last_modified = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.now, nullable=False)
     location = db.Column(db.Integer)
     station = db.Column(db.Integer)
     phone = db.Column(db.String)

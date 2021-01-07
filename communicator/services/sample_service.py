@@ -1,3 +1,7 @@
+import re
+
+from sqlalchemy import func
+
 from communicator import db, app
 from communicator.models.sample import Sample
 import random
@@ -15,18 +19,35 @@ class SampleService(object):
                 db.session.add(sample)
         db.session.commit()
 
-    def split_location_column(self):
-        samples = db.session.query(Sample).all()
+    def split_all_location_columns(self):
+        # Only fix records where the station isn't already set.
+        samples = db.session.query(Sample).\
+            filter(Sample.station != None).\
+            filter(Sample.station != "").all()
         for sample in samples:
             loc_code = str(sample.location)
             if len(loc_code) == 4:
                 location, station = int(loc_code[:2]), int(loc_code[2:])
+                sample.location = 1 # Old records, force location to one.
                 sample.station = station
             elif len(loc_code) == 3:
+                # more recent records, use the location provided.
                 location, station = int(loc_code[:1]), int(loc_code[1:])
                 sample.station = station
-            sample.location = 1 
         db.session.commit()
+
+    def correct_computing_id(self):
+        samples = db.session.query(Sample).\
+            filter(func.coalesce(Sample.computing_id, '') == '').\
+            filter(func.coalesce(Sample.email, '') != '').\
+            all()
+        email_match = re.compile('(.*).virginia.edu',  flags=re.IGNORECASE)
+        for sample in samples:
+            match = email_match.match(sample.email)
+            if match:
+                sample.computing_id = match.group(1).strip().lower()
+        db.session.commit()
+
 
     def merge_similar_records(self):
         """ We have samples that are duplicates of each other because of the way the data was coming in

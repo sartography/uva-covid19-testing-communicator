@@ -26,8 +26,12 @@ def add_sample(body):
     sample = Sample(barcode=body['barcode'],
                     student_id=body['student_id'],
                     computing_id=body['computing_id'],
-                    date=body['date'],
-                    location=body['location'])
+                    date=body['date'])
+
+    # Split the 4 digit location code into station and location
+    loc_code = body['location']
+    sample.location, sample.station = int(loc_code[:2]), int(loc_code[2:])
+
     SampleService().add_or_update_records([sample])
 
 
@@ -84,7 +88,11 @@ def _update_data():
 
 def split_location_column():
     sample_service = SampleService()
-    sample_service.split_location_column()
+    sample_service.split_all_location_columns()
+
+def correct_computing_id():
+    sample_service = SampleService()
+    sample_service.correct_computing_id()
     
 def merge_similar_records():
     sample_service = SampleService()

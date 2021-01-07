@@ -12,7 +12,7 @@ from communicator.models.notification import Notification
 
 class TestSampleEndpoint(BaseTest):
     sample_json = {"barcode": "000000111-202009091449-4321",
-                   "location": "4321",
+                   "location": "0102",
                    "date": "2020-09-09T14:49:00+0000",
                    "student_id": "000000111",
                    "computing_id": "abc12d"}
@@ -28,6 +28,29 @@ class TestSampleEndpoint(BaseTest):
 
         samples = db.session.query(Sample).all()
         self.assertEquals(1, len(samples))
+
+    def test_create_sample_gets_correct_location_and_station(self):
+        # Test add sample
+        samples = db.session.query(Sample).all()
+        self.assertEquals(0, len(samples))
+
+        rv = self.app.post('/v1.0/sample',
+                           content_type="application/json",
+                           data=json.dumps(self.sample_json))
+
+        samples = db.session.query(Sample).all()
+        self.assertEquals(1, len(samples))
+        self.assertEquals(1, samples[0].location)
+        self.assertEquals(2, samples[0].station)
+
+    def test_create_sample_has_last_updated(self):
+        rv = self.app.post('/v1.0/sample',
+                           content_type="application/json",
+                           data=json.dumps(self.sample_json))
+
+        samples = db.session.query(Sample).all()
+        self.assertEquals(1, len(samples))
+        self.assertIsNotNone(samples[0].last_modified)
 
     def test_create_duplicate_sample_does_not_raise_error(self):
         # Test add sample
