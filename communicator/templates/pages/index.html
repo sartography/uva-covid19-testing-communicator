@@ -44,16 +44,14 @@
             {{ form.csrf_token() }}
             <div class="card-header border-0">
               <div class="row align-items-center">
-                <div class="col">
-                  <h3 class="mb-0">Search</h3>
-                </div>
+      
                 <div class="col text-right mr-2">
                   <button class="btn btn-sm btn-primary"
                     onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Search Today</button>
                 </div>
                 <div class="col text-right mr-2">
                   <button class="btn btn-sm btn-primary"
-                    onclick="$('input[name=\'dateRange\']').val('01/01/2019 - ' + getToday());submitform();">Search All</button>
+                    onclick="$('input[name=\'dateRange\']').val('10/05/2020 - ' + getToday());submitform();">Search All</button>
                 </div>
                 <div class="col text-right mr-2">
                   <button type="submit" class="btn btn-sm btn-primary">Run Search</button>
@@ -195,7 +193,7 @@
         datasets.map(dataset => {
           sum += dataset.data[ctx.dataIndex];
         });
-        return sum.toFixed(2);
+        return sum;
       }
       else {
         return '';
@@ -215,6 +213,7 @@
     return today
   }
   /////////////////////////////
+  
   var overall_charts = {};
   overall_charts.daily = dict2datasets(JSON.parse('{{overall_chart_data.daily  | tojson }}'));
   overall_charts.hourly = dict2datasets(JSON.parse('{{overall_chart_data.hourly | tojson }}'));
@@ -247,7 +246,7 @@
   var per_weekday = new Chart(document.getElementById('week-chart').getContext('2d'), {
     type: 'horizontalBar',
     data: {
-      labels: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday"],
+      labels: ["Sunday","Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
       datasets: overall_charts.weekday
     },
     options: {

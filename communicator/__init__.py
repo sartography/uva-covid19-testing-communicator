@@ -157,8 +157,16 @@ def apply_filters(query, session):
                 query = query.filter(
                     Sample.station.in_(filters["station"].split()))
             if "compute_id" in filters:
-                filtered_samples = filtered_samples.filter(
-                    Sample.compute_id.in_(filters["compute_id"].split()))
+                query = query.filter(
+                    Sample.computing_id.in_(filters["compute_id"].split()))
+            if "include_tests" in filters:
+                if not filters["include_tests"]:
+                    query = query.filter(
+                        Sample.student_id != 0)
+            else:
+                query = query.filter(
+                    Sample.student_id != 0)
+            
         except Exception as e:
             logging.error(
                 "Encountered an error building filters, so clearing. " + str(e))
@@ -174,7 +182,7 @@ def dow_count(start, end):
     counts = [0 for _ in range(7)]
     curr = start 
     while curr <= end:
-        counts[curr.weekday()] += 1
+        counts[(1 + curr.weekday()) % 7] += 1
         curr += timedelta(1) 
     return counts
 
@@ -225,6 +233,8 @@ def index():
             session["index_filter"]["location"] = form.location.data
         if form.compute_id.data:
             session["index_filter"]["compute_id"] = form.compute_id.data
+        if form.include_tests.data:
+            session["index_filter"]["include_tests"] = form.include_tests.data
     samples = db.session.query(Sample).order_by(Sample.date.desc())
     # Store previous form submission settings in the session, so they are preseved through pagination.
     filtered_samples, filters = apply_filters(samples, session)
@@ -311,12 +321,12 @@ def index():
         offset = 6 
         counts = result[2:]
         counts = counts[offset:] + counts[:offset]
-        hourly_charts_data[location][station] = [round(i/days_in_search, 2) for i in counts]
+        hourly_charts_data[location][station] = [round(i/days_in_search + .4) for i in counts]
     
     # Count by weekday
     cases = [ ]  
     for i in range(7):
-        cases.append(func.count(case([(func.extract('isodow', Sample.date) == i + 1, 1)])))
+        cases.append(func.count(case([(func.extract('dow', Sample.date) == i, 1)])))
     
     q = db.session.query(Sample.location, Sample.station,
         *cases\
@@ -332,7 +342,7 @@ def index():
         weekday_charts_data[location][station] = []
         for dow, total in zip(range(7),result[2:]):
             if dow_counts[dow] > 0:
-                weekday_charts_data[location][station].append(round(total/dow_counts[dow],2))
+                weekday_charts_data[location][station].append(round(total/dow_counts[dow] + .4))
             else:
                 weekday_charts_data[location][station].append(total)
     # Count by range
@@ -356,9 +366,9 @@ def index():
     # Aggregate results 
     for location in location_stats_data:     
         if location in daily_charts_data:
-            overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0,dtype=np.float16).tolist()
-            overall_chart_data["hourly"][location] = np.sum([hourly_charts_data[location][station] for station in hourly_charts_data[location]],axis=0,dtype=np.float16).tolist()
-            overall_chart_data["weekday"][location] = np.sum([weekday_charts_data[location][station] for station in weekday_charts_data[location]],axis=0,dtype=np.float16).tolist()
+            overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0,dtype=np.int).tolist()
+            overall_chart_data["hourly"][location] = np.sum([hourly_charts_data[location][station] for station in hourly_charts_data[location]],axis=0,dtype=np.int).tolist()
+            overall_chart_data["weekday"][location] = np.sum([weekday_charts_data[location][station] for station in weekday_charts_data[location]],axis=0,dtype=np.int).tolist()
         
         overall_totals_data["one_week_ago"] += location_stats_data[location]["one_week_ago"]
         overall_totals_data["two_week_ago"] += location_stats_data[location]["two_week_ago"]
