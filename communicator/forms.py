@@ -3,7 +3,7 @@ import re
 from flask_table import Table, Col, LinkCol, BoolCol, DatetimeCol, NestedTableCol
 from flask_wtf import FlaskForm
 from wtforms import SelectMultipleField, StringField, BooleanField, SelectField, validators, HiddenField, TextAreaField, \
-    ValidationError
+    ValidationError, BooleanField
 
 from wtforms.fields.html5 import DateField
 from wtforms.widgets import TextArea
@@ -27,3 +27,4 @@ class SearchForm(FlaskForm):
     studentId = TextAreaField('Student Id')
     location = TextAreaField('Location')
     compute_id = TextAreaField('Compute ID')
+    include_tests = BooleanField("Include Test Strips", default=False)
