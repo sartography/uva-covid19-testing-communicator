@@ -128,18 +128,20 @@ class TestSampleEndpoint(BaseTest):
 
         print(data)
 
-    def test_get_all_samples_after_barcode(self):
-        d1_str = '202009091449'
+
+    def test_get_all_samples_by_last_modified(self):
+        d1_str = '202012300101' # dec 30th 2020
         d1 = datetime.strptime(d1_str, '%Y%m%d%H%M')
         s1_bar_code = '000000111-'+ d1_str +'-4321'
 
-        d2_str = '202011010000'
+        d2_str = '202101010101' # Jan 1st 2021
         d2 = datetime.strptime(d2_str, '%Y%m%d%H%M')
         s2_bar_code = '000000111-'+ d2_str +'-4321'
 
         s1 = Sample(barcode=s1_bar_code,
                     location="4321",
-                    date=d1,
+                    date= datetime.now(),
+                    last_modified=d1,
                     student_id="000000111",
                     email="daniel.h.funk@gmail.com",
                     result_code="12345",
@@ -148,7 +150,8 @@ class TestSampleEndpoint(BaseTest):
                     text_notified=True)
         s2 = Sample(barcode=s2_bar_code,
                     location="4321",
-                    date=d2,
+                    date= datetime.now(),
+                    last_modified=d2,
                     student_id="000000112",
                     email="dan@gmail.com",
                     result_code="12345",
@@ -158,9 +161,20 @@ class TestSampleEndpoint(BaseTest):
         db.session.add(s1)
         db.session.add(s2)
 
-        rv = self.app.get(f'/v1.0/sample?bar_code={s1_bar_code}', content_type="application/json",
+        rv = self.app.get(f'/v1.0/sample', content_type="application/json",
                           headers={'X-CR-API-KEY': app.config.get('API_TOKEN')})
         data = json.loads(rv.get_data(as_text=True))
-        self.assertEqual(1, len(data))
-        self.assertEqual(s2_bar_code, data[0]["barcode"])
-        print(data)
+        self.assertEquals(2, len(data))
+
+        last_modified_arg = d1.isoformat()
+        rv = self.app.get(f'/v1.0/sample?last_modified={last_modified_arg}', content_type="application/json",
+                          headers={'X-CR-API-KEY': app.config.get('API_TOKEN')})
+        data = json.loads(rv.get_data(as_text=True))
+        self.assertEquals(1, len(data))
+        self.assertEquals(s2.barcode, data[0]['barcode'])
+
+        last_modified_arg = d2.isoformat()
+        rv = self.app.get(f'/v1.0/sample?last_modified={last_modified_arg}', content_type="application/json",
+                          headers={'X-CR-API-KEY': app.config.get('API_TOKEN')})
+        data = json.loads(rv.get_data(as_text=True))
+        self.assertEquals(0, len(data))
