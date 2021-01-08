@@ -1,4 +1,5 @@
 import smtplib
+from datetime import datetime
 
 from communicator import db, app, executor
 from communicator.models import Sample
@@ -35,18 +36,14 @@ def add_sample(body):
     SampleService().add_or_update_records([sample])
 
 
-def get_samples(bar_code=None):
+def get_samples(last_modified=None):
     query = db.session.query(Sample)
-    if bar_code:
-        last_sample = db.session.query(Sample).filter(Sample.barcode == bar_code).first()
-        if not last_sample:
-            app.logger.error(f'Someone queried for a barcode that does not exist: {bar_code} ', exc_info=True)
-            raise Exception("No such bar code.")
-        query = query.filter(Sample.date > last_sample.date)
-    samples = query.order_by(Sample.date).limit(200).all()
+    if last_modified:
+        lm_date = datetime.fromisoformat(last_modified)
+        query = query.filter(Sample.last_modified > lm_date)
+    samples = query.order_by(Sample.last_modified).limit(200).all()
     response = SampleSchema(many=True).dump(samples)
     return response
-
 
 
 def clear_samples():
