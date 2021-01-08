@@ -145,6 +145,7 @@ def date2datetime(_date):
     return datetime.combine(_date, datetime.min.time())
 
 def apply_filters(query, session):
+    if "index_filter" in session:
         filters = session["index_filter"]
         try:
             if "student_id" in filters:
@@ -173,27 +174,6 @@ def apply_filters(query, session):
             session["index_filter"] = {}
     else:
         filters = dict()
-    try:
-        if "start_date" not in filters:
-            filters["start_date"] = date.today()
-        if "end_date" not in filters:
-            filters["end_date"] = date.today() + timedelta(1)
-        if "student_id" in filters:
-            query = query.filter(
-                Sample.student_id.in_(filters["student_id"].split()))
-        if "location" in filters:
-            query = query.filter(
-                Sample.location.in_(filters["location"].split()))
-        if "station" in filters:
-            query = query.filter(
-                Sample.station.in_(filters["station"].split()))
-        if "compute_id" in filters:
-            query = query.filter(
-                Sample.compute_id.in_(filters["compute_id"].split()))
-    except Exception as e:
-        logging.error(
-            "Encountered an error building filters, so clearing. " + str(e))
-        session["index_filter"] = {}
 
     return query, filters
 
