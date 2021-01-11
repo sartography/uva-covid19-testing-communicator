@@ -3,9 +3,9 @@ import os
 import unittest
 import globus_sdk
 
-from communicator.models.ivy_file import IvyFile
-
 from communicator import app, db
+
+from communicator.models.ivy_file import IvyFile
 
 from communicator.errors import CommError
 from communicator.services.ivy_service import IvyService
@@ -25,9 +25,9 @@ class IvyServiceTest(BaseTest):
             IvyService.samples_from_ivy_file(ivy_incorrect_file)
 
     def test_load_directory(self):
-        self.assertEquals(0, db.session.query(IvyFile).count())
+        self.assertEqual(0, db.session.query(IvyFile).count())
         app.config['IVY_IMPORT_DIR'] = os.path.join(app.root_path, '..', 'tests', 'data', 'import_directory')
-        files, records = IvyService().load_directory()
-        self.assertEquals(4, len(files))
+        files, _ = IvyService().load_directory()
+        self.assertEqual(4, len(files))
 
 

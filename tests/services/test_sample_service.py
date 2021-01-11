@@ -94,15 +94,15 @@ class IvyServiceTest(BaseTest):
         delta = datetime.now() - s1.last_modified
         self.assertGreater(delta.days, 1) # Last modified is in the past.
 
-        self.assertEquals(2, len(db.session.query(Sample).all()))
+        self.assertEqual(2, len(db.session.query(Sample).all()))
         service.merge_similar_records()
-        self.assertEquals(1, len(db.session.query(Sample).all()))
+        self.assertEqual(1, len(db.session.query(Sample).all()))
         sample = db.session.query(Sample).first()
-        self.assertEquals("dan@sartography.com", sample.email)
-        self.assertEquals("111111111-AAA-202010050000-0000", sample.barcode)
-        self.assertEquals(1, len(sample.notifications))
+        self.assertEqual("dan@sartography.com", sample.email)
+        self.assertEqual("111111111-AAA-202010050000-0000", sample.barcode)
+        self.assertEqual(1, len(sample.notifications))
         delta = datetime.now() - sample.last_modified
-        self.assertEquals(0, delta.days) # Last modified is updated on merge.
+        self.assertEqual(0, delta.days) # Last modified is updated on merge.
 
     def test_merge_non_similar_records(self):
         service = SampleService()
@@ -117,7 +117,7 @@ class IvyServiceTest(BaseTest):
                               email="dan@sartography.com",
                               phone="555-555-5555"))
         service.merge_similar_records()
-        self.assertEquals(2, len(db.session.query(Sample).all()))
+        self.assertEqual(2, len(db.session.query(Sample).all()))
 
 
     def test_correct_computing_id(self):

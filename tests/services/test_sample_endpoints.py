@@ -20,28 +20,28 @@ class TestSampleEndpoint(BaseTest):
     def test_create_sample(self):
         # Test add sample
         samples = db.session.query(Sample).all()
-        self.assertEquals(0, len(samples))
+        self.assertEqual(0, len(samples))
 
         rv = self.app.post('/v1.0/sample',
                            content_type="application/json",
                            data=json.dumps(self.sample_json))
 
         samples = db.session.query(Sample).all()
-        self.assertEquals(1, len(samples))
+        self.assertEqual(1, len(samples))
 
     def test_create_sample_gets_correct_location_and_station(self):
         # Test add sample
         samples = db.session.query(Sample).all()
-        self.assertEquals(0, len(samples))
+        self.assertEqual(0, len(samples))
 
         rv = self.app.post('/v1.0/sample',
                            content_type="application/json",
                            data=json.dumps(self.sample_json))
 
         samples = db.session.query(Sample).all()
-        self.assertEquals(1, len(samples))
-        self.assertEquals(1, samples[0].location)
-        self.assertEquals(2, samples[0].station)
+        self.assertEqual(1, len(samples))
+        self.assertEqual(1, samples[0].location)
+        self.assertEqual(2, samples[0].station)
 
     def test_create_sample_has_last_updated(self):
         rv = self.app.post('/v1.0/sample',
@@ -49,13 +49,13 @@ class TestSampleEndpoint(BaseTest):
                            data=json.dumps(self.sample_json))
 
         samples = db.session.query(Sample).all()
-        self.assertEquals(1, len(samples))
+        self.assertEqual(1, len(samples))
         self.assertIsNotNone(samples[0].last_modified)
 
     def test_create_duplicate_sample_does_not_raise_error(self):
         # Test add sample
         samples = db.session.query(Sample).all()
-        self.assertEquals(0, len(samples))
+        self.assertEqual(0, len(samples))
 
         rv = self.app.post('/v1.0/sample', content_type="application/json", data=json.dumps(self.sample_json))
         rv = self.app.post('/v1.0/sample', content_type="application/json", data=json.dumps(self.sample_json))
@@ -63,7 +63,7 @@ class TestSampleEndpoint(BaseTest):
         rv = self.app.post('/v1.0/sample', content_type="application/json", data=json.dumps(self.sample_json))
 
         samples = db.session.query(Sample).all()
-        self.assertEquals(1, len(samples))
+        self.assertEqual(1, len(samples))
 
     def test_notify_by_email_by_file_name(self):
         db.session.add(Sample(barcode="000000111-202009091449-4321",
@@ -83,12 +83,12 @@ class TestSampleEndpoint(BaseTest):
         db.session.commit()
         admin._notify_by_email('xxx')
         samples = db.session.query(Sample).filter(Sample.email_notified == True).all()
-        self.assertEquals(1, len(samples))
+        self.assertEqual(1, len(samples))
         samples = db.session.query(Sample).filter(Sample.email_notified != True).all()
-        self.assertEquals(1, len(samples))
+        self.assertEqual(1, len(samples))
         admin._notify_by_email()
         samples = db.session.query(Sample).filter(Sample.email_notified == True).all()
-        self.assertEquals(2, len(samples))
+        self.assertEqual(2, len(samples))
 
     def test_get_all_samples(self):
         s1 = Sample(barcode="000000111-202009091449-4321",
@@ -164,17 +164,17 @@ class TestSampleEndpoint(BaseTest):
         rv = self.app.get(f'/v1.0/sample', content_type="application/json",
                           headers={'X-CR-API-KEY': app.config.get('API_TOKEN')})
         data = json.loads(rv.get_data(as_text=True))
-        self.assertEquals(2, len(data))
+        self.assertEqual(2, len(data))
 
         last_modified_arg = d1.isoformat()
         rv = self.app.get(f'/v1.0/sample?last_modified={last_modified_arg}', content_type="application/json",
                           headers={'X-CR-API-KEY': app.config.get('API_TOKEN')})
         data = json.loads(rv.get_data(as_text=True))
-        self.assertEquals(1, len(data))
-        self.assertEquals(s2.barcode, data[0]['barcode'])
+        self.assertEqual(1, len(data))
+        self.assertEqual(s2.barcode, data[0]['barcode'])
 
         last_modified_arg = d2.isoformat()
         rv = self.app.get(f'/v1.0/sample?last_modified={last_modified_arg}', content_type="application/json",
                           headers={'X-CR-API-KEY': app.config.get('API_TOKEN')})
         data = json.loads(rv.get_data(as_text=True))
-        self.assertEquals(0, len(data))
+        self.assertEqual(0, len(data))

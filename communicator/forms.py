@@ -16,7 +16,7 @@ class InvitationForm(FlaskForm):
 
     def validate_emails(form, field):
         all_emails = field.data.splitlines()
-        EMAIL_REGEX = re.compile('^[a-z0-9]+[._a-z0-9]+[@]\w+[.]\w{2,3}$')
+        EMAIL_REGEX = re.compile(r'^[a-z0-9]+[._a-z0-9]+[@]\w+[.]\w{2,3}$')
         for email in all_emails:
             if not re.search(EMAIL_REGEX, email):
                 raise ValidationError(f'Invalid email \'{email}\', Emails must each be on a seperate line.')
