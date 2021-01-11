@@ -92,7 +92,7 @@ from communicator import models
 from communicator import api
 from communicator import forms
 from communicator.models import Sample
-from flask_table import Table, Col, DatetimeCol, BoolCol, NestedTableCol
+from communicator import scheduler
 from communicator.tables import SampleTable
 # Convert list of allowed origins to list of regexes
 origins_re = [r"^https?:\/\/%s(.*)" % o.replace('.', r'\.')
