@@ -36,7 +36,7 @@ class GraphService(object):
     def __init__(self):
         self.filters = dict()
         self.filters["start_date"] = Sample.date >= dt.date.today()
-        self.start_date =  dt.date.today()
+        self.start_date = dt.date.today()
         self.filters["end_date"] = Sample.date <=  dt.date.today() + dt.timedelta(1)
         self.end_date = dt.date.today() + dt.timedelta(1)
 
@@ -47,10 +47,8 @@ class GraphService(object):
             query = query.filter(self.filters[key])
         return query
 
-
     """Handles the collection and syncing of data from various sources. """
     def get_totals_last_week(self):
-        return dict()
         location_stats_data = dict()
         # Count by range
         cases = [func.count(case([(and_(Sample.date >= self.start_date - dt.timedelta(14), Sample.date <= self.end_date - dt.timedelta(14)), 1)])),
@@ -69,11 +67,11 @@ class GraphService(object):
             location_stats_data[location]["two_week_ago"] = result[1]
             location_stats_data[location]["one_week_ago"] = result[2]
             location_stats_data[location]["search"] = result[3]
+        return location_stats_data
 
     def get_totals_by_hour(self):
-        return dict()
         hourly_charts_data = dict()
-        days_in_search = 1
+        days_in_search = (self.end_date - self.start_date).days
         
         cases = [ ]  
         for i in range(24):
@@ -93,9 +91,9 @@ class GraphService(object):
             counts = result[2:]
             counts = counts[offset:] + counts[:offset]
             hourly_charts_data[location][station] = [round(i/days_in_search + .4) for i in counts]
-            
+        return hourly_charts_data
     def get_totals_by_day(self):
-        return dict()
+        daily_charts_data = dict()
         bounds = daterange(self.start_date, self.end_date, days=1, hours=0)
         cases = [ ]  
         for i in range(len(bounds) - 1):
@@ -104,9 +102,8 @@ class GraphService(object):
         q = db.session.query(Sample.location, Sample.station,
             *cases\
             ).group_by(Sample.location, Sample.station)
-        
         q = self.apply_filters(q)
-        daily_charts_data = dict()
+
         for result in q:
             location, station = result[0], result[1]
             if location not in daily_charts_data: daily_charts_data[location] = dict()
@@ -115,20 +112,16 @@ class GraphService(object):
         return daily_charts_data
     
     def get_totals_by_weekday(self):
-        return dict()
         weekday_charts_data = dict()
-        dow_counts = dow_count(self.start_date, self.end_date)
+        dow_counts = dow_count(self.start_date, self.end_date - dt.timedelta(1))
         cases = [ ]  
         for i in range(7):
             cases.append(func.count(case([(func.extract('dow', Sample.date) == i, 1)])))
         
         q = db.session.query(Sample.location, Sample.station,
             *cases\
-            ).group_by(Sample.location, Sample.station)\
-            .filter(Sample.date >= self.filters["start_date"])\
-            .filter(Sample.date <= self.filters["end_date"])
-
-        # ! Add filtering back in
+            ).group_by(Sample.location, Sample.station)
+        q = self.apply_filters(q)
 
         for result in q:
             location, station = result[0], result[1]

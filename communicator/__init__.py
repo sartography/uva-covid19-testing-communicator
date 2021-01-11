@@ -151,6 +151,7 @@ def group_columns(data):
                              )
     return grouped_data
 from communicator.services.graph_service import GraphService, daterange
+from datetime import timedelta
 
 @app.route('/', methods=['GET', 'POST'])
 @superuser
@@ -166,7 +167,7 @@ def index():
         if form.dateRange.data:
             start, end = form.dateRange.data.split("-")
             session["index_filter"]["start_date"] = datetime.strptime(start.strip(), "%m/%d/%Y").date()
-            session["index_filter"]["end_date"] =  datetime.strptime(end.strip(), "%m/%d/%Y").date() + dt.timedelta(1)
+            session["index_filter"]["end_date"] =  datetime.strptime(end.strip(), "%m/%d/%Y").date() + timedelta(1)
         if form.studentId.data:
             session["index_filter"]["student_id"] = form.studentId.data
         if form.location.data:
@@ -177,11 +178,11 @@ def index():
             session["index_filter"]["include_tests"] = form.include_tests.data
         graph.update_search_filters(session["index_filter"])
 
-    filtered_samples = db.session.query(Sample).order_by(Sample.date.desc())
-    # filtered_samples = graph.apply_filters(samples)
-    # if request.args.get('download') == 'true':
-    #     csv = __make_csv(filtered_samples)
-    #     return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
+    samples = db.session.query(Sample).order_by(Sample.date.desc())
+    filtered_samples = graph.apply_filters(samples)
+    if request.args.get('download') == 'true':
+        csv = __make_csv(filtered_samples)
+        return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
 
     overall_chart_data = {
         "daily":{},
@@ -213,21 +214,21 @@ def index():
     weekday_charts_data = graph.get_totals_by_weekday()
 
     # # Aggregate results 
-    # for location in location_stats_data:     
-    #     if location in daily_charts_data:
-    #         overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0,dtype=np.int).tolist()
-    #         overall_chart_data["hourly"][location] = np.sum([hourly_charts_data[location][station] for station in hourly_charts_data[location]],axis=0,dtype=np.int).tolist()
-    #         overall_chart_data["weekday"][location] = np.sum([weekday_charts_data[location][station] for station in weekday_charts_data[location]],axis=0,dtype=np.int).tolist()
+    for location in location_stats_data:     
+        if location in daily_charts_data:
+            overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0,dtype=np.int).tolist()
+            overall_chart_data["hourly"][location] = np.sum([hourly_charts_data[location][station] for station in hourly_charts_data[location]],axis=0,dtype=np.int).tolist()
+            overall_chart_data["weekday"][location] = np.sum([weekday_charts_data[location][station] for station in weekday_charts_data[location]],axis=0,dtype=np.int).tolist()
         
-    #     overall_totals_data["one_week_ago"] += location_stats_data[location]["one_week_ago"]
-    #     overall_totals_data["two_week_ago"] += location_stats_data[location]["two_week_ago"]
-    #     overall_totals_data["search"] += location_stats_data[location]["search"]
+        overall_totals_data["one_week_ago"] += location_stats_data[location]["one_week_ago"]
+        overall_totals_data["two_week_ago"] += location_stats_data[location]["two_week_ago"]
+        overall_totals_data["search"] += location_stats_data[location]["search"]
 
-    # important_dates = {
-    #     "search" : filters["start_date"].strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(1)).strftime("%m/%d/%Y"),
-    #     "one_week_ago" : (filters["start_date"] - dt.timedelta(7)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(7)).strftime("%m/%d/%Y"),
-    #     "two_weeks_ago" : (filters["start_date"] - dt.timedelta(14)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(14)).strftime("%m/%d/%Y"),
-    #     }
+    important_dates = {
+        "search" : graph.start_date.strftime("%m/%d/%Y") + " - " + (graph.end_date - timedelta(1)).strftime("%m/%d/%Y"),
+        "one_week_ago" : (graph.start_date - timedelta(7)).strftime("%m/%d/%Y") + " - " + (graph.end_date- timedelta(7)).strftime("%m/%d/%Y"),
+        "two_weeks_ago" : (graph.start_date - timedelta(14)).strftime("%m/%d/%Y") + " - " + (graph.end_date - timedelta(14)).strftime("%m/%d/%Y"),
+        }
     ################# Raw Samples Table ##############
     page = request.args.get(get_page_parameter(), type=int, default=1)
     pagination = Pagination(page=page, total=filtered_samples.count(
