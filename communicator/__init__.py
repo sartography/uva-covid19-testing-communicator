@@ -161,9 +161,8 @@ def index():
     graph = GraphService()
 
     if request.method == "POST": session["index_filter"] = {}  # Clear out the session if it is invalid.
-
+    if "index_filter" not in session: session["index_filter"] = {}
     if form.validate():
-        session["index_filter"] = {}
         if form.dateRange.data:
             start, end = form.dateRange.data.split("-")
             session["index_filter"]["start_date"] = datetime.strptime(start.strip(), "%m/%d/%Y").date()
@@ -176,7 +175,13 @@ def index():
             session["index_filter"]["compute_id"] = form.compute_id.data
         if form.include_tests.data:
             session["index_filter"]["include_tests"] = form.include_tests.data
-        graph.update_search_filters(session["index_filter"])
+    
+    if type(session["index_filter"]["start_date"]) == str:
+        session["index_filter"]["start_date"] = datetime.strptime(session["index_filter"]["start_date"].strip(), "%Y-%m-%d").date()
+    if type(session["index_filter"]["end_date"]) == str:
+        session["index_filter"]["end_date"] = datetime.strptime(session["index_filter"]["end_date"].strip(), "%Y-%m-%d").date()
+
+    graph.update_search_filters(session["index_filter"])
 
     samples = db.session.query(Sample).order_by(Sample.date.desc())
     filtered_samples = graph.apply_filters(samples)
@@ -189,21 +194,14 @@ def index():
         "hourly":{},
         "weekday":{}
     }
-
-    important_dates = {}
     overall_totals_data = {
                     "one_week_ago":0,
                     "two_week_ago":0,
                     "search":0,
                 }
-
-    location_stats_data = {}
     
     chart_ticks = [] 
-    
     timeFormat = "%m/%d"
-    
-    # Count by Day
     bounds = daterange(graph.start_date, graph.end_date, days=1, hours=0)
     for i in range(len(bounds) - 1):
         chart_ticks.append(f"{bounds[i].strftime(timeFormat)}")
@@ -236,7 +234,6 @@ def index():
     
     table = SampleTable(group_columns(filtered_samples[(page - 1) * 10:((page - 1) * 10) + 10]))
     
-
     return render_template('layouts/default.html',
                            base_href=BASE_HREF,
                            content=render_template(
@@ -354,15 +351,17 @@ def list_imported_files_from_ivy():
     page = request.args.get(get_page_parameter(), type=int, default=1)
     files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
     pagination = Pagination(page=page, total=files.count(),
-                            search=False, record_name='samples')
+                            search=False, record_name='samples', css_framework='bootstrap4')
 
     table = IvyFileTable(files.paginate(page, 10, error_out=False).items)
-    return render_template(
-        'imported_files.html',
-        table=table,
-        pagination=pagination,
-        base_href=BASE_HREF
-    )
+    return render_template('layouts/default.html',
+                           base_href=BASE_HREF,
+                           content=render_template(
+                               'pages/imported_files.html',
+                               table=table,
+                               pagination=pagination,
+                               base_href=BASE_HREF
+                           ))
 
 
 @app.route('/sso')

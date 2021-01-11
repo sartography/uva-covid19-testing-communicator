@@ -45,12 +45,14 @@ class SampleTable(Table):
 class IvyFileTable(Table):
     def sort_url(self, col_id, reverse=False):
         pass
+    classes = ["table","align-items-center","table-flush"]
     file_name = Col('File Name')
     date_added = BetterDatetimeCol('Date', "medium", tzinfo=get_timezone('US/Eastern'), locale='en')
     sample_count = Col('Total Records')
 
 
 class InvitationTable(Table):
+    classes = ["table","align-items-center","table-flush"]
     def sort_url(self, col_id, reverse=False):
         pass
     date_sent = BetterDatetimeCol('Date Sent', "medium", tzinfo=get_timezone('US/Eastern'), locale='en')
