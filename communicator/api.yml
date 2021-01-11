@@ -162,9 +162,9 @@ paths:
         - ApiKeyAuth: []
       parameters:
         - in: query
-          name: bar_code
+          name: last_modified
           required: false
-          description: Return all samples AFTER this bar code.
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
           schema:
             type: string
       responses:
