@@ -10,13 +10,8 @@
               <div class="row">
                 <div class="col">
                   <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within {{dates.search | safe }}</h5>
-                  <span id="stats_today" class="h2 font-weight-bold mb-0">{{overall_totals_data.search| safe }}</span>
+                  <span id="card_1" class="h2 font-weight-bold mb-0">{{overall_totals_data.search| safe }}</span>
 
-                </div>
-                <div class="col-auto">
-                  <div class="icon icon-shape bg-danger text-white rounded-circle shadow">
-                    <em class="fas fa-chart-bar"></em>
-                  </div>
                 </div>
               </div>
             </div>
@@ -29,13 +24,8 @@
                 <div class="col">
                   <h5 class="card-title text-uppercase text-muted mb-0">(1 Week Back) {{dates.one_week_ago| safe }}</h5>
 
-                  <span id="stats_one_week" class="h2 font-weight-bold mb-0">{{overall_totals_data.one_week_ago| safe }}</span>
+                  <span id="card_2" class="h2 font-weight-bold mb-0">{{overall_totals_data.one_week_ago| safe }}</span>
 
-                </div>
-                <div class="col-auto">
-                  <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
-                    <em class="fas fa-chart-pie"></em>
-                  </div>
                 </div>
               </div>
             </div>
@@ -49,13 +39,8 @@
                   <h5 class="card-title text-uppercase text-muted mb-0">(2 Weeks Back) {{dates.two_weeks_ago| safe }}
                   </h5>
 
-                  <span id="stats_two_weeks" class="h2 font-weight-bold mb-0">{{overall_totals_data.two_week_ago| safe }}</span>
+                  <span id="card_3" class="h2 font-weight-bold mb-0">{{overall_totals_data.two_week_ago| safe }}</span>
 
-                </div>
-                <div class="col-auto">
-                  <div class="icon icon-shape bg-yellow text-white rounded-circle shadow">
-                    <em class="fas fa-users"></em>
-                  </div>
                 </div>
               </div>
             </div>

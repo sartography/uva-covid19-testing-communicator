@@ -22,7 +22,7 @@ from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_paginate import Pagination, get_page_parameter
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func, and_, case
+from sqlalchemy import func, and_, case, insert
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
 from flask_executor import Executor
@@ -91,9 +91,9 @@ from communicator import models
 from communicator import api
 from communicator import services
 from communicator import forms
-from communicator.models import Sample
+from communicator.models import Sample, Deposit
 from flask_table import Table, Col, DatetimeCol, BoolCol, NestedTableCol
-from communicator.tables import SampleTable
+from communicator.tables import SampleTable, InventoryDepositTable
 # Convert list of allowed origins to list of regexes
 origins_re = [r"^https?:\/\/%s(.*)" % o.replace('.', r'\.')
               for o in app.config['CORS_ALLOW_ORIGINS']]
@@ -109,7 +109,6 @@ if app.config['ENABLE_SENTRY']:
 
 # HTML Pages
 BASE_HREF = app.config['APPLICATION_ROOT'].strip('/')
-
 
 def superuser(f):
     @wraps(f)
@@ -127,7 +126,9 @@ def superuser(f):
 @superuser
 def page_not_found(e):
     # note that we set the 404 status explicitly
-    return render_template('pages/404.html')
+    return render_template('layouts/default.html',
+        base_href="/",
+        content=render_template('pages/404.html'))
 
 def group_columns(data):
     grouped_data = []
@@ -150,6 +151,7 @@ def group_columns(data):
                              }
                              )
     return grouped_data
+
 from communicator.services.graph_service import GraphService, daterange
 from datetime import timedelta
 
@@ -175,10 +177,10 @@ def index():
             session["index_filter"]["compute_id"] = form.compute_id.data
         if form.include_tests.data:
             session["index_filter"]["include_tests"] = form.include_tests.data
-    
-    if type(session["index_filter"]["start_date"]) == str:
+
+    if type(session["index_filter"].get("start_date", None)) == str:
         session["index_filter"]["start_date"] = datetime.strptime(session["index_filter"]["start_date"].strip(), "%Y-%m-%d").date()
-    if type(session["index_filter"]["end_date"]) == str:
+    if type(session["index_filter"].get("end_date",None)) == str:
         session["index_filter"]["end_date"] = datetime.strptime(session["index_filter"]["end_date"].strip(), "%Y-%m-%d").date()
 
     graph.update_search_filters(session["index_filter"])
@@ -193,11 +195,12 @@ def index():
         "daily":{},
         "hourly":{},
         "weekday":{}
-    }
+        }
+
     overall_totals_data = {
-                    "one_week_ago":0,
-                    "two_week_ago":0,
-                    "search":0,
+                    "one_week_ago" : 0,
+                    "two_week_ago" : 0,
+                    "search" : 0,
                 }
     
     chart_ticks = [] 
@@ -211,7 +214,7 @@ def index():
     daily_charts_data = graph.get_totals_by_day()
     weekday_charts_data = graph.get_totals_by_weekday()
 
-    # # Aggregate results 
+    # Aggregate results 
     for location in location_stats_data:     
         if location in daily_charts_data:
             overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0,dtype=np.int).tolist()
@@ -254,13 +257,39 @@ def index():
                                location_stats_data = location_stats_data,
                            ))
 
-@app.route('/activate', methods=['GET', 'POST'])
+@app.route('/inventory', methods=['GET', 'POST'])
 @superuser
-def activate_station():
+def inventory_page():
+    form = forms.InventoryDepositForm(request.form)
+    if form.validate():
+        if form.date_added.data != None and form.amount.data != None:
+            _date = datetime.strptime(form.date_added.data.strip(), "%m/%d/%Y").date()
+            new_deposit = Deposit(date_added=_date, amount=int(form.amount.data), notes=form.notes.data)
+            db.session.add(new_deposit)
+            db.session.commit()    
+    deposits = db.session.query(Deposit).order_by(Deposit.date_added.desc())
+    total_deposits = sum([i.amount for i in deposits])
+    if deposits.count() > 0:
+        sample_count = db.session.query(Sample).filter(Sample.date >= deposits[-1].date_added).count()
+        first_deposit = deposits[-1].date_added.strftime("%m/%d/%Y")
+    else:
+        sample_count = 0
+        first_deposit = "(No Deposits)"
+    samples_since = total_deposits - sample_count
+    
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    pagination = Pagination(page = page, total = deposits.count(),\
+        search = False, record_name = 'deposits', css_framework = 'bootstrap4')
+
     return render_template('layouts/default.html',
                            base_href=BASE_HREF,
                            content=render_template(
-                               'pages/stations.html'))
+                               'pages/inventory.html',
+                               form=form,
+                               pagination = pagination,
+                               samples_since = samples_since,
+                               first_deposit = first_deposit,
+                               deposits = deposits[(page - 1) * 10:((page - 1) * 10) + 10]))
 
 
 def __make_csv(sample_query):

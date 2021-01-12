@@ -10,8 +10,6 @@ from alembic import context
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-from sqlalchemy.engine import Engine
-
 config = context.config
 
 # Interpret the config file for Python logging.
@@ -56,23 +54,6 @@ def run_migrations_offline():
         context.run_migrations()
 
 
-def exclude_tables_from_config(config_):
-    tables_ = config_.get("tables", None)
-    if tables_ is not None:
-        tables = tables_.split(",")
-    return tables
-
-
-exclude_tables = exclude_tables_from_config(config.get_section('alembic:exclude'))
-
-
-def include_object(object, name, type_, reflected, compare_to):
-    if type_ == "table" and name in exclude_tables:
-        return False
-    else:
-        return True
-
-
 def run_migrations_online():
     """Run migrations in 'online' mode.
 
@@ -101,7 +82,6 @@ def run_migrations_online():
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            include_object=include_object,
             process_revision_directives=process_revision_directives,
             **current_app.extensions['migrate'].configure_args
         )
@@ -114,8 +94,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
-
-
-
-

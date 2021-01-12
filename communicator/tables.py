@@ -19,6 +19,10 @@ class BetterDatetimeCol(Col):
         else:
             return ''
 
+class InventoryDepositTable(Table):
+    classes = ["table","align-items-center","table-flush"]
+    date_added = BetterDatetimeCol('Date', "medium", tzinfo=get_timezone('US/Eastern'), locale='en')
+    amount = Col('Amount')
 
 class NotificationTable(Table):
     type = Col('type')
