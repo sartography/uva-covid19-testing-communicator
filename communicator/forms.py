@@ -3,7 +3,7 @@ import re
 from flask_table import Table, Col, LinkCol, BoolCol, DatetimeCol, NestedTableCol
 from flask_wtf import FlaskForm
 from wtforms import SelectMultipleField, StringField, BooleanField, SelectField, validators, HiddenField, TextAreaField, \
-    ValidationError, BooleanField
+    ValidationError, BooleanField, IntegerField
 
 from wtforms.fields.html5 import DateField
 from wtforms.widgets import TextArea
@@ -28,3 +28,8 @@ class SearchForm(FlaskForm):
     location = TextAreaField('Location')
     compute_id = TextAreaField('Compute ID')
     include_tests = BooleanField("Include Test Strips", default=False)
+
+class InventoryDepositForm(FlaskForm):
+    date_added = TextAreaField('Date')
+    amount = IntegerField('Amount',[validators.DataRequired()])
+    notes = StringField('Date (ex. Monday, September 23 from 10:00 am-5:00 pm ', [validators.DataRequired()])

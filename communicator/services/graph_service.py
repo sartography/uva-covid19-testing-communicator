@@ -136,9 +136,8 @@ class GraphService(object):
                              *cases
                              ).group_by(Sample.location, Sample.station)
         q = self.apply_filters(q)
-
         for result in q:
-            location, station = result[0], result[1]
+            location, station = int(result[0]), int(result[1])
             if location not in weekday_charts_data:
                 weekday_charts_data[location] = dict()
             weekday_charts_data[location][station] = []
