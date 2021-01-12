@@ -1,33 +1,28 @@
-
-import random
+import csv
 import csv
 import io
 import json
-
 import logging
 import os
 from datetime import datetime
-from datetime import date
 from functools import wraps
 
 import connexion
+import numpy as np
 import sentry_sdk
 from babel.dates import format_datetime, get_timezone
-from connexion import ProblemException
 from flask import render_template, request, redirect, url_for, flash, abort, Response, send_file, session
 from flask_assets import Environment
 from flask_cors import CORS
+from flask_executor import Executor
 from flask_mail import Mail
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_paginate import Pagination, get_page_parameter
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func, and_, case, insert
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
-from flask_executor import Executor
 
-import numpy as np
 logging.basicConfig(level=logging.INFO)
 
 # API, fully defined in api.yml
@@ -89,11 +84,11 @@ connexion_app.add_api('api.yml', base_path='/v1.0')
 
 from communicator import models
 from communicator import api
-from communicator import services
 from communicator import forms
 from communicator.models import Sample, Deposit
-from flask_table import Table, Col, DatetimeCol, BoolCol, NestedTableCol
 from communicator.tables import SampleTable, InventoryDepositTable
+from communicator import scheduler # Must import this to cause the scheduler to kick off.
+
 # Convert list of allowed origins to list of regexes
 origins_re = [r"^https?:\/\/%s(.*)" % o.replace('.', r'\.')
               for o in app.config['CORS_ALLOW_ORIGINS']]
