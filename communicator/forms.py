@@ -3,7 +3,7 @@ import re
 from flask_table import Table, Col, LinkCol, BoolCol, DatetimeCol, NestedTableCol
 from flask_wtf import FlaskForm
 from wtforms import SelectMultipleField, StringField, BooleanField, SelectField, validators, HiddenField, TextAreaField, \
-    ValidationError
+    ValidationError, BooleanField, IntegerField
 
 from wtforms.fields.html5 import DateField
 from wtforms.widgets import TextArea
@@ -16,7 +16,7 @@ class InvitationForm(FlaskForm):
 
     def validate_emails(form, field):
         all_emails = field.data.splitlines()
-        EMAIL_REGEX = re.compile('^[a-z0-9]+[._a-z0-9]+[@]\w+[.]\w{2,3}$')
+        EMAIL_REGEX = re.compile(r'^[a-z0-9]+[._a-z0-9]+[@]\w+[.]\w{2,3}$')
         for email in all_emails:
             if not re.search(EMAIL_REGEX, email):
                 raise ValidationError(f'Invalid email \'{email}\', Emails must each be on a seperate line.')
@@ -27,3 +27,9 @@ class SearchForm(FlaskForm):
     studentId = TextAreaField('Student Id')
     location = TextAreaField('Location')
     compute_id = TextAreaField('Compute ID')
+    include_tests = BooleanField("Include Test Strips", default=False)
+
+class InventoryDepositForm(FlaskForm):
+    date_added = TextAreaField('Date')
+    amount = IntegerField('Amount',[validators.DataRequired()])
+    notes = StringField('Date (ex. Monday, September 23 from 10:00 am-5:00 pm ', [validators.DataRequired()])

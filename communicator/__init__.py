@@ -1,33 +1,28 @@
-
-import random
+import csv
 import csv
 import io
 import json
-
 import logging
 import os
 from datetime import datetime
-from datetime import date
 from functools import wraps
 
 import connexion
+import numpy as np
 import sentry_sdk
 from babel.dates import format_datetime, get_timezone
-from connexion import ProblemException
 from flask import render_template, request, redirect, url_for, flash, abort, Response, send_file, session
 from flask_assets import Environment
 from flask_cors import CORS
+from flask_executor import Executor
 from flask_mail import Mail
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_paginate import Pagination, get_page_parameter
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func, and_, case
 from sentry_sdk.integrations.flask import FlaskIntegration
 from webassets import Bundle
-from flask_executor import Executor
 
-import numpy as np
 logging.basicConfig(level=logging.INFO)
 
 # API, fully defined in api.yml
@@ -87,13 +82,13 @@ assets.register('app_scss', scss)
 
 connexion_app.add_api('api.yml', base_path='/v1.0')
 
-from datetime import date, timedelta
 from communicator import models
 from communicator import api
 from communicator import forms
-from communicator.models import Sample
-from communicator import scheduler
-from communicator.tables import SampleTable
+from communicator.models import Sample, Deposit
+from communicator.tables import SampleTable, InventoryDepositTable
+from communicator import scheduler # Must import this to cause the scheduler to kick off.
+
 # Convert list of allowed origins to list of regexes
 origins_re = [r"^https?:\/\/%s(.*)" % o.replace('.', r'\.')
               for o in app.config['CORS_ALLOW_ORIGINS']]
@@ -109,7 +104,6 @@ if app.config['ENABLE_SENTRY']:
 
 # HTML Pages
 BASE_HREF = app.config['APPLICATION_ROOT'].strip('/')
-
 
 def superuser(f):
     @wraps(f)
@@ -127,60 +121,9 @@ def superuser(f):
 @superuser
 def page_not_found(e):
     # note that we set the 404 status explicitly
-    return render_template('pages/404.html')
-
-def daterange(start, stop, days = 1, hours =  0):
-    if (type(start) == date):
-        start = date2datetime(start)
-    if (type(stop) == date):
-        stop = date2datetime(stop)
-    time = start
-    date_list = []
-    while time <= stop:
-        date_list.append(time)
-        time += timedelta(days=days,hours=hours)
-    return date_list
-    
-def date2datetime(_date):
-    return datetime.combine(_date, datetime.min.time())
-
-def apply_filters(query, session):
-    if "index_filter" not in session:
-        filters = dict()
-    else:
-        filters = session["index_filter"]
-
-    try:
-        if "start_date" not in filters:
-            filters["start_date"] = date.today()
-        if "end_date" not in filters:
-            filters["end_date"] = date.today() + timedelta(1)
-        if "student_id" in filters:
-            query = query.filter(
-                Sample.student_id.in_(filters["student_id"].split()))
-        if "location" in filters:
-            query = query.filter(
-                Sample.location.in_(filters["location"].split()))
-        if "station" in filters:
-            query = query.filter(
-                Sample.station.in_(filters["station"].split()))
-        if "compute_id" in filters:
-            query = query.filter(
-                Sample.compute_id.in_(filters["compute_id"].split()))
-    except Exception as e:
-        logging.error(
-            "Encountered an error building filters, so clearing. " + str(e))
-        session["index_filter"] = {}
-
-    return query, filters
-
-def dow_count(start, end):
-    counts = [0 for _ in range(7)]
-    curr = start 
-    while curr <= end:
-        counts[curr.weekday()] += 1
-        curr += timedelta(1) 
-    return counts
+    return render_template('layouts/default.html',
+        base_href="/",
+        content=render_template('pages/404.html'))
 
 def group_columns(data):
     grouped_data = []
@@ -188,7 +131,6 @@ def group_columns(data):
         grouped_data.append({"barcode":entry.barcode,
                              "date":entry.date,
                              "notifications":entry.notifications,
-
                              "ids":[dict(type = "computing_id",
                                          data = entry.computing_id),
                                     dict(type = "student_id",
@@ -205,20 +147,19 @@ def group_columns(data):
                              )
     return grouped_data
 
-def ingest_form(form):
-    pass
+from communicator.services.graph_service import GraphService, daterange
+from datetime import timedelta
 
 @app.route('/', methods=['GET', 'POST'])
 @superuser
 def index():
     form = forms.SearchForm(request.form)
     action = BASE_HREF + "/"
-    
-    if request.method == "POST" or request.args.get('cancel') == 'true':
-        session["index_filter"] = {}  # Clear out the session if it is invalid.
-    
+    graph = GraphService()
+
+    if request.method == "POST": session["index_filter"] = {}  # Clear out the session if it is invalid.
+    if "index_filter" not in session: session["index_filter"] = {}
     if form.validate():
-        session["index_filter"] = {}
         if form.dateRange.data:
             start, end = form.dateRange.data.split("-")
             session["index_filter"]["start_date"] = datetime.strptime(start.strip(), "%m/%d/%Y").date()
@@ -229,150 +170,60 @@ def index():
             session["index_filter"]["location"] = form.location.data
         if form.compute_id.data:
             session["index_filter"]["compute_id"] = form.compute_id.data
+        if form.include_tests.data:
+            session["index_filter"]["include_tests"] = form.include_tests.data
+
+    if type(session["index_filter"].get("start_date", None)) == str:
+        session["index_filter"]["start_date"] = datetime.strptime(session["index_filter"]["start_date"].strip(), "%Y-%m-%d").date()
+    if type(session["index_filter"].get("end_date",None)) == str:
+        session["index_filter"]["end_date"] = datetime.strptime(session["index_filter"]["end_date"].strip(), "%Y-%m-%d").date()
+
+    graph.update_search_filters(session["index_filter"])
+
     samples = db.session.query(Sample).order_by(Sample.date.desc())
-    # Store previous form submission settings in the session, so they are preseved through pagination.
-    filtered_samples, filters = apply_filters(samples, session)
-
-
-    if type(filters["start_date"]) == str:
-        filters["start_date"] = datetime.strptime(filters["start_date"].strip(), "%Y-%m-%d").date()
-    if type(filters["end_date"]) == str:
-        filters["end_date"] = datetime.strptime(filters["end_date"].strip(), "%Y-%m-%d").date()
-
-    filtered_samples = filtered_samples\
-                        .filter(Sample.date >= filters["start_date"])\
-                        .filter(Sample.date <= filters["end_date"])
-
+    filtered_samples = graph.apply_filters(samples)
     if request.args.get('download') == 'true':
         csv = __make_csv(filtered_samples)
         return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
-    
-    daily_charts_data = {}
-    hourly_charts_data = {}
-    weekday_charts_data = {}
 
     overall_chart_data = {
         "daily":{},
         "hourly":{},
         "weekday":{}
-    }
+        }
 
-    important_dates = {}
     overall_totals_data = {
-                    "one_week_ago":0,
-                    "two_week_ago":0,
-                    "search":0,
+                    "one_week_ago" : 0,
+                    "two_week_ago" : 0,
+                    "search" : 0,
                 }
-
-    location_stats_data = {}
     
-    days_in_search = (filters["end_date"] - filters["start_date"]).days
-    dow_counts = dow_count(filters["start_date"], filters["end_date"] - timedelta(1))
     chart_ticks = [] 
-    
     timeFormat = "%m/%d"
-    
-    # Count by Day
-    bounds = daterange(filters["start_date"], filters["end_date"], days=1, hours=0)
+    bounds = daterange(graph.start_date, graph.end_date, days=1, hours=0)
     for i in range(len(bounds) - 1):
         chart_ticks.append(f"{bounds[i].strftime(timeFormat)}")
-
-    cases = [ ]  
-    for i in range(len(bounds) - 1):
-        cases.append(func.count(case([(and_(Sample.date >= bounds[i], Sample.date <= bounds[i+1]), 1)])))
     
-    q = db.session.query(Sample.location, Sample.station,
-        *cases\
-        ).group_by(Sample.location, Sample.station)\
-         .filter(Sample.date >= filters["start_date"])\
-         .filter(Sample.date <= filters["end_date"])
-
-
-    q, filters = apply_filters(q, session)\
-
-    for result in q:
-        location, station = result[0], result[1]
-        if location not in daily_charts_data: daily_charts_data[location] = dict()
-        daily_charts_data[location][station] = result[2:]
-
-    # Count by hour
-    cases = [ ]  
-    for i in range(24):
-        cases.append(func.count(case([(func.extract('hour', Sample.date) == i, 1)])))
-    
-    q = db.session.query(Sample.location, Sample.station,
-        *cases\
-        ).group_by(Sample.location, Sample.station)\
-         .filter(Sample.date >= filters["start_date"])\
-         .filter(Sample.date <= filters["end_date"])
-
-    q, filters = apply_filters(q, session)
-
-    for result in q:
-        location, station = result[0], result[1]
-        if location not in hourly_charts_data: hourly_charts_data[location] = dict()
-        # Here I'm accounting for the difference in UTC and GMT time zones 
-        # by moving the five results from the start to the end. 
-        offset = 6 
-        counts = result[2:]
-        counts = counts[offset:] + counts[:offset]
-        hourly_charts_data[location][station] = [round(i/days_in_search, 2) for i in counts]
-    
-    # Count by weekday
-    cases = [ ]  
-    for i in range(7):
-        cases.append(func.count(case([(func.extract('isodow', Sample.date) == i + 1, 1)])))
-    
-    q = db.session.query(Sample.location, Sample.station,
-        *cases\
-        ).group_by(Sample.location, Sample.station)\
-         .filter(Sample.date >= filters["start_date"])\
-         .filter(Sample.date <= filters["end_date"])
-
-    q, filters = apply_filters(q , session)
-
-    for result in q:
-        location, station = result[0], result[1]
-        if location not in weekday_charts_data: weekday_charts_data[location] = dict()
-        weekday_charts_data[location][station] = []
-        for dow, total in zip(range(7),result[2:]):
-            if dow_counts[dow] > 0:
-                weekday_charts_data[location][station].append(round(total/dow_counts[dow],2))
-            else:
-                weekday_charts_data[location][station].append(total)
-    # Count by range
-    cases = [func.count(case([(and_(Sample.date >= filters["start_date"] - timedelta(14), Sample.date <= filters["end_date"] - timedelta(14)), 1)])),
-            func.count(case([(and_(Sample.date >= filters["start_date"] - timedelta(7), Sample.date <= filters["end_date"] - timedelta(7)), 1)])),
-            func.count(case([(and_(Sample.date >= filters["start_date"], Sample.date <= filters["end_date"]), 1)]))]
-    
-    q = db.session.query(Sample.location,
-        *cases\
-        ).group_by(Sample.location)
-
-    q, filters = apply_filters(q , session)
-
-    for result in q:
-        location = result[0]
-        if location not in location_stats_data: location_stats_data[location] = dict()
-        location_stats_data[location]["two_week_ago"] = result[1]
-        location_stats_data[location]["one_week_ago"] = result[2]
-        location_stats_data[location]["search"] = result[3]
+    location_stats_data = graph.get_totals_last_week()
+    hourly_charts_data = graph.get_totals_by_hour()
+    daily_charts_data = graph.get_totals_by_day()
+    weekday_charts_data = graph.get_totals_by_weekday()
 
     # Aggregate results 
     for location in location_stats_data:     
         if location in daily_charts_data:
-            overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0,dtype=np.float16).tolist()
-            overall_chart_data["hourly"][location] = np.sum([hourly_charts_data[location][station] for station in hourly_charts_data[location]],axis=0,dtype=np.float16).tolist()
-            overall_chart_data["weekday"][location] = np.sum([weekday_charts_data[location][station] for station in weekday_charts_data[location]],axis=0,dtype=np.float16).tolist()
+            overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0,dtype=np.int).tolist()
+            overall_chart_data["hourly"][location] = np.sum([hourly_charts_data[location][station] for station in hourly_charts_data[location]],axis=0,dtype=np.int).tolist()
+            overall_chart_data["weekday"][location] = np.sum([weekday_charts_data[location][station] for station in weekday_charts_data[location]],axis=0,dtype=np.int).tolist()
         
         overall_totals_data["one_week_ago"] += location_stats_data[location]["one_week_ago"]
         overall_totals_data["two_week_ago"] += location_stats_data[location]["two_week_ago"]
         overall_totals_data["search"] += location_stats_data[location]["search"]
 
     important_dates = {
-        "search" : filters["start_date"].strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(1)).strftime("%m/%d/%Y"),
-        "one_week_ago" : (filters["start_date"] - timedelta(7)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(7)).strftime("%m/%d/%Y"),
-        "two_weeks_ago" : (filters["start_date"] - timedelta(14)).strftime("%m/%d/%Y") + " - " + (filters["end_date"] - timedelta(14)).strftime("%m/%d/%Y"),
+        "search" : graph.start_date.strftime("%m/%d/%Y") + " - " + (graph.end_date - timedelta(1)).strftime("%m/%d/%Y"),
+        "one_week_ago" : (graph.start_date - timedelta(7)).strftime("%m/%d/%Y") + " - " + (graph.end_date- timedelta(7)).strftime("%m/%d/%Y"),
+        "two_weeks_ago" : (graph.start_date - timedelta(14)).strftime("%m/%d/%Y") + " - " + (graph.end_date - timedelta(14)).strftime("%m/%d/%Y"),
         }
     ################# Raw Samples Table ##############
     page = request.args.get(get_page_parameter(), type=int, default=1)
@@ -381,7 +232,6 @@ def index():
     
     table = SampleTable(group_columns(filtered_samples[(page - 1) * 10:((page - 1) * 10) + 10]))
     
-
     return render_template('layouts/default.html',
                            base_href=BASE_HREF,
                            content=render_template(
@@ -402,13 +252,39 @@ def index():
                                location_stats_data = location_stats_data,
                            ))
 
-@app.route('/activate', methods=['GET', 'POST'])
+@app.route('/inventory', methods=['GET', 'POST'])
 @superuser
-def activate_station():
+def inventory_page():
+    form = forms.InventoryDepositForm(request.form)
+    if form.validate():
+        if form.date_added.data != None and form.amount.data != None:
+            _date = datetime.strptime(form.date_added.data.strip(), "%m/%d/%Y").date()
+            new_deposit = Deposit(date_added=_date, amount=int(form.amount.data), notes=form.notes.data)
+            db.session.add(new_deposit)
+            db.session.commit()    
+    deposits = db.session.query(Deposit).order_by(Deposit.date_added.desc())
+    total_deposits = sum([i.amount for i in deposits])
+    if deposits.count() > 0:
+        sample_count = db.session.query(Sample).filter(Sample.date >= deposits[-1].date_added).count()
+        first_deposit = deposits[-1].date_added.strftime("%m/%d/%Y")
+    else:
+        sample_count = 0
+        first_deposit = "(No Deposits)"
+    samples_since = total_deposits - sample_count
+    
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    pagination = Pagination(page = page, total = deposits.count(),\
+        search = False, record_name = 'deposits', css_framework = 'bootstrap4')
+
     return render_template('layouts/default.html',
                            base_href=BASE_HREF,
                            content=render_template(
-                               'pages/stations.html'))
+                               'pages/inventory.html',
+                               form=form,
+                               pagination = pagination,
+                               samples_since = samples_since,
+                               first_deposit = first_deposit,
+                               deposits = deposits[(page - 1) * 10:((page - 1) * 10) + 10]))
 
 
 def __make_csv(sample_query):
@@ -499,15 +375,17 @@ def list_imported_files_from_ivy():
     page = request.args.get(get_page_parameter(), type=int, default=1)
     files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
     pagination = Pagination(page=page, total=files.count(),
-                            search=False, record_name='samples')
+                            search=False, record_name='samples', css_framework='bootstrap4')
 
     table = IvyFileTable(files.paginate(page, 10, error_out=False).items)
-    return render_template(
-        'imported_files.html',
-        table=table,
-        pagination=pagination,
-        base_href=BASE_HREF
-    )
+    return render_template('layouts/default.html',
+                           base_href=BASE_HREF,
+                           content=render_template(
+                               'pages/imported_files.html',
+                               table=table,
+                               pagination=pagination,
+                               base_href=BASE_HREF
+                           ))
 
 
 @app.route('/sso')

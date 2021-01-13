@@ -1,19 +1,5 @@
-<!-- Main content -->
-
-<div class="main-content">
-
-  <!-- Top navbar -->
-  <nav class="navbar navbar-top navbar-expand-md navbar-dark" id="navbar-main">
-    <div class="container-fluid">
-
-      <!-- Brand -->
-      <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="./index.html">UVA Communicator
-        Dashboard</a>
-    </div>
-  </nav>
 
   <!-- Header -->
-  {% include 'includes/top-stats.html' %}
   <script src="{{url_for('static', filename='assets/js/graph.js')}}"></script>
 
   <!-- Page content -->
@@ -44,16 +30,14 @@
             {{ form.csrf_token() }}
             <div class="card-header border-0">
               <div class="row align-items-center">
-                <div class="col">
-                  <h3 class="mb-0">Search</h3>
-                </div>
+      
                 <div class="col text-right mr-2">
                   <button class="btn btn-sm btn-primary"
                     onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Search Today</button>
                 </div>
                 <div class="col text-right mr-2">
                   <button class="btn btn-sm btn-primary"
-                    onclick="$('input[name=\'dateRange\']').val('01/01/2019 - ' + getToday());submitform();">Search All</button>
+                    onclick="$('input[name=\'dateRange\']').val('10/05/2020 - ' + getToday());submitform();">Search All</button>
                 </div>
                 <div class="col text-right mr-2">
                   <button type="submit" class="btn btn-sm btn-primary">Run Search</button>
@@ -125,7 +109,7 @@
           <div class="card-header border-0">
             <div class="row align-items-center">
               <div class="col">
-                <h3 class="mb-0">Records to be processed</h3>
+                <h3 class="mb-0">Records to be processed</h3>{{pagination.info}}
               </div>
               <div class="col text-right">
                 <a href="{{ url_for('index') }}?download=true" class="btn btn-sm btn-primary">Download all</a>
@@ -146,7 +130,6 @@
       </div>
     </div>
   </div>
-</div>
 </form>
 
 
@@ -195,7 +178,7 @@
         datasets.map(dataset => {
           sum += dataset.data[ctx.dataIndex];
         });
-        return sum.toFixed(2);
+        return sum;
       }
       else {
         return '';
@@ -215,6 +198,7 @@
     return today
   }
   /////////////////////////////
+  
   var overall_charts = {};
   overall_charts.daily = dict2datasets(JSON.parse('{{overall_chart_data.daily  | tojson }}'));
   overall_charts.hourly = dict2datasets(JSON.parse('{{overall_chart_data.hourly | tojson }}'));
@@ -247,7 +231,7 @@
   var per_weekday = new Chart(document.getElementById('week-chart').getContext('2d'), {
     type: 'horizontalBar',
     data: {
-      labels: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday"],
+      labels: ["Sunday","Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
       datasets: overall_charts.weekday
     },
     options: {
@@ -383,9 +367,9 @@
       per_weekday.config.data.datasets = weekday_charts[loc_code];
 
       per_location.config.options.legend.onClick = station_legend;
-      $('#stats_today').text(location_stats_data[loc_code].search);
-      $('#stats_one_week').text(location_stats_data[loc_code].one_week_ago);
-      $('#stats_two_weeks').text(location_stats_data[loc_code].two_week_ago);
+      $('#card_1').text(location_stats_data[loc_code].search);
+      $('#card_2').text(location_stats_data[loc_code].one_week_ago);
+      $('#card_3').text(location_stats_data[loc_code].two_week_ago);
 
       $('#location').val(loc_code);
     } else {
@@ -394,9 +378,9 @@
       per_weekday.config.data.datasets = overall_charts.weekday;
       per_location.config.options.legend.onClick = location_legend;
 
-      $('#stats_today').text(overall_totals_data.search);
-      $('#stats_one_week').text(overall_totals_data.one_week_ago);
-      $('#stats_two_weeks').text(overall_totals_data.two_week_ago);
+      $('#card_1').text(overall_totals_data.search);
+      $('#card_2').text(overall_totals_data.one_week_ago);
+      $('#card_3').text(overall_totals_data.two_week_ago);
 
       $('#chart-title').text("Location Activity");
       $('#location').val("");
