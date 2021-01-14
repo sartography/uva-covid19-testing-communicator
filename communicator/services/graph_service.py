@@ -161,7 +161,7 @@ class GraphService(object):
                 self.filters["station"] = Sample.station.in_(
                     filters["station"].split())
             if "compute_id" in filters:
-                self.filters["compute_id"] = Sample.computing_id.in_(
+                self.filters["compute_id"] = func.lower(Sample.computing_id).in_(
                     filters["compute_id"].split())
             if "start_date" in filters:
                 self.filters["start_date"] = Sample.date >= filters["start_date"]
