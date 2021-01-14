@@ -26,22 +26,27 @@
       </div>
       <div class="col-xl-4 mb-xl-0">
         <div class="card shadow">
+         
           <form action="{{ action }}" method="post" id="pageForm">
             {{ form.csrf_token() }}
             <div class="card-header border-0">
               <div class="row align-items-center">
+                <div class="card-header border-0">
+                  <div class="row align-items-center">
+                    <div class="col">
+                      <h3 class="mb-0">Search</h3>
+                    </div>
+                  </div>
+                </div>
       
-                <div class="col text-right mr-2">
                   <button class="btn btn-sm btn-primary"
-                    onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Search Today</button>
-                </div>
-                <div class="col text-right mr-2">
+                    onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Today</button>
+            
                   <button class="btn btn-sm btn-primary"
-                    onclick="$('input[name=\'dateRange\']').val('10/05/2020 - ' + getToday());submitform();">Search All</button>
-                </div>
-                <div class="col text-right mr-2">
-                  <button type="submit" class="btn btn-sm btn-primary">Run Search</button>
-                </div>
+                    onclick="$('input[name=\'dateRange\']').val('10/05/2020 - ' + getToday());submitform();">All</button>
+               
+                  <button type="submit" class="btn btn-sm btn-primary">Run</button>
+               
               </div>
             </div>
             <div class="table-responsive">
@@ -165,7 +170,7 @@
           borderWidth: 4,
           borderCapStyle: 'butt',
           data: data[key],
-        })
+        }
     });
     return datasets;
   }
@@ -199,7 +204,7 @@
   }
   /////////////////////////////
   
-  var overall_charts = {};
+  var overall_charts = {}; 
   overall_charts.daily = dict2datasets(JSON.parse('{{overall_chart_data.daily  | tojson }}'));
   overall_charts.hourly = dict2datasets(JSON.parse('{{overall_chart_data.hourly | tojson }}'));
   overall_charts.weekday = dict2datasets(JSON.parse('{{overall_chart_data.weekday | tojson }}'));
@@ -265,7 +270,8 @@
 
     }
   });
-
+search button
+base href 
   var per_hour = new Chart(document.getElementById('time-chart').getContext('2d'), {
     type: 'horizontalBar',
     data: {
