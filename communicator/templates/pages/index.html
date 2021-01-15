@@ -138,10 +138,6 @@
 
 
 <script>
-  function random_rgba() {
-    var o = Math.round, r = Math.random, s = 255;
-    return 'rgba(' + o(r() * s) + ',' + o(r() * s) + ',' + o(r() * s) + ',1)';
-  }
   var color_idx = 1;
   var colors = {};
   function getColor(key) {
@@ -192,6 +188,20 @@
     align: 'end'
   }
 
+  var stacked_bar_scale = {
+        xAxes: [{
+          ticks: {
+            beginAtZero: true
+          },
+          stacked: true
+        }],
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          },
+          stacked: true
+        }]
+      };
   function getToday() {
     var today = new Date();
     var dd = String(today.getDate()).padStart(2, '0');
@@ -232,7 +242,6 @@
   var overall_totals_data = JSON.parse('{{overall_totals_data | tojson }}');
   var location_stats_data = JSON.parse('{{location_stats_data | tojson }}');
 
-  //Chart.defaults.global.defaultFontColor = 'lightgray';
   var per_weekday = new Chart(document.getElementById('week-chart').getContext('2d'), {
     type: 'horizontalBar',
     data: {
@@ -245,22 +254,7 @@
       legend: {
         display: false
       },
-      scales: {
-        xAxes: [{
-          ticks: {
-            beginAtZero: true
-            , fontColor: 'black'
-          },
-          stacked: true
-        }],
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
-            , fontColor: 'black'
-          },
-          stacked: true
-        }]
-      },
+      scales: stacked_bar_scale,
       title: {
         display: true,
         text: 'Average Count By Weekday For {{dates.search}}'
@@ -292,27 +286,11 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      scales: stacked_bar_scale,
       legend: {
         display: false
       },
-      scales: {
-        xAxes: [{
-          ticks: {
-            beginAtZero: true
-            , fontColor: 'black'
-          },
-          stacked: true
-        }],
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
-            , fontColor: 'black'
-          },
-          stacked: true
-        }]
-      },
       title: {
-        display: true,
         text: 'Average Count By Hour For {{dates.search}}'
       },
       plugins: {
@@ -337,29 +315,13 @@
       datasets: overall_charts.daily,
       labels: JSON.parse('{{chart_ticks | tojson }}')
     },
-
     // Configuration options go here
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      scales: stacked_bar_scale,
       title: {
         display: false,
-      },
-      scales: {
-        xAxes: [{
-          ticks: {
-            beginAtZero: true
-            , fontColor: 'white'
-          },
-          stacked: true
-        }],
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
-            , fontColor: 'white'
-          },
-          stacked: true
-        }]
       },
       legend: {
         display: true,
