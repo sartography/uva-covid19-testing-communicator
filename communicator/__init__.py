@@ -18,6 +18,7 @@ from flask_executor import Executor
 from flask_mail import Mail
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
+from flask import jsonify
 from flask_paginate import Pagination, get_page_parameter
 from flask_sqlalchemy import SQLAlchemy
 from sentry_sdk.integrations.flask import FlaskIntegration
@@ -85,7 +86,7 @@ connexion_app.add_api('api.yml', base_path='/v1.0')
 from communicator import models
 from communicator import api
 from communicator import forms
-from communicator.models import Sample, Deposit
+from communicator.models import Sample, Deposit, DepositSchema, IvyFileSchema
 from communicator.tables import SampleTable, InventoryDepositTable
 from communicator import scheduler # Must import this to cause the scheduler to kick off.
 
@@ -121,9 +122,7 @@ def superuser(f):
 @superuser
 def page_not_found(e):
     # note that we set the 404 status explicitly
-    return render_template('layouts/default.html',
-        base_href="/",
-        content=render_template('pages/404.html'))
+    return render_template('pages/404.html')
 
 def group_columns(data):
     grouped_data = []
@@ -225,6 +224,7 @@ def index():
         "one_week_ago" : (graph.start_date - timedelta(7)).strftime("%m/%d/%Y") + " - " + (graph.end_date- timedelta(7)).strftime("%m/%d/%Y"),
         "two_weeks_ago" : (graph.start_date - timedelta(14)).strftime("%m/%d/%Y") + " - " + (graph.end_date - timedelta(14)).strftime("%m/%d/%Y"),
         }
+
     ################# Raw Samples Table ##############
     page = request.args.get(get_page_parameter(), type=int, default=1)
     pagination = Pagination(page=page, total=filtered_samples.count(
@@ -255,39 +255,72 @@ def index():
                                location_stats_data = location_stats_data,
                            ))
 
-@app.route('/inventory', methods=['GET', 'POST'])
+@app.route('/inventory_deposits', methods=['GET', 'POST'])
 @superuser
-def inventory_page():
-    form = forms.InventoryDepositForm(request.form)
-    if form.validate():
-        if form.date_added.data != None and form.amount.data != None:
-            _date = datetime.strptime(form.date_added.data.strip(), "%m/%d/%Y").date()
-            new_deposit = Deposit(date_added=_date, amount=int(form.amount.data), notes=form.notes.data)
-            db.session.add(new_deposit)
-            db.session.commit()    
+def list_inventory_deposits():
+    from communicator.models.deposit import Deposit, DepositSchema
+    # form = forms.InventoryDepositForm(request.form)
+    # if form.validate():
+    #     if form.date_added.data != None and form.amount.data != None:
+    #         _date = datetime.strptime(form.date_added.data.strip(), "%m/%d/%Y").date()
+    #         new_deposit = Deposit(date_added=_date, amount=int(form.amount.data), notes=form.notes.data)
+    #         db.session.add(new_deposit)
+    #         db.session.commit()    
     deposits = db.session.query(Deposit).order_by(Deposit.date_added.desc())
-    total_deposits = sum([i.amount for i in deposits])
-    if deposits.count() > 0:
-        sample_count = db.session.query(Sample).filter(Sample.date >= deposits[-1].date_added).count()
-        first_deposit = deposits[-1].date_added.strftime("%m/%d/%Y")
-    else:
-        sample_count = 0
-        first_deposit = "(No Deposits)"
-    samples_since = total_deposits - sample_count
+    # total_deposits = sum([i.amount for i in deposits])
+    # if deposits.count() > 0:
+    #     sample_count = db.session.query(Sample).filter(Sample.date >= deposits[-1].date_added).count()
+    #     first_deposit = deposits[-1].date_added.strftime("%m/%d/%Y")
+    # else:
+    #     sample_count = 0
+    #     first_deposit = "(No Deposits)"
+    # samples_since = total_deposits - sample_count
     
-    page = request.args.get(get_page_parameter(), type=int, default=1)
-    pagination = Pagination(page = page, total = deposits.count(),\
-        search = False, record_name = 'deposits', css_framework = 'bootstrap4')
+    return DepositSchema(many=True).dumps(deposits)
+                 
+@app.route('/imported_files', methods=['GET'])
+@superuser
+def list_imported_files_from_ivy():
+    from communicator.models.ivy_file import IvyFile
+    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
+    return IvyFileSchema(many=True).dumps(files)
+                           
 
-    return render_template('layouts/default.html',
-                           base_href=BASE_HREF,
-                           content=render_template(
-                               'pages/inventory.html',
-                               form=form,
-                               pagination = pagination,
-                               samples_since = samples_since,
-                               first_deposit = first_deposit,
-                               deposits = deposits[(page - 1) * 10:((page - 1) * 10) + 10]))
+@app.route('/invitation', methods=['GET', 'POST'])
+@superuser
+def send_invitation():
+    from communicator.models.invitation import Invitation
+    from communicator.tables import InvitationTable
+
+    form = forms.InvitationForm(request.form)
+    action = BASE_HREF + "/invitation"
+    title = "Send invitation to students"
+    if request.method == 'POST' and form.validate():
+        from communicator.services.notification_service import NotificationService
+        with NotificationService(app) as ns:
+            ns.send_invitations(
+                form.date.data, form.location.data, form.emails.data)
+            return redirect(url_for('send_invitation'))
+    # display results
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    invites = db.session.query(Invitation).order_by(
+        Invitation.date_sent.desc())
+    pagination = Pagination(page=page, total=invites.count(),
+                            search=False, record_name='samples')
+
+    table = InvitationTable(invites.paginate(page, 10, error_out=False).items)
+
+    return render_template(
+        'form.html',
+        form=form,
+        table=table,
+        pagination=pagination,
+        action=action,
+        title=title,
+        description_map={},
+        base_href=BASE_HREF
+    )
+
 
 
 def __make_csv(sample_query):
@@ -330,66 +363,6 @@ def __make_csv(sample_query):
     mem.seek(0)
     csvfile.close()
     return mem
-
-
-@app.route('/invitation', methods=['GET', 'POST'])
-@superuser
-def send_invitation():
-    from communicator.models.invitation import Invitation
-    from communicator.tables import InvitationTable
-
-    form = forms.InvitationForm(request.form)
-    action = BASE_HREF + "/invitation"
-    title = "Send invitation to students"
-    if request.method == 'POST' and form.validate():
-        from communicator.services.notification_service import NotificationService
-        with NotificationService(app) as ns:
-            ns.send_invitations(
-                form.date.data, form.location.data, form.emails.data)
-            return redirect(url_for('send_invitation'))
-    # display results
-    page = request.args.get(get_page_parameter(), type=int, default=1)
-    invites = db.session.query(Invitation).order_by(
-        Invitation.date_sent.desc())
-    pagination = Pagination(page=page, total=invites.count(),
-                            search=False, record_name='samples')
-
-    table = InvitationTable(invites.paginate(page, 10, error_out=False).items)
-
-    return render_template(
-        'form.html',
-        form=form,
-        table=table,
-        pagination=pagination,
-        action=action,
-        title=title,
-        description_map={},
-        base_href=BASE_HREF
-    )
-
-
-@app.route('/imported_files', methods=['GET'])
-@superuser
-def list_imported_files_from_ivy():
-    from communicator.models.ivy_file import IvyFile
-    from communicator.tables import IvyFileTable
-
-    # display results
-    page = request.args.get(get_page_parameter(), type=int, default=1)
-    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
-    pagination = Pagination(page=page, total=files.count(),
-                            search=False, record_name='samples', css_framework='bootstrap4')
-
-    table = IvyFileTable(files.paginate(page, 10, error_out=False).items)
-    return render_template('layouts/default.html',
-                           base_href=BASE_HREF,
-                           content=render_template(
-                               'pages/imported_files.html',
-                               table=table,
-                               pagination=pagination,
-                               base_href=BASE_HREF
-                           ))
-
 
 @app.route('/sso')
 def sso():

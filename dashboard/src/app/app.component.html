@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    
+    <title>Be SAFE Notification System</title>
+    <script>
+      $("#menu-toggle").click(function(e) {
+    e.preventDefault();
+    $("#wrapper").toggleClass("toggled");
+  });
+    </script>
+  </head>
+
+<body>
+  <div id="wrapper">
+
+    <!-- Sidebar -->
+    <div id="sidebar-wrapper">
+        <ul class="sidebar-nav">
+            <li class="sidebar-brand">
+                <a routerLink="/graphs">
+                  UVA Communicator
+                </a>
+            </li>
+            <li>
+                <a routerLink="/graphs">Dashboard</a>
+            </li>
+            <li>
+                <a routerLink="/imports">Imported Files</a>
+            </li>
+            <li>
+                <a routerLink="/deposits">Manage Inventory</a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-12">         
+                    <h5><button class="btn btn-default" id="menu-toggle">Toggle Menu</button></h5>
+                    <router-outlet></router-outlet>
+                </div>
+            </div>
+        </div>
+    </div>
+  
+    </div>
+  </body>
+
+
+</html>
+
+
+

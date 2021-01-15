@@ -1,0 +1,90 @@
+
+<div class="container-fluid mt--7">
+    <app-top-bar></app-top-bar>
+    <div class="row">
+        <div class="col mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-3 ">Location Activity </h3>
+                </div>
+                <div style="display: block">
+                    <canvas baseChart [datasets]="barChartData" 
+                    [labels]="barChartLabels" 
+                    [options]="barChartOptions"
+                    [legend]="barChartLegend" 
+                    [chartType]="barChartType">
+                    </canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col mb-3">
+            <div class="card ">
+                <div class="card-header">
+
+                <div class = row>
+                    <h3 class="mb-3 col ">Search</h3>
+                    <button class="btn btn-sm btn-primary col mr-3"
+                    onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Today</button>
+    
+                  <button class="btn btn-sm btn-primary col mr-3"
+                    onclick="$('input[name=\'dateRange\']').val('10/05/2020 - ' + getToday());submitform();">All</button>
+    
+                  <button type="submit" class="btn btn-sm btn-primary col ">Run</button>
+                </div>
+
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <div class="col mb-3 ">
+            <div class="card ">
+                <div class="card-header">
+                    <h3 class="mb-3 ">(Total Inventory - Total Prints)</h3>
+                </div>
+                <div style="display: block">
+                    <canvas baseChart [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions"
+                        [legend]="barChartLegend" [chartType]="horizontalBar">
+                    </canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-3">(Total Inventory - Total Prints)</h3>
+                </div>
+                <div style="display: block">
+                    <canvas baseChart [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions"
+                        [legend]="barChartLegend" [chartType]="horizontalBar">
+                    </canvas>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="card row">
+        <div class="card-header">
+            <h3 class="mb-0">Records to be processed </h3>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-items-center table-flush">
+                <thead><tr><th>The </th><th>Sample</th><th>Table</th></tr></thead>
+                <tbody>
+                <tr *ngFor="let file of fileList">
+                  <td>{{file.date_added}}</td>
+                  <td>{{file.file_name}}</td>
+                  <td>{{file.sample_count}}</td>
+                </tr>
+                </tbody>
+                </table>
+        </div>
+
+    </div>
+
+</div>

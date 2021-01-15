@@ -1,0 +1,46 @@
+
+<div class="container-fluid mt--7">
+    <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Inventory Deposits</h3>pagination.info
+                </div>
+        <div class="card-body">
+          <h5 class="card-title"><h3 class="mb-0">(Total Inventory - Total Prints) since first_deposit | safe: samples_since | safe Strips Remaining</h3>
+          </h5>
+          <div class="justify-content-center">
+            <form action="/inventory" method="post">
+                <div class="table-responsive">
+                    <!-- Projects table -->
+                    <table class="table align-items-center table-flush">
+                        <thead><tr><th>Date Added</th><th>Amount</th><th>Notes</th></tr></thead>
+                        <tbody>
+
+                        <tr>
+                            <td><input type="text" name="date_added"></td>
+                            <td><input type="number" name="amount"></td>
+                            <td><input type="text" name="notes"><button type="submit">Submit</button></td>
+                        </tr>
+                        <tr *ngFor="let deposit of depositList">
+                          <td>{{deposit.date_added}}</td>
+                          <td>{{deposit.amount}}</td>
+                          <td>{{deposit.notes}}</td>
+                        </tr>
+                        </tbody>
+                        </table>
+                </div>
+            </form>
+        </div>
+        </div>
+      </div>
+ 
+
+</div>
+
+<script>
+$(function () {
+    $('input[name="date_added"]').daterangepicker({
+      opens: 'left',
+      singleDatePicker: true,
+    });
+  });
+</script>
