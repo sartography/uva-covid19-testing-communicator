@@ -233,8 +233,10 @@ def index():
     table = SampleTable(group_columns(filtered_samples[(page - 1) * 10:((page - 1) * 10) + 10]))
     
     return render_template('layouts/default.html',
-                           base_href=BASE_HREF,
-                           content=render_template(
+                            base_href=BASE_HREF,
+                            dates = important_dates,
+                            overall_totals_data = overall_totals_data,
+                            content=render_template(
                                'pages/index.html',
                                form = form,
                                dates = important_dates,
@@ -247,7 +249,8 @@ def index():
                                daily_charts_data = daily_charts_data,
                                hourly_charts_data = hourly_charts_data,
                                weekday_charts_data = weekday_charts_data,
-
+                               
+                            
                                overall_totals_data = overall_totals_data,
                                location_stats_data = location_stats_data,
                            ))

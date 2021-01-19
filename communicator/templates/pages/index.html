@@ -1,143 +1,143 @@
+<!-- Header -->
+<script src="{{url_for('static', filename='assets/js/graph.js')}}"></script>
 
-  <!-- Header -->
-  <script src="{{url_for('static', filename='assets/js/graph.js')}}"></script>
-
-  <!-- Page content -->
-  <div class="container-fluid mt--7">
-    <div class="row">
-      <div class="col-xl-8 mb-4 mb-xl-0">
-        <div class="card bg-gradient-default shadow">
-          <div class="card-header bg-transparent">
-            <div class="row align-items-center">
-              <div class="col">
-                <h6 class="text-uppercase text-light ls-1 mb-1">Overview</h6>
-                <h2 id="chart-title" class="text-white mb-0">Location Activity</h2>
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-
-            <!-- Chart  -->
-            <div class="chart">
-              <canvas id="data-chart" class="chart-canvas"></canvas>
+<!-- Page content -->
+<div class="container-fluid mt--7">
+  <div class="row">
+    <div class="col-xl-8 mb-4 mb-xl-0">
+      <div class="card bg-gradient-default shadow">
+        <div class="card-header bg-transparent">
+          <div class="row align-items-center">
+            <div class="col">
+              <h6 class="text-uppercase text-light ls-1 mb-1">Overview</h6>
+              <h2 id="chart-title" class="text-white mb-0">Location Activity</h2>
             </div>
           </div>
         </div>
-      </div>
-      <div class="col-xl-4 mb-xl-0">
-        <div class="card shadow">
-          <form action="{{ action }}" method="post" id="pageForm">
-            {{ form.csrf_token() }}
-            <div class="card-header border-0">
-              <div class="row align-items-center">
-      
-                <div class="col text-right mr-2">
-                  <button class="btn btn-sm btn-primary"
-                    onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Search Today</button>
-                </div>
-                <div class="col text-right mr-2">
-                  <button class="btn btn-sm btn-primary"
-                    onclick="$('input[name=\'dateRange\']').val('10/05/2020 - ' + getToday());submitform();">Search All</button>
-                </div>
-                <div class="col text-right mr-2">
-                  <button type="submit" class="btn btn-sm btn-primary">Run Search</button>
-                </div>
-              </div>
-            </div>
-            <div class="table-responsive">
-              <!-- Projects table -->
-              <table class="table align-items-center table-flush">
-                <tbody>
-                  <input type="hidden" name="currently_showing" />
-                  {% for field in form if field.name != "csrf_token" %}
-                  <tr>
+        <div class="card-body">
 
-                    <div class="form-field {{ field.widget.input_type }}">
-                      <td>
-                        <div class="form-field-label">{{ field.label() }}:</div>
-                      </td>
-                      <td>
-                        {% if field.name == "dateRange" %}
-                        <input type="text" name="{{field.name}}" />
-                        {%else%}
-                        <div class="form-field-input">{{ field }}</div>
-
-                        {% for error in field.errors %}
-                        <div class="form-field-error">{{ error }}</div>
-
-                        {% endfor %}
-                        {% endif %}
-                    </div>
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </form>
-        </div>
-      </div>
-
-    </div>
-    <div class="row mt-4">
-      <div class="col mb-5 mb-xl-0">
-        <div class="card shadow">
-          <div class="card-header border-0">
-            <div class="row align-items-center">
-              <div class="col">
-                <h3 class="mb-0">Additional Stats:</h3>
-              </div>
-            </div>
-          </div>
-
-          <div class="card-body row">
-            <div class="chart col">
-              <canvas id="week-chart" class="chart-canvas"></canvas>
-            </div>
-            <div class="chart col">
-              <canvas id="time-chart" class="chart-canvas"></canvas>
-            </div>
+          <!-- Chart  -->
+          <div class="chart">
+            <canvas id="data-chart" class="chart-canvas"></canvas>
           </div>
         </div>
-
       </div>
     </div>
+    <div class="col-xl-4 mb-xl-0">
+      <div class="card shadow">
 
-    <div class="row mt-4">
-      <div class="col mb-5 mb-xl-0">
-        <div class="card shadow">
+        <form action="{{ action }}" method="post" id="pageForm">
+          {{ form.csrf_token() }}
           <div class="card-header border-0">
             <div class="row align-items-center">
-              <div class="col">
-                <h3 class="mb-0">Records to be processed</h3>{{pagination.info}}
+              <div class="card-header border-0">
+                <div class="row align-items-center">
+                  <div class="col">
+                    <h3 class="mb-0">Search</h3>
+                  </div>
+                </div>
               </div>
-              <div class="col text-right">
-                <a href="{{ url_for('index') }}?download=true" class="btn btn-sm btn-primary">Download all</a>
-              </div>
+
+              <button class="btn btn-sm btn-primary"
+                onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Today</button>
+
+              <button class="btn btn-sm btn-primary"
+                onclick="$('input[name=\'dateRange\']').val('10/05/2020 - ' + getToday());submitform();">All</button>
+
+              <button type="submit" class="btn btn-sm btn-primary">Run</button>
+
             </div>
           </div>
-
           <div class="table-responsive">
-
             <!-- Projects table -->
-            {{ table }}
+            <table class="table align-items-center table-flush">
+              <tbody>
+                <input type="hidden" name="currently_showing" />
+                {% for field in form if field.name != "csrf_token" %}
+                <tr>
+
+                  <div class="form-field {{ field.widget.input_type }}">
+                    <td>
+                      <div class="form-field-label">{{ field.label() }}:</div>
+                    </td>
+                    <td>
+                      {% if field.name == "dateRange" %}
+                      <input type="text" name="{{field.name}}" />
+                      {%else%}
+                      <div class="form-field-input">{{ field }}</div>
+
+                      {% for error in field.errors %}
+                      <div class="form-field-error">{{ error }}</div>
+
+                      {% endfor %}
+                      {% endif %}
+                  </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
-          <div class="row justify-content-center">
-            {{ pagination.links }}
+        </form>
+      </div>
+    </div>
+
+  </div>
+  <div class="row mt-4">
+    <div class="col mb-5 mb-xl-0">
+      <div class="card shadow">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Additional Stats:</h3>
+            </div>
           </div>
         </div>
 
+        <div class="card-body row">
+          <div class="chart col">
+            <canvas id="week-chart" class="chart-canvas"></canvas>
+          </div>
+          <div class="chart col">
+            <canvas id="time-chart" class="chart-canvas"></canvas>
+          </div>
+        </div>
       </div>
+
     </div>
   </div>
+
+  <div class="row mt-4">
+    <div class="col mb-5 mb-xl-0">
+      <div class="card shadow">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Records to be processed</h3>{{pagination.info}}
+            </div>
+            <div class="col text-right">
+              <a href="{{ url_for('index') }}?download=true" class="btn btn-sm btn-primary">Download all</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+
+          <!-- Projects table -->
+          {{ table }}
+        </div>
+        <div class="row justify-content-center">
+          {{ pagination.links }}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 </form>
 
 
 <script>
-  function random_rgba() {
-    var o = Math.round, r = Math.random, s = 255;
-    return 'rgba(' + o(r() * s) + ',' + o(r() * s) + ',' + o(r() * s) + ',1)';
-  }
   var color_idx = 1;
   var colors = {};
   function getColor(key) {
@@ -188,6 +188,20 @@
     align: 'end'
   }
 
+  var stacked_bar_scale = {
+        xAxes: [{
+          ticks: {
+            beginAtZero: true
+          },
+          stacked: true
+        }],
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          },
+          stacked: true
+        }]
+      };
   function getToday() {
     var today = new Date();
     var dd = String(today.getDate()).padStart(2, '0');
@@ -198,7 +212,7 @@
     return today
   }
   /////////////////////////////
-  
+
   var overall_charts = {};
   overall_charts.daily = dict2datasets(JSON.parse('{{overall_chart_data.daily  | tojson }}'));
   overall_charts.hourly = dict2datasets(JSON.parse('{{overall_chart_data.hourly | tojson }}'));
@@ -231,7 +245,7 @@
   var per_weekday = new Chart(document.getElementById('week-chart').getContext('2d'), {
     type: 'horizontalBar',
     data: {
-      labels: ["Sunday","Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      labels: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday"],
       datasets: overall_charts.weekday
     },
     options: {
@@ -240,31 +254,28 @@
       legend: {
         display: false
       },
-      scales: {
-        xAxes: [{ stacked: true }],
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
-          },
-          stacked: true
-        }]
-      },
+      scales: stacked_bar_scale,
       title: {
         display: true,
         text: 'Average Count By Weekday For {{dates.search}}'
       },
+     
       plugins: {
+
         datalabels: stacked_sum_labels
-      },layout: {
-            padding: {
-                left: 0,
-                right: 50,
-                top: 0,
-                bottom: 0
-            }}
+      }, layout: {
+        padding: {
+          left: 0,
+          right: 50,
+          top: 0,
+          bottom: 0
+        }
+      }
 
     }
   });
+  per_weekday.options.plugins.datalabels.color = "black";
+  per_weekday.update();
 
   var per_hour = new Chart(document.getElementById('time-chart').getContext('2d'), {
     type: 'horizontalBar',
@@ -275,33 +286,27 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      scales: stacked_bar_scale,
       legend: {
         display: false
       },
-      scales: {
-        xAxes: [{ stacked: true }],
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
-          },
-          stacked: true
-        }]
-      },
       title: {
-        display: true,
         text: 'Average Count By Hour For {{dates.search}}'
       },
       plugins: {
         datalabels: stacked_sum_labels
-      },layout: {
-            padding: {
-                left: 0,
-                right: 50,
-                top: 0,
-                bottom: 0
-            }}
+      }, layout: {
+        padding: {
+          left: 0,
+          right: 50,
+          top: 0,
+          bottom: 0
+        }
+      }
     }
   });
+  per_hour.options.plugins.datalabels.color = "black";
+  per_hour.update();
 
   var per_location = new Chart(document.getElementById('data-chart').getContext('2d'), {
     // The type of chart we want to create
@@ -310,22 +315,13 @@
       datasets: overall_charts.daily,
       labels: JSON.parse('{{chart_ticks | tojson }}')
     },
-
     // Configuration options go here
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      scales: stacked_bar_scale,
       title: {
         display: false,
-      },
-      scales: {
-        xAxes: [{ stacked: true }],
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
-          },
-          stacked: true
-        }]
       },
       legend: {
         display: true,
@@ -341,16 +337,18 @@
       },
       plugins: {
         datalabels: stacked_sum_labels
-      },layout: {
-            padding: {
-                left: 0,
-                right: 0,
-                top: 20,
-                bottom: 0
-            }}
+      }, layout: {
+        padding: {
+          left: 0,
+          right: 0,
+          top: 20,
+          bottom: 0
+        }
+      }
     }
   });
-
+  per_location.options.plugins.datalabels.color = "white";
+  per_location.update();
   function station_legend(e, legendItem) {
     showLocation("");
   };
@@ -399,6 +397,18 @@
   $(function () {
     $('input[name="dateRange"]').daterangepicker({
       opens: 'left',
+      locale: {
+        "daysOfWeek": [
+          
+          "Mo",
+          "Tu",
+          "We",
+          "Th",
+          "Fr",
+          "Sa",
+          "Su"
+      ],    
+      }
     });
   });
   $('input[name="dateRange"]').val('{{dates.search}}');
