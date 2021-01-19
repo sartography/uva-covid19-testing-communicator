@@ -245,7 +245,7 @@
   var per_weekday = new Chart(document.getElementById('week-chart').getContext('2d'), {
     type: 'horizontalBar',
     data: {
-      labels: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      labels: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday"],
       datasets: overall_charts.weekday
     },
     options: {
@@ -397,6 +397,18 @@
   $(function () {
     $('input[name="dateRange"]').daterangepicker({
       opens: 'left',
+      locale: {
+        "daysOfWeek": [
+          
+          "Mo",
+          "Tu",
+          "We",
+          "Th",
+          "Fr",
+          "Sa",
+          "Su"
+      ],    
+      }
     });
   });
   $('input[name="dateRange"]').val('{{dates.search}}');
