@@ -3,7 +3,14 @@ import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
+import { HttpHeaders } from '@angular/common/http';
 
+const httpOptions = {
+  headers: new HttpHeaders({
+    'Content-Type':  'application/json',
+    Authorization: 'my-auth-token'
+  })
+};
 
 // import {API_URL} from '../env';
 
@@ -18,11 +25,19 @@ export class DepositService {
   // GET list of public, future events
   getDeposits(): Observable<Deposit[]> {
     return this.http
-      .get<Deposit[]>(`http://0.0.0.0:5000/inventory_deposits`).pipe(
+      .get<Deposit[]>(`http://0.0.0.0:5000/get_inventory_deposits`).pipe(
         tap(_ => this.log('fetched files')),
         catchError(this.handleError<Deposit[]>('getDeposits', []))
       );
   }
+
+    /** POST: add a new hero to the database */
+    addDeposit(deposit: Deposit): Observable<Deposit> {
+      return this.http.post<Deposit>(`http://0.0.0.0:5000/add_inventory_deposit`, deposit, httpOptions)
+        .pipe(
+          catchError(this.handleError('addDeposit', deposit))
+        );
+    }
     /**
    * Handle Http operation that failed.
    * Let the app continue.

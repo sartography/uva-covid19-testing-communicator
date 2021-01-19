@@ -22,7 +22,10 @@
     "bootstrap": "^4.5.3",
     "chart.js": "^2.9.4",
     "jquery": "^3.5.1",
+    "jw-angular-pagination": "^1.2.0",
     "ng2-charts": "^2.4.2",
+    "ngx-daterange": "^1.0.43",
+    "ngx-daterangepicker": "^1.1.1",
     "rxjs": "^6.6.3",
     "tslib": "^2.0.0",
     "zone.js": "~0.10.2"

@@ -10,8 +10,8 @@
                     <table class="table align-items-center table-flush">
                         <thead><tr><th>Date Added</th><th>File Name</th><th>Sample Count</th></tr></thead>
                         <tbody>
-                        <tr *ngFor="let file of fileList">
-                          <td>{{file.date_added}}</td>
+                        <tr *ngFor="let file of fileList ">
+                          <td>{{file.date_added | date : 'medium'}}</td>
                           <td>{{file.file_name}}</td>
                           <td>{{file.sample_count}}</td>
                         </tr>

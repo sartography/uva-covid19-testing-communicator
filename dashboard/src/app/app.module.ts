@@ -9,8 +9,9 @@ import { ImportedFilesComponent } from './imported-files/imported-files.componen
 import { HttpClientModule } from '@angular/common/http';
 import { ChartsModule } from 'ng2-charts';
 import { TopBarComponent } from './top-bar/top-bar.component';
-import {IvyFileService} from './ivyfile.service'
+import { IvyFileService } from './ivyfile.service'
 import { DepositService } from './deposit.service';
+import { FormsModule } from '@angular/forms';
 @NgModule({
   declarations: [
     AppComponent,
@@ -23,7 +24,8 @@ import { DepositService } from './deposit.service';
     BrowserModule,
     AppRoutingModule,
     ChartsModule,
-    HttpClientModule
+    HttpClientModule,
+    FormsModule
   ],
   providers: [IvyFileService, DepositService],
   bootstrap: [AppComponent]

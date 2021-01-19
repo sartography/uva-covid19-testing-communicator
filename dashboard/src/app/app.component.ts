@@ -10,8 +10,7 @@ export class AppComponent implements OnInit {
   title = 'Dashboard';
   ngOnInit() {
     (function ($) {
-      $("#menu-toggle").click(function(e) {
-        e.preventDefault();
+      $("#menu-toggle").click(function() {
         $("#wrapper").toggleClass("toggled");
       });
     })(jQuery);

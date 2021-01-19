@@ -118,12 +118,6 @@ def superuser(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@app.errorhandler(404)
-@superuser
-def page_not_found(e):
-    # note that we set the 404 status explicitly
-    return render_template('pages/404.html')
-
 def group_columns(data):
     grouped_data = []
     for entry in data:
@@ -152,32 +146,31 @@ from datetime import timedelta
 @app.route('/', methods=['GET', 'POST'])
 @superuser
 def index():
-    form = forms.SearchForm(request.form)
-    action = BASE_HREF + "/"
-    graph = GraphService()
 
-    if request.method == "POST": session["index_filter"] = {}  # Clear out the session if it is invalid.
-    if "index_filter" not in session: session["index_filter"] = {}
-    if form.validate():
-        if form.dateRange.data:
-            start, end = form.dateRange.data.split("-")
-            session["index_filter"]["start_date"] = datetime.strptime(start.strip(), "%m/%d/%Y").date()
-            session["index_filter"]["end_date"] =  datetime.strptime(end.strip(), "%m/%d/%Y").date() + timedelta(1)
-        if form.studentId.data:
-            session["index_filter"]["student_id"] = form.studentId.data
-        if form.location.data:
-            session["index_filter"]["location"] = form.location.data
-        if form.compute_id.data:
-            session["index_filter"]["compute_id"] = form.compute_id.data
-        if form.include_tests.data:
-            session["index_filter"]["include_tests"] = form.include_tests.data
+    # graph = GraphService()
 
-    if type(session["index_filter"].get("start_date", None)) == str:
-        session["index_filter"]["start_date"] = datetime.strptime(session["index_filter"]["start_date"].strip(), "%Y-%m-%d").date()
-    if type(session["index_filter"].get("end_date",None)) == str:
-        session["index_filter"]["end_date"] = datetime.strptime(session["index_filter"]["end_date"].strip(), "%Y-%m-%d").date()
+    # if request.method == "POST": session["index_filter"] = {}  # Clear out the session if it is invalid.
+    # if "index_filter" not in session: session["index_filter"] = {}
+    # if form.validate():
+    #     if form.dateRange.data:
+    #         start, end = form.dateRange.data.split("-")
+    #         session["index_filter"]["start_date"] = datetime.strptime(start.strip(), "%m/%d/%Y").date()
+    #         session["index_filter"]["end_date"] =  datetime.strptime(end.strip(), "%m/%d/%Y").date() + timedelta(1)
+    #     if form.studentId.data:
+    #         session["index_filter"]["student_id"] = form.studentId.data
+    #     if form.location.data:
+    #         session["index_filter"]["location"] = form.location.data
+    #     if form.compute_id.data:
+    #         session["index_filter"]["compute_id"] = form.compute_id.data
+    #     if form.include_tests.data:
+    #         session["index_filter"]["include_tests"] = form.include_tests.data
 
-    graph.update_search_filters(session["index_filter"])
+    # if type(session["index_filter"].get("start_date", None)) == str:
+    #     session["index_filter"]["start_date"] = datetime.strptime(session["index_filter"]["start_date"].strip(), "%Y-%m-%d").date()
+    # if type(session["index_filter"].get("end_date",None)) == str:
+    #     session["index_filter"]["end_date"] = datetime.strptime(session["index_filter"]["end_date"].strip(), "%Y-%m-%d").date()
+
+    # graph.update_search_filters(session["index_filter"])
 
     samples = db.session.query(Sample).order_by(Sample.date.desc())
     filtered_samples = graph.apply_filters(samples)
@@ -255,26 +248,43 @@ def index():
                                location_stats_data = location_stats_data,
                            ))
 
-@app.route('/inventory_deposits', methods=['GET', 'POST'])
+@app.route('/graphs/daily', methods=['GET'])
+@superuser
+def blah():
+    from communicator.models.ivy_file import IvyFile
+    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
+    return IvyFileSchema(many=True).dumps(files)
+    
+@app.route('/graphs/weekly', methods=['GET'])
+@superuser
+def blah():
+    from communicator.models.ivy_file import IvyFile
+    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
+    return IvyFileSchema(many=True).dumps(files)
+    
+@app.route('/graphs/hourly', methods=['GET'])
+@superuser
+def blahblah():
+    from communicator.models.ivy_file import IvyFile
+    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
+    return IvyFileSchema(many=True).dumps(files)
+
+@app.route('/add_inventory_deposit', methods=['POST'])
+@superuser
+def add_inventory_deposit():
+    from communicator.models.deposit import Deposit, DepositSchema
+    _date = datetime.strptime(request.json["date_added"].strip(), "%m/%d/%Y").date()
+    new_deposit = Deposit(date_added=_date, amount=int(request.json["amount"]), notes=request.json["notes"])
+    db.session.add(new_deposit)
+    db.session.commit()  
+    return DepositSchema().dumps(new_deposit)
+
+@app.route('/get_inventory_deposits', methods=['GET'])
 @superuser
 def list_inventory_deposits():
     from communicator.models.deposit import Deposit, DepositSchema
-    # form = forms.InventoryDepositForm(request.form)
-    # if form.validate():
-    #     if form.date_added.data != None and form.amount.data != None:
-    #         _date = datetime.strptime(form.date_added.data.strip(), "%m/%d/%Y").date()
-    #         new_deposit = Deposit(date_added=_date, amount=int(form.amount.data), notes=form.notes.data)
-    #         db.session.add(new_deposit)
-    #         db.session.commit()    
+
     deposits = db.session.query(Deposit).order_by(Deposit.date_added.desc())
-    # total_deposits = sum([i.amount for i in deposits])
-    # if deposits.count() > 0:
-    #     sample_count = db.session.query(Sample).filter(Sample.date >= deposits[-1].date_added).count()
-    #     first_deposit = deposits[-1].date_added.strftime("%m/%d/%Y")
-    # else:
-    #     sample_count = 0
-    #     first_deposit = "(No Deposits)"
-    # samples_since = total_deposits - sample_count
     
     return DepositSchema(many=True).dumps(deposits)
                  

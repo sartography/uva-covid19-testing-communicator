@@ -2,10 +2,12 @@ import smtplib
 from datetime import datetime
 
 from communicator import db, app, executor
-from communicator.models import Sample
+from communicator.models import Sample, Deposit, IvyFile
 from communicator.models.invitation import Invitation
 from communicator.models.notification import Notification, EMAIL_TYPE, TEXT_TYPE
 from communicator.models.sample import SampleSchema
+from communicator.models.deposit import DepositSchema
+from communicator.models.ivyfile import IvyFileSchema
 from communicator.services.ivy_service import IvyService
 from communicator.services.notification_service import NotificationService
 from communicator.services.sample_service import SampleService
@@ -45,12 +47,23 @@ def get_samples(last_modified=None):
     response = SampleSchema(many=True).dump(samples)
     return response
 
-
 def clear_samples():
     db.session.query(Notification).delete()
     db.session.query(Sample).delete()
     db.session.query(Invitation).delete()
     db.session.commit()
+
+def get_deposits(last_modified=None):
+    query = db.session.query(Sample)
+    if last_modified:
+        lm_date = datetime.fromisoformat(last_modified)
+        query = query.filter(Sample.last_modified > lm_date)
+    deposits = query.order_by(Deposit.date_added).all()
+    response = DepositSchema(many=True).dump(deposits)
+    return response
+def add_deposit(body):
+    pass
+
 
 
 def update_and_notify():

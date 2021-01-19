@@ -1,4 +1,3 @@
-
 <div class="container-fluid mt--7">
     <app-top-bar></app-top-bar>
     <div class="row">
@@ -8,11 +7,8 @@
                     <h3 class="mb-3 ">Location Activity </h3>
                 </div>
                 <div style="display: block">
-                    <canvas baseChart [datasets]="barChartData" 
-                    [labels]="barChartLabels" 
-                    [options]="barChartOptions"
-                    [legend]="barChartLegend" 
-                    [chartType]="barChartType">
+                    <canvas baseChart [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions"
+                        [legend]="barChartLegend" chartType="bar">
                     </canvas>
                 </div>
             </div>
@@ -22,18 +18,51 @@
             <div class="card ">
                 <div class="card-header">
 
-                <div class = row>
-                    <h3 class="mb-3 col ">Search</h3>
-                    <button class="btn btn-sm btn-primary col mr-3"
-                    onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Today</button>
-    
-                  <button class="btn btn-sm btn-primary col mr-3"
-                    onclick="$('input[name=\'dateRange\']').val('10/05/2020 - ' + getToday());submitform();">All</button>
-    
-                  <button type="submit" class="btn btn-sm btn-primary col ">Run</button>
-                </div>
+                    <div class=row>
+                        <h3 class="mb-3 col ">Search</h3>
+                        <button class="btn btn-sm btn-primary col mr-3"
+                            onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Today</button>
 
+                        <button class="btn btn-sm btn-primary col mr-3"
+                            onclick="$('input[name=\'dateRange\']').val('10/05/2020 - ' + getToday());submitform();">All</button>
+
+                        <button type="submit" class="btn btn-sm btn-primary col ">Run</button>
+                    </div>
+
+                </div>
+                
+            <div class = "col">
+                <div class="form-group row">
+                    <label for="range" class="col mt-3 mr-3">Search Range</label>
+                    <input type="text" class="form-control col mr-3 mt-3" id="range">
+                  </div>
+
+                <div class="form-group row ">
+
+                    <label for="location" class="col mt-3 mr-3">Location ID(s)</label>
+
+                    <textarea class="form-control col mr-3 mt-3" id="location" rows="2"></textarea>
+
+                </div>
+                <div class="form-group row ">
+
+                    <label for="student" class="col mt-3 mr-3">Student ID(s)</label>
+
+                    <textarea class="form-control col mr-3 mt-3" id="student" rows="2"></textarea>
+
+                </div>
+                <div class="form-group row ">
+
+                    <label for="compute" class="col mt-3 mr-3">Compute ID(s)</label>
+
+                    <textarea class="form-control col mr-3 mt-3" id="compute" rows="2"></textarea>
+
+                </div>
+          
+
+                
             </div>
+
             </div>
         </div>
     </div>
@@ -43,11 +72,11 @@
         <div class="col mb-3 ">
             <div class="card ">
                 <div class="card-header">
-                    <h3 class="mb-3 ">(Total Inventory - Total Prints)</h3>
+                    <h3 class="mb-3 ">Average Count By Weekday For dates.search</h3>
                 </div>
                 <div style="display: block">
-                    <canvas baseChart [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions"
-                        [legend]="barChartLegend" [chartType]="horizontalBar">
+                    <canvas baseChart [datasets]="barChartData" [labels]="weekdayChartLabels"
+                        [options]="barChartOptions" [legend]=false chartType="horizontalBar">
                     </canvas>
                 </div>
             </div>
@@ -56,11 +85,11 @@
         <div class="col mb-3">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="mb-3">(Total Inventory - Total Prints)</h3>
+                    <h3 class="mb-3">Average Count By Hour For dates.search</h3>
                 </div>
                 <div style="display: block">
-                    <canvas baseChart [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions"
-                        [legend]="barChartLegend" [chartType]="horizontalBar">
+                    <canvas baseChart [datasets]="barChartData" [labels]="hourlyChartLabels" [options]="barChartOptions"
+                        [legend]=false chartType="horizontalBar">
                     </canvas>
                 </div>
 
@@ -74,15 +103,19 @@
         </div>
         <div class="table-responsive">
             <table class="table align-items-center table-flush">
-                <thead><tr><th>The </th><th>Sample</th><th>Table</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>The </th>
+                        <th>Sample</th>
+                        <th>Table</th>
+                    </tr>
+                </thead>
                 <tbody>
-                <tr *ngFor="let file of fileList">
-                  <td>{{file.date_added}}</td>
-                  <td>{{file.file_name}}</td>
-                  <td>{{file.sample_count}}</td>
-                </tr>
+                    <tr *ngFor="let sample of searchResult">
+                        <td>{{sample.date}}</td>
+                    </tr>
                 </tbody>
-                </table>
+            </table>
         </div>
 
     </div>

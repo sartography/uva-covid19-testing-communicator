@@ -9,7 +9,7 @@ import { IvyFile } from '../ivyfile';
   styleUrls: ['./imported-files.component.css']
 })
 export class ImportedFilesComponent implements OnInit {
-  fileList: IvyFile[];
+  fileList: IvyFile[] = [];
   constructor(private fileService: IvyFileService) { }
 
   getFiles(): void {

@@ -20,16 +20,3 @@ class InvitationForm(FlaskForm):
         for email in all_emails:
             if not re.search(EMAIL_REGEX, email):
                 raise ValidationError(f'Invalid email \'{email}\', Emails must each be on a seperate line.')
-
-
-class SearchForm(FlaskForm):
-    dateRange = TextAreaField('Search Range', id="dateRange")
-    studentId = TextAreaField('Student Id')
-    location = TextAreaField('Location')
-    compute_id = TextAreaField('Compute ID')
-    include_tests = BooleanField("Include Test Strips", default=False)
-
-class InventoryDepositForm(FlaskForm):
-    date_added = TextAreaField('Date')
-    amount = IntegerField('Amount',[validators.DataRequired()])
-    notes = StringField('Date (ex. Monday, September 23 from 10:00 am-5:00 pm ', [validators.DataRequired()])
