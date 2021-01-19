@@ -36,11 +36,14 @@ def add_sample(body):
     SampleService().add_or_update_records([sample])
 
 
-def get_samples(last_modified=None):
+def get_samples(last_modified=None, created_on=None):
     query = db.session.query(Sample)
     if last_modified:
         lm_date = datetime.fromisoformat(last_modified)
         query = query.filter(Sample.last_modified > lm_date)
+    if created_on:
+        co_date = datetime.fromisoformat(created_on)
+        query = query.filter(Sample.created_on > co_date)
     samples = query.order_by(Sample.last_modified).limit(200).all()
     response = SampleSchema(many=True).dump(samples)
     return response

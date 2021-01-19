@@ -178,3 +178,47 @@ class TestSampleEndpoint(BaseTest):
                           headers={'X-CR-API-KEY': app.config.get('API_TOKEN')})
         data = json.loads(rv.get_data(as_text=True))
         self.assertEqual(0, len(data))
+
+    def test_get_all_samples_by_created_on(self):
+        d1_str = '202012300101'  # dec 30th 2020
+        d1 = datetime.strptime(d1_str, '%Y%m%d%H%M')
+        s1_bar_code = '000000111-' + d1_str + '-4321'
+
+        d2_str = '202101010101'  # Jan 1st 2021
+        d2 = datetime.strptime(d2_str, '%Y%m%d%H%M')
+        s2_bar_code = '000000111-' + d2_str + '-4321'
+
+        d3_str = '202101010101'  # Jan 5th 2021
+        d3 = datetime.strptime(d3_str, '%Y%m%d%H%M')
+
+        s1 = Sample(barcode=s1_bar_code,
+                    location="4321",
+                    date=datetime.now(),
+                    created_on=d1,
+                    last_modified=d3,  # Note Modified date is later than created date.
+                    student_id="000000111",
+                    email="daniel.h.funk@gmail.com",
+                    result_code="12345",
+                    ivy_file="xxx",
+                    email_notified=True,
+                    text_notified=True)
+        s2 = Sample(barcode=s2_bar_code,
+                    location="4321",
+                    date=datetime.now(),
+                    created_on=d2,
+                    last_modified=d2,
+                    student_id="000000112",
+                    email="dan@gmail.com",
+                    result_code="12345",
+                    ivy_file="yyy",
+                    email_notified=False,
+                    text_notified=False)
+        db.session.add(s1)
+        db.session.add(s2)
+
+        created_on_arg = d1.isoformat()
+        rv = self.app.get(f'/v1.0/sample?created_on={created_on_arg}', content_type="application/json",
+                          headers={'X-CR-API-KEY': app.config.get('API_TOKEN')})
+        data = json.loads(rv.get_data(as_text=True))
+        self.assertEqual(1, len(data)) # Even through s1 was modified on the 4th, it isn't returned.
+        self.assertEqual(s2.barcode, data[0]['barcode'])

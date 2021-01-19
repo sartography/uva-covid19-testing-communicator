@@ -13,6 +13,7 @@ class Sample(db.Model):
     student_id = db.Column(db.Integer)
     computing_id = db.Column(db.String)
     date = db.Column(db.DateTime)
+    created_on = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     last_modified = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.now, nullable=False)
     location = db.Column(db.Integer)
     station = db.Column(db.Integer)
