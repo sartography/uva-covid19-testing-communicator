@@ -6,7 +6,7 @@
                 <div class="card-header border-0">
                     <div class="row align-items-center">
                         <div class="col">
-                            <h3 class="mb-0">(Total Inventory - Total Prints) since {{first_deposit | safe}}: {{samples_since | safe}} Strips Remaining</h3>
+                            <h3 class="mb-0">(Total Inventory - Total Prints) since {{first_deposit | safe}}: {{samples_since | safe}} Labels Remaining</h3>
                         </div>
                     </div>
                 </div>
@@ -61,6 +61,9 @@ $(function () {
     $('input[name="date_added"]').daterangepicker({
       opens: 'left',
       singleDatePicker: true,
+      locale: {
+        firstDay: 1   
+      }
     });
   });
 </script>

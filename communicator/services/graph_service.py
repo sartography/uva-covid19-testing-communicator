@@ -14,7 +14,7 @@ def dow_count(start, end):
     counts = [0 for _ in range(7)]
     curr = start
     while curr <= end:
-        counts[(1 + curr.weekday()) % 7] += 1
+        counts[curr.weekday()] += 1
         curr += dt.timedelta(1)
     return counts
 
