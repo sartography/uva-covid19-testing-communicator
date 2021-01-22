@@ -211,15 +211,8 @@ paths:
       summary: Returns all the inventory deposits 
       tags:
         - Deposits
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: query
-          name: last_modified
-          required: false
-          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
-          schema:
-            type: string
+      # security:
+      #   - ApiKeyAuth: []
       responses:
         '200':
           description: a list of deposits
@@ -229,6 +222,51 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Deposit"
+  /ivy_file:
+    get:
+      operationId: communicator.api.admin.get_imported_files
+      summary: Returns all the imported ivy files
+      tags:
+        - IvyFiles
+      # security:
+      #   - ApiKeyAuth: []
+      responses:
+        '200':
+          description: a list of files
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IvyFile"
+    # post:
+    #   operationId: communicator.api.admin.add_deposit
+    #   summary: Creates a new Deposits
+    #   tags:
+    #     - IvyFiles
+    #   requestBody:
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: '#/components/schemas/IvyFile'
+    #   responses:
+    #     '200':
+    #       description: Deposits created successfully
+    #       content:
+    #         application/json:
+    #           schema:
+    #             type: array
+    #             items:
+    #               $ref: "#/components/schemas/Deposit"
+    # delete:
+    #   operationId: communicator.api.admin.clear_samples
+    #   summary: Removes the given samples completely.
+    #   tags:
+    #     - Samples
+    #   responses:
+    #     '204':
+    #       description: All Samples removed.
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -278,3 +316,16 @@ components:
         location:
           type: string
           example: "0001"
+    IvyFile:
+      properties:
+        file_name:
+          type: string
+          example: "000000111-202009091449-4321"
+        sample_count:
+          type: int
+          example: "abc2d"
+        date_added:
+          type: string
+          format: date_time
+          example: "2019-12-25T09:12:33.001Z"
+

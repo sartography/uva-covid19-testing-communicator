@@ -212,126 +212,34 @@ def index():
         overall_totals_data["two_week_ago"] += location_stats_data[location]["two_week_ago"]
         overall_totals_data["search"] += location_stats_data[location]["search"]
 
-    important_dates = {
-        "search" : graph.start_date.strftime("%m/%d/%Y") + " - " + (graph.end_date - timedelta(1)).strftime("%m/%d/%Y"),
-        "one_week_ago" : (graph.start_date - timedelta(7)).strftime("%m/%d/%Y") + " - " + (graph.end_date- timedelta(7)).strftime("%m/%d/%Y"),
-        "two_weeks_ago" : (graph.start_date - timedelta(14)).strftime("%m/%d/%Y") + " - " + (graph.end_date - timedelta(14)).strftime("%m/%d/%Y"),
-        }
+    # important_dates = {
+    #     "search" : graph.start_date.strftime("%m/%d/%Y") + " - " + (graph.end_date - timedelta(1)).strftime("%m/%d/%Y"),
+    #     "one_week_ago" : (graph.start_date - timedelta(7)).strftime("%m/%d/%Y") + " - " + (graph.end_date- timedelta(7)).strftime("%m/%d/%Y"),
+    #     "two_weeks_ago" : (graph.start_date - timedelta(14)).strftime("%m/%d/%Y") + " - " + (graph.end_date - timedelta(14)).strftime("%m/%d/%Y"),
+    #     }
 
-    ################# Raw Samples Table ##############
-    page = request.args.get(get_page_parameter(), type=int, default=1)
-    pagination = Pagination(page=page, total=filtered_samples.count(
-    ), search=False, record_name='samples', css_framework='bootstrap4')
-    
-    table = SampleTable(group_columns(filtered_samples[(page - 1) * 10:((page - 1) * 10) + 10]))
-    
-    return render_template('layouts/default.html',
-                            base_href=BASE_HREF,
-                            dates = important_dates,
-                            overall_totals_data = overall_totals_data,
-                            content=render_template(
-                               'pages/index.html',
-                               form = form,
-                               dates = important_dates,
-                               table = table,
-                               action = action,
-                               pagination = pagination,
+    # return render_template('layouts/default.html',
+    #                         base_href=BASE_HREF,
+    #                         dates = important_dates,
+    #                         overall_totals_data = overall_totals_data,
+    #                         content=render_template(
+    #                            'pages/index.html',
+    #                            form = form,
+    #                            dates = important_dates,
+    #                            table = table,
+    #                            action = action,
+    #                            pagination = pagination,
 
-                               chart_ticks = chart_ticks,
-                               overall_chart_data = overall_chart_data,
-                               daily_charts_data = daily_charts_data,
-                               hourly_charts_data = hourly_charts_data,
-                               weekday_charts_data = weekday_charts_data,
+    #                            chart_ticks = chart_ticks,
+    #                            overall_chart_data = overall_chart_data,
+    #                            daily_charts_data = daily_charts_data,
+    #                            hourly_charts_data = hourly_charts_data,
+    #                            weekday_charts_data = weekday_charts_data,
                                
                             
-                               overall_totals_data = overall_totals_data,
-                               location_stats_data = location_stats_data,
-                           ))
-
-@app.route('/graphs/daily', methods=['GET'])
-@superuser
-def blah():
-    from communicator.models.ivy_file import IvyFile
-    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
-    return IvyFileSchema(many=True).dumps(files)
-    
-@app.route('/graphs/weekly', methods=['GET'])
-@superuser
-def blah():
-    from communicator.models.ivy_file import IvyFile
-    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
-    return IvyFileSchema(many=True).dumps(files)
-    
-@app.route('/graphs/hourly', methods=['GET'])
-@superuser
-def blahblah():
-    from communicator.models.ivy_file import IvyFile
-    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
-    return IvyFileSchema(many=True).dumps(files)
-
-@app.route('/add_inventory_deposit', methods=['POST'])
-@superuser
-def add_inventory_deposit():
-    from communicator.models.deposit import Deposit, DepositSchema
-    _date = datetime.strptime(request.json["date_added"].strip(), "%m/%d/%Y").date()
-    new_deposit = Deposit(date_added=_date, amount=int(request.json["amount"]), notes=request.json["notes"])
-    db.session.add(new_deposit)
-    db.session.commit()  
-    return DepositSchema().dumps(new_deposit)
-
-@app.route('/get_inventory_deposits', methods=['GET'])
-@superuser
-def list_inventory_deposits():
-    from communicator.models.deposit import Deposit, DepositSchema
-
-    deposits = db.session.query(Deposit).order_by(Deposit.date_added.desc())
-    
-    return DepositSchema(many=True).dumps(deposits)
-                 
-@app.route('/imported_files', methods=['GET'])
-@superuser
-def list_imported_files_from_ivy():
-    from communicator.models.ivy_file import IvyFile
-    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
-    return IvyFileSchema(many=True).dumps(files)
-                           
-
-@app.route('/invitation', methods=['GET', 'POST'])
-@superuser
-def send_invitation():
-    from communicator.models.invitation import Invitation
-    from communicator.tables import InvitationTable
-
-    form = forms.InvitationForm(request.form)
-    action = BASE_HREF + "/invitation"
-    title = "Send invitation to students"
-    if request.method == 'POST' and form.validate():
-        from communicator.services.notification_service import NotificationService
-        with NotificationService(app) as ns:
-            ns.send_invitations(
-                form.date.data, form.location.data, form.emails.data)
-            return redirect(url_for('send_invitation'))
-    # display results
-    page = request.args.get(get_page_parameter(), type=int, default=1)
-    invites = db.session.query(Invitation).order_by(
-        Invitation.date_sent.desc())
-    pagination = Pagination(page=page, total=invites.count(),
-                            search=False, record_name='samples')
-
-    table = InvitationTable(invites.paginate(page, 10, error_out=False).items)
-
-    return render_template(
-        'form.html',
-        form=form,
-        table=table,
-        pagination=pagination,
-        action=action,
-        title=title,
-        description_map={},
-        base_href=BASE_HREF
-    )
-
-
+    #                            overall_totals_data = overall_totals_data,
+    #                            location_stats_data = location_stats_data,
+    #                        ))
 
 def __make_csv(sample_query):
     csvfile = io.StringIO()

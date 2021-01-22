@@ -7,7 +7,7 @@ from communicator.models.invitation import Invitation
 from communicator.models.notification import Notification, EMAIL_TYPE, TEXT_TYPE
 from communicator.models.sample import SampleSchema
 from communicator.models.deposit import DepositSchema
-from communicator.models.ivyfile import IvyFileSchema
+from communicator.models.ivy_file import IvyFileSchema
 from communicator.services.ivy_service import IvyService
 from communicator.services.notification_service import NotificationService
 from communicator.services.sample_service import SampleService
@@ -53,18 +53,26 @@ def clear_samples():
     db.session.query(Invitation).delete()
     db.session.commit()
 
-def get_deposits(last_modified=None):
-    query = db.session.query(Sample)
-    if last_modified:
-        lm_date = datetime.fromisoformat(last_modified)
-        query = query.filter(Sample.last_modified > lm_date)
+def get_deposits():
+    query = db.session.query(Deposit)
     deposits = query.order_by(Deposit.date_added).all()
     response = DepositSchema(many=True).dump(deposits)
     return response
+
 def add_deposit(body):
-    pass
+    from communicator.models.deposit import Deposit, DepositSchema
+    new_deposit = Deposit(date_added=datetime.strptime(body['date_added'], "%m/%d/%Y").date(),
+                      amount=int(body['amount']),
+                      notes=body['notes'])
 
+    db.session.add(new_deposit)
+    db.session.commit()  
+    return DepositSchema().dumps(new_deposit)   
 
+def get_imported_files():
+    from communicator.models.ivy_file import IvyFile, IvyFileSchema
+    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
+    return IvyFileSchema(many=True).dumps(files)
 
 def update_and_notify():
     # These can take a very long time to execute.
