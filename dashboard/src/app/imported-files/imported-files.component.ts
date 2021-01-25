@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { IvyFileService } from '../ivyfile.service';
+import { IvyFileService } from './ivyfile.service';
 
-import { IvyFile } from '../ivyfile';
+import { IvyFile } from './ivyfile';
 
 @Component({
   selector: 'app-imported-files',

@@ -25,14 +25,20 @@
 
               <tr>
                 
-                <td><input [(ngModel)]="newDeposit.date_added" name="date_added" /></td>
+                <td>
+                    <input matInput [(ngModel)]="date_temp" [value] = "date_temp" [matDatepicker]="picker">
+                    <mat-datepicker #picker></mat-datepicker>
+
+                    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+
+                </td>
                 <td><input [(ngModel)]="newDeposit.amount" name="amount"></td>
                 <td><input [(ngModel)]="newDeposit.notes" name="notes">
                   <button type="submit" (click)="addDeposit()">Submit</button>
                 </td>
               </tr>
               <tr *ngFor="let deposit of depositList">
-                <td>{{deposit.date_added | date }}</td>
+                <td>{{deposit.date_added | date : 'full' }}</td>
                 <td>{{deposit.amount}}</td>
                 <td>{{deposit.notes}}</td>
               </tr>

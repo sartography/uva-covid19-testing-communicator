@@ -1,123 +1,190 @@
 <div class="container-fluid mt--7">
-    <app-top-bar></app-top-bar>
-    <div class="row">
-        <div class="col mb-3">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="mb-3 ">Location Activity </h3>
-                </div>
-                <div style="display: block">
-                    <canvas baseChart [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions"
-                        [legend]="barChartLegend" chartType="bar">
-                    </canvas>
-                </div>
+  <div class="row mb-4">
+    <div class="col-xl-3 col-lg-6">
+      <div class="card card-stats  mb-xl-0">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within {{form.start_date | date}} - {{form.end_date | date}}</h5>
+              <span id="card_1" class="h2 font-weight-bold">{{searchResult?.length}}</span>
+
             </div>
+          </div>
         </div>
-
-        <div class="col mb-3">
-            <div class="card ">
-                <div class="card-header">
-
-                    <div class=row>
-                        <h3 class="mb-3 col ">Search</h3>
-                        <button class="btn btn-sm btn-primary col mr-3"
-                            onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Today</button>
-
-                        <button class="btn btn-sm btn-primary col mr-3"
-                            onclick="$('input[name=\'dateRange\']').val('10/05/2020 - ' + getToday());submitform();">All</button>
-
-                        <button type="submit" class="btn btn-sm btn-primary col ">Run</button>
-                    </div>
-
-                </div>
-                
-            <div class = "col">
-                <div class="form-group row">
-                    <label for="range" class="col mt-3 mr-3">Search Range</label>
-                    <input type="text" class="form-control col mr-3 mt-3" id="range">
-                  </div>
-
-                <div class="form-group row ">
-
-                    <label for="location" class="col mt-3 mr-3">Location ID(s)</label>
-
-                    <textarea class="form-control col mr-3 mt-3" id="location" rows="2"></textarea>
-
-                </div>
-                <div class="form-group row ">
-
-                    <label for="student" class="col mt-3 mr-3">Student ID(s)</label>
-
-                    <textarea class="form-control col mr-3 mt-3" id="student" rows="2"></textarea>
-
-                </div>
-                <div class="form-group row ">
-
-                    <label for="compute" class="col mt-3 mr-3">Compute ID(s)</label>
-
-                    <textarea class="form-control col mr-3 mt-3" id="compute" rows="2"></textarea>
-
-                </div>
-          
-
-                
-            </div>
-
-            </div>
-        </div>
+      </div>
     </div>
-
-    <div class="row">
-
-        <div class="col mb-3 ">
-            <div class="card ">
-                <div class="card-header">
-                    <h3 class="mb-3 ">Average Count By Weekday For dates.search</h3>
-                </div>
-                <div style="display: block">
-                    <canvas baseChart [datasets]="barChartData" [labels]="weekdayChartLabels"
-                        [options]="barChartOptions" [legend]=false chartType="horizontalBar">
-                    </canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="col mb-3">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="mb-3">Average Count By Hour For dates.search</h3>
-                </div>
-                <div style="display: block">
-                    <canvas baseChart [datasets]="barChartData" [labels]="hourlyChartLabels" [options]="barChartOptions"
-                        [legend]=false chartType="horizontalBar">
-                    </canvas>
-                </div>
+    <div class="col-xl-3 col-lg-6">
+      <div class="card card-stats  mb-xl-0">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within </h5>
+              <span id="card_1" class="h2 font-weight-bold mb-0">Coming</span>
 
             </div>
+          </div>
         </div>
+      </div>
     </div>
+    <div class="col-xl-3 col-lg-6">
+      <div class="card card-stats  mb-xl-0">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within </h5>
+              <span id="card_1" class="h2 font-weight-bold mb-0">Along</span>
 
-    <div class="card row">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-lg-6">
+      <div class="card card-stats  mb-xl-0">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within </h5>
+              <span id="card_1" class="h2 font-weight-bold mb-0">Nicely</span>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col mb-3">
+      <div class="card">
         <div class="card-header">
-            <h3 class="mb-0">Records to be processed </h3>
+          <h3 class="mb-3 ">Location Activity </h3>
         </div>
-        <div class="table-responsive">
-            <table class="table align-items-center table-flush">
-                <thead>
-                    <tr>
-                        <th>The </th>
-                        <th>Sample</th>
-                        <th>Table</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let sample of searchResult">
-                        <td>{{sample.date}}</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div style="display: block">
+          <canvas baseChart 
+          [datasets]="dailyChartsData"
+          [labels]="dailyChartLabels" 
+          [options]="barChartOptions"
+          [legend]="false" chartType="bar" (chartClick)="chartClicked($event)">
+          </canvas>
         </div>
-
+      </div>
     </div>
 
+    <div class="col mb-3">
+      <div class="card ">
+        <div class="card-header">
+
+          <div class=row>
+            <h3 class="mb-3 col ">Search</h3>
+            <button class="btn btn-sm btn-primary col mr-3"
+              onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Today</button>
+
+            <button class="btn btn-sm btn-primary col mr-3"
+              onclick="$('input[name=\'dateRange\']').val('10/05/2020 - ' + getToday());submitform();">All</button>
+
+            <button (click)="updateGraphData()" class="btn btn-sm btn-primary col ">Run</button>
+          </div>
+
+        </div>
+
+        <div class="col">
+          <div class="form-group row">
+            <label for="range" class="col mt-3 mr-3">Search Range</label>
+            <mat-form-field appearance="none">
+              <mat-date-range-input [rangePicker]="picker">
+                <input matStartDate placeholder="Start date" [(ngModel)]= "start_date">
+                <input matEndDate placeholder="End date" [(ngModel)]= "end_date">
+              </mat-date-range-input>
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-date-range-picker #picker></mat-date-range-picker>
+            </mat-form-field>
+          </div>
+
+          <div class="form-group row ">
+
+            <label for="location" class="col mt-3 mr-3">Location ID(s)</label>
+
+            <textarea class="form-control col mr-3 mt-3" id="location" [(ngModel)]="form.location" rows="2"></textarea>
+
+          </div>
+          <div class="form-group row ">
+
+            <label for="student" class="col mt-3 mr-3">Student ID(s)</label>
+
+            <textarea class="form-control col mr-3 mt-3" id="student" [(ngModel)]="form.student_id" rows="2"></textarea>
+
+          </div>
+          <div class="form-group row ">
+
+            <label for="compute" class="col mt-3 mr-3">Compute ID(s)</label>
+
+            <textarea class="form-control col mr-3 mt-3" id="compute" [(ngModel)]="form.compute_id" rows="2"></textarea>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+
+    <div class="col mb-3 ">
+      <div class="card ">
+        <div class="card-header">
+          <h3 class="mb-3 ">Average Count By Weekday For {{form.start_date | date}} - {{form.end_date | date}}</h3>
+        </div>
+        <div style="display: block">
+          <canvas baseChart [datasets]="weekdayChartsData" [labels]="weekdayChartLabels" [options]="barChartOptions"
+            [legend]=false chartType="horizontalBar">
+          </canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col mb-3">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-3">Average Count By Hour For {{form.start_date | date}} - {{form.end_date | date}}</h3>
+        </div>
+        <div style="display: block">
+          <canvas baseChart [datasets]="hourlyChartsData" 
+          [labels]="hourlyChartLabels" 
+          [options]="barChartOptions"
+          [legend]=false chartType="horizontalBar">
+          </canvas>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="card row">
+    <div class="card-header">
+      <h3 class="mb-0">Records to be processed </h3>
+    </div>
+    <div class="table-responsive">
+      <table class="table align-items-center table-flush">
+        <thead>
+          <tr>
+            <th>Barcode </th>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Contacts</th>
+            <th>IDs</th>
+            <!-- <th>Notifications</th> -->
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let sample of searchResult">
+            <td>{{sample.barcode}}</td>
+            <td>{{sample.date| date :"medium"}}</td>
+            <td>Location: {{sample.location}}<br>Station: {{sample.station}}</td>
+            <td>Computing ID: {{sample.computing_id}}<br>Student ID: {{sample.student_id}}</td>
+            <td>Phone: {{sample.phone}}<br>Email: {{sample.email}}</td>
+            <!-- <td>Phone: {{sample.phone}}<br>Email: {{sample.email}}</td> -->
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
 </div>

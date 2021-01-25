@@ -14,7 +14,7 @@ def dow_count(start, end):
     counts = [0 for _ in range(7)]
     curr = start
     while curr <= end:
-        counts[(1 + curr.weekday()) % 7] += 1
+        counts[curr.weekday()] += 1
         curr += dt.timedelta(1)
     return counts
 
@@ -130,7 +130,7 @@ class GraphService(object):
         cases = []
         for i in range(7):
             cases.append(func.count(
-                case([(func.extract('dow', Sample.date) == i, 1)])))
+                case([(func.extract('isodow', Sample.date) == i + 1, 1)])))
 
         q = db.session.query(Sample.location, Sample.station,
                              *cases
@@ -152,27 +152,27 @@ class GraphService(object):
     def update_search_filters(self, filters):
         try:
             if "student_id" in filters:
-                self.filters["student_id"] = Sample.student_id.in_(
-                    filters["student_id"].split())
+                if (type(filters["student_id"]) == list):
+                    self.filters["student_id"] = Sample.student_id.in_(
+                        filters["student_id"])
             if "location" in filters:
-                self.filters["location"] = Sample.location.in_(
-                    filters["location"].split())
-            if "station" in filters:
-                self.filters["station"] = Sample.station.in_(
-                    filters["station"].split())
+                if (type(filters["location"]) == list):
+                    self.filters["location"] = Sample.location.in_(
+                        filters["location"])
             if "compute_id" in filters:
-                self.filters["compute_id"] = func.lower(Sample.computing_id).in_(
-                    filters["compute_id"].split())
+                if (type(filters["compute_id"]) == list):
+                    self.filters["compute_id"] = func.lower(Sample.computing_id).in_(
+                        filters["compute_id"].split())
             if "start_date" in filters:
                 self.filters["start_date"] = Sample.date >= filters["start_date"]
                 self.start_date = filters["start_date"]
             if "end_date" in filters:
-                self.filters["end_date"] = Sample.date <= filters["end_date"]
-                self.end_date = filters["end_date"]
-            if not "include_tests" in filters:
-                self.filters["include_tests"] = Sample.student_id != 0
-            else:
-                del self.filters["include_tests"]
+                self.filters["end_date"] = Sample.date <= (filters["end_date"] + dt.timedelta(1))
+                self.end_date = filters["end_date"] + dt.timedelta(1)
+            # if not "include_tests" in filters:
+            #     self.filters["include_tests"] = Sample.student_id != 0
+            # else:
+            #     del self.filters["include_tests"]
 
         except Exception as e:
             logging.error(

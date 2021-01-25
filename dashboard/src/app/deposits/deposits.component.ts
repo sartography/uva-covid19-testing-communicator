@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { DepositService } from '../deposit.service';
+import { DepositService } from './deposit.service';
 import {Deposit} from "../deposit";
+
 declare var jQuery: any;
 
 @Component({
@@ -15,6 +16,8 @@ export class DepositsComponent implements OnInit {
     date_added: "",
   notes:''}
   ;
+  date_temp = new Date(Date.now());
+
   constructor(
     private depositService: DepositService) {
   }
@@ -23,16 +26,12 @@ export class DepositsComponent implements OnInit {
     this.depositService.getDeposits().subscribe(depositList => this.depositList = depositList);
   }
   addDeposit(): void {
+    this.newDeposit.date_added = this.date_temp.toLocaleDateString();
+  
     this.depositService.addDeposit(this.newDeposit).subscribe(deposit => this.depositList.push(deposit)) }
   
   ngOnInit(): void {
     this.getDeposits();
-    ((function ($) {
-      $('input[name="date_added"]').daterangepicker({
-        opens: 'left',
-        singleDatePicker: true,
-      });
-    }))(jQuery);
   }
 
  

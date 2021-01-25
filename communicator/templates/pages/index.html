@@ -1,29 +1,3 @@
-        <form action="{{ action }}" method="post" id="pageForm">
-          {{ form.csrf_token() }}
-          <div class="card-header border-0">
-            <div class="row align-items-center">
-             
-
-              <button class="btn btn-sm btn-primary"
-                onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Today</button>
-
-              <button class="btn btn-sm btn-primary"
-                onclick="$('input[name=\'dateRange\']').val('10/05/2020 - ' + getToday());submitform();">All</button>
-
-              <button type="submit" class="btn btn-sm btn-primary">Run</button>
-
-            </div>
-          </div>
-        
-        </form>
-      </div>
-    </div>
-
-  </div>
-
-</div>
-</form>
-
 
 <script>
   var color_idx = 1;
@@ -75,21 +49,6 @@
     anchor: 'end',
     align: 'end'
   }
-
-  var stacked_bar_scale = {
-        xAxes: [{
-          ticks: {
-            beginAtZero: true
-          },
-          stacked: true
-        }],
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
-          },
-          stacked: true
-        }]
-      };
       
   function getToday() {
     var today = new Date();
@@ -100,49 +59,6 @@
     today = mm + '/' + dd + '/' + yyyy;
     return today
   }
-  /////////////////////////////
-
-  var overall_charts = {};
-
-      datasets: overall_charts.weekday
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-     
- 
-     
-      plugins: {
-        datalabels: stacked_sum_labels
-      }, layout: {
-        padding: {
-          left: 0,
-          right: 50,
-          top: 0,
-          bottom: 0
-        }
-      }
-
-    }
-  });
-  per_weekday.options.plugins.datalabels.color = "black";
-  per_weekday.update();
-
-  var per_hour = new Chart(document.getElementById('time-chart').getContext('2d'), {
-    type: 'horizontalBar',
-    data: {
-      datasets: overall_charts.hourly
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: stacked_bar_scale,
-      legend: {
-        display: false
-      },
-      title: {
-        text: 'Average Count By Hour For {{dates.search}}'
-      },
 
   var per_location = new Chart(document.getElementById('data-chart').getContext('2d'), {
     // The type of chart we want to create
@@ -157,29 +73,8 @@
       title: {
         display: false,
       },
-      legend: {
-        display: true,
-        position: "right",
-        onClick: location_legend,
-        labels: {
-          usePointStyle: true,
-          fontColor: '#FFFFFF',
-          fontSize: 15,
-          padding: 20,
-          fontStyle: 'bold'
-        }
-      },
-      plugins: {
-        datalabels: stacked_sum_labels
-      }, layout: {
-        padding: {
-          left: 0,
-          right: 0,
-          top: 20,
-          bottom: 0
-        }
-      }
-    }
+
+
   });
   per_location.options.plugins.datalabels.color = "white";
   per_location.update();

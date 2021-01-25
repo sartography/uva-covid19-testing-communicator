@@ -118,128 +118,16 @@ def superuser(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def group_columns(data):
-    grouped_data = []
-    for entry in data:
-        grouped_data.append({"barcode":entry.barcode,
-                             "date":entry.date,
-                             "notifications":entry.notifications,
-                             "ids":[dict(type = "computing_id",
-                                         data = entry.computing_id),
-                                    dict(type = "student_id",
-                                         data = entry.student_id)],
-                             "contacts":[dict(type="phone",
-                                              data=entry.phone),
-                                         dict(type="email",
-                                              data=entry.email)],
-                             "taken_at":[dict(type="location",
-                                              data=entry.location),
-                                         dict(type="station",
-                                              data=entry.station)],
-                             }
-                             )
-    return grouped_data
-
 from communicator.services.graph_service import GraphService, daterange
 from datetime import timedelta
 
 @app.route('/', methods=['GET', 'POST'])
 @superuser
 def index():
-
-    # graph = GraphService()
-
-    # if request.method == "POST": session["index_filter"] = {}  # Clear out the session if it is invalid.
-    # if "index_filter" not in session: session["index_filter"] = {}
-    # if form.validate():
-    #     if form.dateRange.data:
-    #         start, end = form.dateRange.data.split("-")
-    #         session["index_filter"]["start_date"] = datetime.strptime(start.strip(), "%m/%d/%Y").date()
-    #         session["index_filter"]["end_date"] =  datetime.strptime(end.strip(), "%m/%d/%Y").date() + timedelta(1)
-    #     if form.studentId.data:
-    #         session["index_filter"]["student_id"] = form.studentId.data
-    #     if form.location.data:
-    #         session["index_filter"]["location"] = form.location.data
-    #     if form.compute_id.data:
-    #         session["index_filter"]["compute_id"] = form.compute_id.data
-    #     if form.include_tests.data:
-    #         session["index_filter"]["include_tests"] = form.include_tests.data
-
-    # if type(session["index_filter"].get("start_date", None)) == str:
-    #     session["index_filter"]["start_date"] = datetime.strptime(session["index_filter"]["start_date"].strip(), "%Y-%m-%d").date()
-    # if type(session["index_filter"].get("end_date",None)) == str:
-    #     session["index_filter"]["end_date"] = datetime.strptime(session["index_filter"]["end_date"].strip(), "%Y-%m-%d").date()
-
-    # graph.update_search_filters(session["index_filter"])
-
-    samples = db.session.query(Sample).order_by(Sample.date.desc())
-    filtered_samples = graph.apply_filters(samples)
-    if request.args.get('download') == 'true':
-        csv = __make_csv(filtered_samples)
-        return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
-
-    overall_chart_data = {
-        "daily":{},
-        "hourly":{},
-        "weekday":{}
-        }
-
-    overall_totals_data = {
-                    "one_week_ago" : 0,
-                    "two_week_ago" : 0,
-                    "search" : 0,
-                }
-    
-    chart_ticks = [] 
-    timeFormat = "%m/%d"
-    bounds = daterange(graph.start_date, graph.end_date, days=1, hours=0)
-    for i in range(len(bounds) - 1):
-        chart_ticks.append(f"{bounds[i].strftime(timeFormat)}")
-    
-    location_stats_data = graph.get_totals_last_week()
-    hourly_charts_data = graph.get_totals_by_hour()
-    daily_charts_data = graph.get_totals_by_day()
-    weekday_charts_data = graph.get_totals_by_weekday()
-
-    # Aggregate results 
-    for location in location_stats_data:     
-        if location in daily_charts_data:
-            overall_chart_data["daily"][location] = np.sum([daily_charts_data[location][station] for station in daily_charts_data[location]],axis=0,dtype=np.int).tolist()
-            overall_chart_data["hourly"][location] = np.sum([hourly_charts_data[location][station] for station in hourly_charts_data[location]],axis=0,dtype=np.int).tolist()
-            overall_chart_data["weekday"][location] = np.sum([weekday_charts_data[location][station] for station in weekday_charts_data[location]],axis=0,dtype=np.int).tolist()
-        
-        overall_totals_data["one_week_ago"] += location_stats_data[location]["one_week_ago"]
-        overall_totals_data["two_week_ago"] += location_stats_data[location]["two_week_ago"]
-        overall_totals_data["search"] += location_stats_data[location]["search"]
-
-    # important_dates = {
-    #     "search" : graph.start_date.strftime("%m/%d/%Y") + " - " + (graph.end_date - timedelta(1)).strftime("%m/%d/%Y"),
-    #     "one_week_ago" : (graph.start_date - timedelta(7)).strftime("%m/%d/%Y") + " - " + (graph.end_date- timedelta(7)).strftime("%m/%d/%Y"),
-    #     "two_weeks_ago" : (graph.start_date - timedelta(14)).strftime("%m/%d/%Y") + " - " + (graph.end_date - timedelta(14)).strftime("%m/%d/%Y"),
-    #     }
-
-    # return render_template('layouts/default.html',
-    #                         base_href=BASE_HREF,
-    #                         dates = important_dates,
-    #                         overall_totals_data = overall_totals_data,
-    #                         content=render_template(
-    #                            'pages/index.html',
-    #                            form = form,
-    #                            dates = important_dates,
-    #                            table = table,
-    #                            action = action,
-    #                            pagination = pagination,
-
-    #                            chart_ticks = chart_ticks,
-    #                            overall_chart_data = overall_chart_data,
-    #                            daily_charts_data = daily_charts_data,
-    #                            hourly_charts_data = hourly_charts_data,
-    #                            weekday_charts_data = weekday_charts_data,
-                               
-                            
-    #                            overall_totals_data = overall_totals_data,
-    #                            location_stats_data = location_stats_data,
-    #                        ))
+    pass
+    # if request.args.get('download') == 'true':
+    #     csv = __make_csv(filtered_samples)
+    #     return send_file(csv, attachment_filename='data_export.csv', as_attachment=True)
 
 def __make_csv(sample_query):
     csvfile = io.StringIO()

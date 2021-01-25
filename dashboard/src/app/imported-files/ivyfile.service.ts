@@ -3,41 +3,28 @@ import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { HttpHeaders } from '@angular/common/http';
 
-const httpOptions = {
-  headers: new HttpHeaders({
-    'Content-Type':  'application/json',
-    Authorization: 'my-auth-token'
-  })
-};
+import { environment } from '../../environments/environment';
+
 
 // import {API_URL} from '../env';
 
-import {Deposit} from './deposit'
+import {IvyFile} from './ivyfile'
 
 @Injectable()
-export class DepositService {
+export class IvyFileService {
 
   constructor(private http: HttpClient) {
   }
 
   // GET list of public, future events
-  getDeposits(): Observable<Deposit[]> {
+  getFiles(): Observable<IvyFile[]> {
     return this.http
-      .get<Deposit[]>(`http://0.0.0.0:5000/get_inventory_deposits`).pipe(
+      .get<IvyFile[]>(`http://0.0.0.0:5000/v1.0/ivy_file`).pipe(
         tap(_ => this.log('fetched files')),
-        catchError(this.handleError<Deposit[]>('getDeposits', []))
+        catchError(this.handleError<IvyFile[]>('getFiles', []))
       );
   }
-
-    /** POST: add a new hero to the database */
-    addDeposit(deposit: Deposit): Observable<Deposit> {
-      return this.http.post<Deposit>(`http://0.0.0.0:5000/add_inventory_deposit`, deposit, httpOptions)
-        .pipe(
-          catchError(this.handleError('addDeposit', deposit))
-        );
-    }
     /**
    * Handle Http operation that failed.
    * Let the app continue.

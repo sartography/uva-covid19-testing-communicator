@@ -61,6 +61,7 @@ def get_deposits():
 
 def add_deposit(body):
     from communicator.models.deposit import Deposit, DepositSchema
+    
     new_deposit = Deposit(date_added=datetime.strptime(body['date_added'], "%m/%d/%Y").date(),
                       amount=int(body['amount']),
                       notes=body['notes'])
