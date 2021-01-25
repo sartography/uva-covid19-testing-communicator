@@ -90,10 +90,10 @@
         <div class="col">
           <div class="form-group row">
             <label for="range" class="col mt-3 mr-3">Search Range</label>
-            <mat-form-field appearance="none">
+            <mat-form-field >
               <mat-date-range-input [rangePicker]="picker">
-                <input matStartDate placeholder="Start date" [(ngModel)]= "start_date">
-                <input matEndDate placeholder="End date" [(ngModel)]= "end_date">
+                <input matStartDate [(ngModel)]= "start_date">
+                <input matEndDate [(ngModel)]= "end_date">
               </mat-date-range-input>
               <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
               <mat-date-range-picker #picker></mat-date-range-picker>
@@ -178,7 +178,7 @@
             <td>{{sample.barcode}}</td>
             <td>{{sample.date| date :"medium"}}</td>
             <td>Location: {{sample.location}}<br>Station: {{sample.station}}</td>
-            <td>Computing ID: {{sample.computing_id}}<br>Student ID: {{sample.student_id}}</td>
+            <td>Compute ID: {{sample.compute_id}}<br>Student ID: {{sample.student_id}}</td>
             <td>Phone: {{sample.phone}}<br>Email: {{sample.email}}</td>
             <!-- <td>Phone: {{sample.phone}}<br>Email: {{sample.email}}</td> -->
           </tr>

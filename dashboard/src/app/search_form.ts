@@ -5,5 +5,4 @@ export interface SearchForm{
     location : string;
     compute_id : string;
     include_tests : boolean;
-    results_page: number;
 }

@@ -93,7 +93,7 @@ def get_search_results(start_date, end_date, student_id, compute_id, location):
     graph = GraphService()
     filters = dict()
     filters["start_date"] =  datetime.strptime(start_date, "%m/%d/%Y").date()
-    filters["end_date"] =  datetime.strptime(end_date, "%m/%d/%Y").date()
+    filters["end_date"] = datetime.strptime(end_date, "%m/%d/%Y").date()
     filters["student_id"] = student_id.split() if len(student_id.split()) > 0 else None
     filters["compute_id"] = compute_id.split() if len(compute_id.split()) > 0 else None
     filters["location"] = [int(i) for i in location.split()] if len(location.split()) > 0 else None
