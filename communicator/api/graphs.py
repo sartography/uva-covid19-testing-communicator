@@ -2,15 +2,10 @@ import smtplib
 from datetime import datetime
 
 from communicator import db, app, executor
-
-from communicator.services.ivy_service import IvyService
-from communicator.services.notification_service import NotificationService
 from communicator.services.graph_service import GraphService
-from time import sleep
-import numpy as np
-from sqlalchemy import func
 
-from communicator import db
+import numpy as np
+
 import marshmallow
 from flask import jsonify
 from marshmallow import EXCLUDE
@@ -18,77 +13,72 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 from communicator.models.notification import Notification
 
-def parse_form():
-    pass
-
-def get_totals_by_day(start_date, end_date, student_id, compute_id, location):
-    graph = GraphService()
-    filters = dict()
-    filters["start_date"] =  datetime.strptime(start_date, "%m/%d/%Y").date()
-    filters["end_date"] =  datetime.strptime(end_date, "%m/%d/%Y").date()
-    filters["student_id"] = student_id.split() if len(student_id.split()) > 0 else None
-    filters["compute_id"] = compute_id.split() if len(compute_id.split()) > 0 else None
-    filters["location"] = [int(i) for i in location.split()] if len(location.split()) > 0 else None
-
-    graph.update_search_filters(filters)
-    data = graph.get_totals_by_day()
-    if (len(data) > 1):
+def form_graph_response(data):
+    locations = list(data.keys())
+    if (len(locations) > 1):
         temp = data
         data = dict()
         for location in temp:
             data[location] = np.sum([temp[location][station] for station in temp[location]],axis=0,dtype=np.int).tolist()       
-    elif (len(data) == 1):
-        data = data[list(data.keys())[0]]   
-    else:
-        data = [] 
+    elif (len(locations) == 1):
+        data = data[locations[0]]
     return jsonify(data)
 
-def get_totals_by_weekday(start_date, end_date, student_id, compute_id, location):
-    graph = GraphService()
+def get_totals_by_day(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = ""):
+  
     filters = dict()
-    filters["start_date"] =  datetime.strptime(start_date, "%m/%d/%Y").date()
-    filters["end_date"] =  datetime.strptime(end_date, "%m/%d/%Y").date()
-    filters["student_id"] = student_id.split() if len(student_id.split()) > 0 else None
-    filters["compute_id"] = compute_id.split() if len(compute_id.split()) > 0 else None
-    filters["location"] = [int(i) for i in location.split()] if len(location.split()) > 0 else None
+    if start_date != None:
+        filters["start_date"] = datetime.strptime(start_date, "%m/%d/%Y").date()
+    if end_date != None:
+        filters["end_date"] = datetime.strptime(end_date, "%m/%d/%Y").date()
+    if len(student_id.strip()) > 0:
+        filters["student_id"] = student_id.split()
+    if len(compute_id.strip()) > 0:
+        filters["compute_id"] = compute_id.split() 
+    if len(location.strip()) > 0:
+        filters["location"] = [int(i) for i in location.split()]
+    graph = GraphService()
+    
+    graph.update_search_filters(filters)
+    return form_graph_response(graph.get_totals_by_day())
+    
+def get_totals_by_weekday(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = ""):
+
+    filters = dict()
+    if start_date != None:
+        filters["start_date"] = datetime.strptime(start_date, "%m/%d/%Y").date()
+    if end_date != None:
+        filters["end_date"] = datetime.strptime(end_date, "%m/%d/%Y").date()
+    if len(student_id) > 0:
+        filters["student_id"] = student_id.split()
+    if len(compute_id) > 0:
+        filters["compute_id"] = compute_id.split() 
+    if len(location) > 0:
+        filters["location"] = [int(i) for i in location.split()]
+    
+    graph = GraphService()
+   
+    graph.update_search_filters(filters)
+    return form_graph_response(graph.get_totals_by_weekday())
+    
+def get_totals_by_hour(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = ""):
+    filters = dict()
+    if start_date != None:
+        filters["start_date"] = datetime.strptime(start_date, "%m/%d/%Y").date()
+    if end_date != None:
+        filters["end_date"] = datetime.strptime(end_date, "%m/%d/%Y").date()
+    if len(student_id) > 0:
+        filters["student_id"] = student_id.split()
+    if len(compute_id) > 0:
+        filters["compute_id"] = compute_id.split() 
+    if len(location) > 0:
+        filters["location"] = [int(i) for i in location.split()]
+    graph = GraphService()
 
     graph.update_search_filters(filters)
-    data = graph.get_totals_by_weekday()
-
-    if (len(data) > 1):
-        temp = data
-        data = dict()
-        for location in temp:
-            data[location] = np.sum([temp[location][station] for station in temp[location]],axis=0,dtype=np.int).tolist()       
-    elif (len(data) == 1):
-        data = data[list(data.keys())[0]]   
-    else:
-        data = [] 
-    return jsonify(data)
-
-def get_totals_by_hour(start_date, end_date, student_id, compute_id, location):
-    graph = GraphService()
-    filters = dict()
-    filters["start_date"] =  datetime.strptime(start_date, "%m/%d/%Y").date()
-    filters["end_date"] =  datetime.strptime(end_date, "%m/%d/%Y").date()
-    filters["student_id"] = student_id.split() if len(student_id.split()) > 0 else None
-    filters["compute_id"] = compute_id.split() if len(compute_id.split()) > 0 else None
-    filters["location"] = [int(i) for i in location.split()]  if len(location.split()) > 0 else None
-
-    graph.update_search_filters(filters)
-    data = graph.get_totals_by_hour()
-    if (len(data) > 1):
-        temp = data
-        data = dict()
-        for location in temp:
-            data[location] = np.sum([temp[location][station] for station in temp[location]],axis=0,dtype=np.int).tolist()       
-    elif (len(data) == 1):
-        data = data[list(data.keys())[0]]   
-    else:
-        data = [] 
-    return jsonify(data)
-
-def get_totals_by_range(start_date, end_date, student_id, compute_id, location):
+    return form_graph_response(graph.get_totals_by_hour())
+    
+def get_totals_by_range(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = ""):
     pass
     
     # # Aggregate results 

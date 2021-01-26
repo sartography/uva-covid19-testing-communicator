@@ -58,14 +58,14 @@ export class GraphService {
       );
   }
 
-  // getHourData(form: SearchForm): Observable<JSON> {
-  //   let params = new HttpParams().set("start_date",form.start_date).set("end_date", form.end_date); 
-  //   return this.http
-  //     .get<JSON>(`http://0.0.0.0:5000/v1.0/graphs/hour`,{params: params}).pipe(
-  //       tap(_ => this.log('building graphs')),
-  //       catchError(this.handleError<JSON>('getHourData', <JSON>{}))
-  //     );
-  // }
+  getTopBarStats(form: SearchForm): Observable<JSON> {
+    let params = new HttpParams().set("start_date",form.start_date).set("end_date", form.end_date); 
+    return this.http
+      .get<JSON>(`http://0.0.0.0:5000/v1.0/graphs/hour`,{params: params}).pipe(
+        tap(_ => this.log('building graphs')),
+        catchError(this.handleError<JSON>('getHourData', <JSON>{}))
+      );
+  }
 
   /**
  * Handle Http operation that failed.

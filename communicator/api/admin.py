@@ -41,8 +41,6 @@ def add_sample_search_filters(query, filters, ignore_dates=False):
         # else:
         #     del q_filters["include_tests"]
     query = query.filter(and_(*[q_filters[key] for key in q_filters]))
-
-    # query = query.filter(or_(*[Sample.location == 50, Sample.location == 20]))
     return query
 
 def verify_token(token, required_scopes):
@@ -77,9 +75,12 @@ def get_samples(last_modified = None, start_date = None, end_date = None, studen
         filters["start_date"] = datetime.strptime(start_date, "%m/%d/%Y").date()
     if end_date != None:
         filters["end_date"] = datetime.strptime(end_date, "%m/%d/%Y").date()
-    filters["student_id"] = student_id.split() if len(student_id.split()) > 0 else None
-    filters["compute_id"] = compute_id.split() if len(compute_id.split()) > 0 else None
-    filters["location"] = [int(i) for i in location.split()] if len(location.split()) > 0 else None
+    if len(student_id.strip()) > 0:
+        filters["student_id"] = student_id.split()
+    if len(compute_id.strip()) > 0:
+        filters["compute_id"] = compute_id.split() 
+    if len(location.strip()) > 0:
+        filters["location"] = [int(i) for i in location.split()]
     
     query = add_sample_search_filters(query, filters)
     if last_modified:

@@ -66,8 +66,7 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
-  
+                type: string 
   /update_and_notify:
     get:
       operationId: communicator.api.admin.update_and_notify
@@ -354,7 +353,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Sample"
-
   /deposit:
     post:
       operationId: communicator.api.admin.add_deposit
@@ -403,45 +401,15 @@ paths:
       summary: Returns all the imported ivy files
       tags:
         - IvyFiles
-      # security:
-      #   - ApiKeyAuth: []
       responses:
         '200':
-          description: a list of files
+          description: a list of uploaded files
           content:
             text/plain:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/IvyFile"
-    # post:
-    #   operationId: communicator.api.admin.add_deposit
-    #   summary: Creates a new Deposits
-    #   tags:
-    #     - IvyFiles
-    #   requestBody:
-    #     content:
-    #       application/json:
-    #         schema:
-    #           $ref: '#/components/schemas/IvyFile'
-    #   responses:
-    #     '200':
-    #       description: Deposits created successfully
-    #       content:
-    #         application/json:
-    #           schema:
-    #             type: array
-    #             items:
-    #               $ref: "#/components/schemas/Deposit"
-    # delete:
-    #   operationId: communicator.api.admin.clear_samples
-    #   summary: Removes the given samples completely.
-    #   tags:
-    #     - Samples
-    #   responses:
-    #     '204':
-    #       description: All Samples removed.
-
 components:
   securitySchemes:
     ApiKeyAuth:

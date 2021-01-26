@@ -5,7 +5,8 @@
         <div class="card-body">
           <div class="row">
             <div class="col">
-              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within {{form.start_date | date}} - {{form.end_date | date}}</h5>
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within {{form.start_date | date}} -
+                {{form.end_date | date}}</h5>
               <span id="card_1" class="h2 font-weight-bold">{{searchResult?.length}}</span>
 
             </div>
@@ -18,7 +19,8 @@
         <div class="card-body">
           <div class="row">
             <div class="col">
-              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within </h5>
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within {{form.start_date | date}} -
+                {{form.end_date | date}}</h5>
               <span id="card_1" class="h2 font-weight-bold mb-0">Coming</span>
 
             </div>
@@ -31,7 +33,8 @@
         <div class="card-body">
           <div class="row">
             <div class="col">
-              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within </h5>
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within {{form.start_date | date}} -
+                {{form.end_date | date}}</h5>
               <span id="card_1" class="h2 font-weight-bold mb-0">Along</span>
 
             </div>
@@ -44,7 +47,8 @@
         <div class="card-body">
           <div class="row">
             <div class="col">
-              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within </h5>
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Notifications within {{form.start_date |
+                date}} - {{form.end_date | date}}</h5>
               <span id="card_1" class="h2 font-weight-bold mb-0">Nicely</span>
 
             </div>
@@ -57,14 +61,11 @@
     <div class="col mb-3">
       <div class="card">
         <div class="card-header">
-          <h3 class="mb-3 ">Location Activity </h3>
+          <h3 class="mb-3 ">{{ChartName}}</h3>
         </div>
         <div style="display: block">
-          <canvas baseChart 
-          [datasets]="dailyChartsData"
-          [labels]="dailyChartLabels" 
-          [options]="barChartOptions"
-          [legend]="false" chartType="bar" (chartClick)="chartClicked($event)">
+          <canvas baseChart [datasets]="dailyChartsData" [labels]="dailyChartLabels" [options]="barChartOptions"
+            [legend]="true" chartType="bar" (chartClick)="chartClicked($event)">
           </canvas>
         </div>
       </div>
@@ -76,12 +77,8 @@
 
           <div class=row>
             <h3 class="mb-3 col ">Search</h3>
-            <button class="btn btn-sm btn-primary col mr-3"
-              onclick="$('input[name=\'dateRange\']').val(getToday()+ ' - ' +getToday());submitform();">Today</button>
-
-            <button class="btn btn-sm btn-primary col mr-3"
-              onclick="$('input[name=\'dateRange\']').val('10/05/2020 - ' + getToday());submitform();">All</button>
-
+            <button (click)="updateGraphData()" class="btn btn-sm btn-primary col mr-3">Today</button>
+            <button (click)="updateGraphData()" class="btn btn-sm btn-primary col mr-3">All 10/05/2020</button>
             <button (click)="updateGraphData()" class="btn btn-sm btn-primary col ">Run</button>
           </div>
 
@@ -90,10 +87,10 @@
         <div class="col">
           <div class="form-group row">
             <label for="range" class="col mt-3 mr-3">Search Range</label>
-            <mat-form-field >
+            <mat-form-field>
               <mat-date-range-input [rangePicker]="picker">
-                <input matStartDate [(ngModel)]= "start_date">
-                <input matEndDate [(ngModel)]= "end_date">
+                <input matStartDate [(ngModel)]="start_date">
+                <input matEndDate [(ngModel)]="end_date">
               </mat-date-range-input>
               <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
               <mat-date-range-picker #picker></mat-date-range-picker>
@@ -146,10 +143,8 @@
           <h3 class="mb-3">Average Count By Hour For {{form.start_date | date}} - {{form.end_date | date}}</h3>
         </div>
         <div style="display: block">
-          <canvas baseChart [datasets]="hourlyChartsData" 
-          [labels]="hourlyChartLabels" 
-          [options]="barChartOptions"
-          [legend]=false chartType="horizontalBar">
+          <canvas baseChart [datasets]="hourlyChartsData" [labels]="hourlyChartLabels" [options]="barChartOptions"
+            [legend]=false chartType="horizontalBar">
           </canvas>
         </div>
 

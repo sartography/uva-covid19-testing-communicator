@@ -16,10 +16,14 @@ import * as pluginDataLabels from 'chartjs-plugin-datalabels';
 export class GraphsComponent implements OnInit {
 
   constructor(private graphService: GraphService) { }
-
+  
+  public ChartName: String = "Location Activity";
   public dailyChartLabels: Label[] = [];
   public weekdayChartLabels: Label[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   public hourlyChartLabels: Label[] = ["1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 AM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM", "12 PM"];
+  public dailyChartsData: ChartDataSets[] = [];
+  public hourlyChartsData: ChartDataSets[] = [];
+  public weekdayChartsData: ChartDataSets[] = [];
 
   public barChartPlugins = [pluginDataLabels];
   public barChartOptions: ChartOptions = {
@@ -38,6 +42,12 @@ export class GraphsComponent implements OnInit {
         },
         stacked: true
       }]
+    },
+    legend: {
+      onClick: (e, i) => {
+        this.form.location = String(i.text);
+        this.updateGraphData();
+      }
     },
     plugins: {
       datalabels: {
@@ -69,10 +79,6 @@ export class GraphsComponent implements OnInit {
     }
   };
 
-  public dailyChartsData: ChartDataSets[] = [];
-  public hourlyChartsData: ChartDataSets[] = [];
-  public weekdayChartsData: ChartDataSets[] = [];
-
   public tempData: JSON = <JSON>{};
 
   searchResult: Sample[] = [];
@@ -92,10 +98,12 @@ export class GraphsComponent implements OnInit {
 
   updateGraphData(): void {
 
+    this.ChartName = "Location Activity @ " + this.form.location;
+
     this.form.start_date = this.start_date.toLocaleDateString();
     this.form.end_date = this.end_date.toLocaleDateString();
 
-    var temp = this.start_date;
+    var temp = new Date(this.start_date.getTime());
     this.dailyChartLabels = [];
     while (true){
       this.dailyChartLabels.push(temp.toLocaleDateString());
@@ -107,7 +115,7 @@ export class GraphsComponent implements OnInit {
     }
 
     this.graphService.getDayData(this.form).subscribe(tempData => {
-      this.tempData = tempData
+      this.tempData = tempData;
       this.dailyChartsData = [];
       Object.entries(this.tempData).forEach(([loc_or_stat_name, totals]) => {
         this.dailyChartsData.push({ data: totals, label: loc_or_stat_name, stack: 'a' })
@@ -115,7 +123,7 @@ export class GraphsComponent implements OnInit {
     });
 
     this.graphService.getWeekdayData(this.form).subscribe(tempData => {
-      this.tempData = tempData
+      this.tempData = tempData;
       this.weekdayChartsData = [];
       Object.entries(this.tempData).forEach(([loc_or_stat_name, totals]) => {
         this.weekdayChartsData.push({ data: totals, label: loc_or_stat_name, stack: 'a' })
@@ -123,7 +131,7 @@ export class GraphsComponent implements OnInit {
     });
 
     this.graphService.getHourData(this.form).subscribe(tempData => {
-      this.tempData = tempData
+      this.tempData = tempData;
       this.hourlyChartsData = [];
       Object.entries(this.tempData).forEach(([loc_or_stat_name, totals]) => {
         this.hourlyChartsData.push({ data: totals, label: loc_or_stat_name, stack: 'c' })
