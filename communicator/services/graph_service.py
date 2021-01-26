@@ -7,7 +7,7 @@ from communicator.models.sample import Sample
 import random
 import logging
 import datetime as dt
-from sqlalchemy import func, and_, case
+from sqlalchemy import func, and_, case, or_
 
 def dow_count(start, end):
     # Monday : 0, Tuesday: 1 ...
@@ -163,8 +163,9 @@ class GraphService(object):
                 self.filters["station"] = Sample.station.in_(
                     filters["station"].split())
             if "compute_id" in filters:
-                self.filters["compute_id"] = func.lower(Sample.computing_id).in_(
-                    filters["compute_id"].split())
+                    self.filters["compute_id"] = or_(*([Sample.computing_id.ilike(ID) for ID in filters["compute_id"].split()] + 
+                                                       [Sample.email.contains(ID.lower()) for ID in filters["compute_id"].split()]
+                                                    ))
             if "start_date" in filters:
                 self.filters["start_date"] = Sample.date >= filters["start_date"]
                 self.start_date = filters["start_date"]
