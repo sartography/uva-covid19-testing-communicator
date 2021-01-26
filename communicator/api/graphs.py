@@ -36,7 +36,7 @@ def get_totals_by_day(start_date, end_date, student_id, compute_id, location):
         temp = data
         data = dict()
         for location in temp:
-            data[location] = np.sum([data[location][station] for station in data[location]],axis=0,dtype=np.int).tolist()       
+            data[location] = np.sum([temp[location][station] for station in temp[location]],axis=0,dtype=np.int).tolist()       
     elif (len(data) == 1):
         data = data[list(data.keys())[0]]   
     else:
@@ -59,7 +59,7 @@ def get_totals_by_weekday(start_date, end_date, student_id, compute_id, location
         temp = data
         data = dict()
         for location in temp:
-            data[location] = np.sum([data[location][station] for station in data[location]],axis=0,dtype=np.int).tolist()       
+            data[location] = np.sum([temp[location][station] for station in temp[location]],axis=0,dtype=np.int).tolist()       
     elif (len(data) == 1):
         data = data[list(data.keys())[0]]   
     else:
@@ -81,27 +81,12 @@ def get_totals_by_hour(start_date, end_date, student_id, compute_id, location):
         temp = data
         data = dict()
         for location in temp:
-            data[location] = np.sum([data[location][station] for station in data[location]],axis=0,dtype=np.int).tolist()       
+            data[location] = np.sum([temp[location][station] for station in temp[location]],axis=0,dtype=np.int).tolist()       
     elif (len(data) == 1):
         data = data[list(data.keys())[0]]   
     else:
         data = [] 
     return jsonify(data)
-
-def get_search_results(start_date, end_date, student_id, compute_id, location):
-    from communicator.models import Sample, SampleSchema
-    graph = GraphService()
-    filters = dict()
-    filters["start_date"] =  datetime.strptime(start_date, "%m/%d/%Y").date()
-    filters["end_date"] = datetime.strptime(end_date, "%m/%d/%Y").date()
-    filters["student_id"] = student_id.split() if len(student_id.split()) > 0 else None
-    filters["compute_id"] = compute_id.split() if len(compute_id.split()) > 0 else None
-    filters["location"] = [int(i) for i in location.split()] if len(location.split()) > 0 else None
-
-    graph.update_search_filters(filters)
-    samples = db.session.query(Sample).order_by(Sample.date.desc())
-    filtered_samples = graph.apply_filters(samples).all()
-    return SampleSchema(many = True).dump(filtered_samples)
 
 def get_totals_by_range(start_date, end_date, student_id, compute_id, location):
     pass

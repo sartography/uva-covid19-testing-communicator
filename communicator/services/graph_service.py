@@ -8,6 +8,7 @@ import random
 import logging
 import datetime as dt
 from sqlalchemy import func, and_, case, or_
+from communicator.api.admin import add_sample_search_filters
 
 def dow_count(start, end):
     # Sunday, Monday, ...
@@ -45,13 +46,6 @@ class GraphService(object):
             dt.timedelta(1)
         self.end_date = dt.date.today() + dt.timedelta(1)
 
-    def apply_filters(self, query, ignore_dates=False):
-        for key in self.filters:
-            if ignore_dates and "date" in key:
-                continue
-            query = query.filter(self.filters[key])
-        return query
-
     def get_totals_last_week(self):
         location_stats_data = dict()
         # Count by range
@@ -64,7 +58,7 @@ class GraphService(object):
                              *cases
                              ).group_by(Sample.location)
 
-        q = self.apply_filters(q, ignore_dates=True)
+        q = add_sample_search_filters(q, self.filters, ignore_dates=True)
 
         for result in q:
             location = result[0]
@@ -88,7 +82,7 @@ class GraphService(object):
                              *cases
                              ).group_by(Sample.location, Sample.station)
 
-        q = self.apply_filters(q)
+        q = add_sample_search_filters(q, self.filters)
         for result in q:
             location, station = result[0], result[1]
             if location not in hourly_charts_data:
@@ -113,7 +107,8 @@ class GraphService(object):
         q = db.session.query(Sample.location, Sample.station,
                              *cases
                              ).group_by(Sample.location, Sample.station)
-        q = self.apply_filters(q)
+        
+        q = add_sample_search_filters(q, self.filters)
 
         for result in q:
             location, station = result[0], result[1]
@@ -135,7 +130,7 @@ class GraphService(object):
         q = db.session.query(Sample.location, Sample.station,
                              *cases
                              ).group_by(Sample.location, Sample.station)
-        q = self.apply_filters(q)
+        q = add_sample_search_filters(q, self.filters)
         for result in q:
             location, station = result[0], result[1]
             if location not in weekday_charts_data:
@@ -150,33 +145,10 @@ class GraphService(object):
         return weekday_charts_data
 
     def update_search_filters(self, filters):
-        try:
-            if "student_id" in filters:
-                if (type(filters["student_id"]) == list):
-                    self.filters["student_id"] = Sample.student_id.in_(
-                        filters["student_id"])
-            if "location" in filters:
-                if (type(filters["location"]) == list):
-                    self.filters["location"] = Sample.location.in_(
-                        filters["location"])
-            if "compute_id" in filters:
-                if (type(filters["compute_id"]) == list):
-                    # Search Email and Compute ID column to account for typos 
-                    self.filters["compute_id"] = or_(*([Sample.computing_id.ilike(ID) for ID in filters["compute_id"].split()] + 
-                                                       [Sample.email.contains(ID.lower()) for ID in filters["compute_id"].split()]
-                                                    ))
-            
-            if "start_date" in filters:
-                self.filters["start_date"] = Sample.date >= filters["start_date"]
-                self.start_date = filters["start_date"]
-            if "end_date" in filters:
-                self.filters["end_date"] = Sample.date <= (filters["end_date"] + dt.timedelta(1))
-                self.end_date = filters["end_date"] + dt.timedelta(1)
-            # if not "include_tests" in filters:
-            #     self.filters["include_tests"] = Sample.student_id != 0
-            # else:
-            #     del self.filters["include_tests"]
+        self.filters = filters
+        if "start_date" in filters:
+            self.start_date = filters["start_date"]
+        if "end_date" in filters:
+            self.end_date = filters["end_date"] + dt.timedelta(1)
 
-        except Exception as e:
-            logging.error(
-                "Encountered an error building filters, so clearing. " + str(e))
+ 

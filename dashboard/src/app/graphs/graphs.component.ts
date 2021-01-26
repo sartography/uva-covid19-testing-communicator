@@ -63,7 +63,7 @@ export class GraphsComponent implements OnInit {
       padding: {
         left: 0,
         right: 20,
-        top: 20,
+        top: 30,
         bottom: 0
       }
     }
@@ -87,6 +87,7 @@ export class GraphsComponent implements OnInit {
     location: "",
     compute_id: "",
     include_tests: false
+    
   };
 
   updateGraphData(): void {

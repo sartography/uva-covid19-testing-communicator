@@ -1,7 +1,8 @@
 import smtplib
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from communicator import db, app, executor
+from sqlalchemy import or_, and_ 
 from communicator.models import Sample, Deposit, IvyFile
 from communicator.models.invitation import Invitation
 from communicator.models.notification import Notification, EMAIL_TYPE, TEXT_TYPE
@@ -13,6 +14,36 @@ from communicator.services.notification_service import NotificationService
 from communicator.services.sample_service import SampleService
 from time import sleep
 
+def add_sample_search_filters(query, filters, ignore_dates=False):
+    q_filters = dict()
+    if "student_id" in filters:
+        if (type(filters["student_id"]) == list):
+            q_filters["student_id"] = or_(*[Sample.student_id == ID for ID in filters["student_id"]])
+
+    if "location" in filters:
+        if filters["location"] != None:
+            q_filters["location"] = or_(*[Sample.location == ID for ID in filters["location"]])
+
+    if "compute_id" in filters:
+        if filters["compute_id"] != None:
+            # Search Email and Compute ID column to account for typos 
+            q_filters["compute_id"] = or_(*([Sample.computing_id.ilike(ID) for ID in filters["compute_id"]] + 
+                                            [Sample.email.contains(ID.lower()) for ID in filters["compute_id"]]))
+    if not ignore_dates:
+        if "start_date" in filters:
+            q_filters["start_date"] = Sample.date >= filters["start_date"]
+
+        if "end_date" in filters:
+            q_filters["end_date"] = Sample.date <= (filters["end_date"] + timedelta(1))
+       
+    # if not "include_tests" in filters:
+        #     q_filters["include_tests"] = Sample.student_id != 0
+        # else:
+        #     del q_filters["include_tests"]
+    query = query.filter(and_(*[q_filters[key] for key in q_filters]))
+
+    # query = query.filter(or_(*[Sample.location == 50, Sample.location == 20]))
+    return query
 
 def verify_token(token, required_scopes):
     if token == app.config['API_TOKEN']:
@@ -38,8 +69,19 @@ def add_sample(body):
     SampleService().add_or_update_records([sample])
 
 
-def get_samples(last_modified=None):
+def get_samples(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = "", page = 0):
     query = db.session.query(Sample)
+    
+    filters = dict()
+    if start_date != None:
+        filters["start_date"] = datetime.strptime(start_date, "%m/%d/%Y").date()
+    if end_date != None:
+        filters["end_date"] = datetime.strptime(end_date, "%m/%d/%Y").date()
+    filters["student_id"] = student_id.split() if len(student_id.split()) > 0 else None
+    filters["compute_id"] = compute_id.split() if len(compute_id.split()) > 0 else None
+    filters["location"] = [int(i) for i in location.split()] if len(location.split()) > 0 else None
+    
+    query = add_sample_search_filters(query, filters)
     if last_modified:
         lm_date = datetime.fromisoformat(last_modified)
         query = query.filter(Sample.last_modified > lm_date)
@@ -51,6 +93,10 @@ def clear_samples():
     db.session.query(Notification).delete()
     db.session.query(Sample).delete()
     db.session.query(Invitation).delete()
+    db.session.commit()
+
+def clear_deposits():
+    db.session.query(Deposit).delete()
     db.session.commit()
 
 def get_deposits():

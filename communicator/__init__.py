@@ -114,7 +114,7 @@ def superuser(f):
             flash("You do not have permission to view that page", "warning")
             logging.info("Permission Denied to user " +
                          UserService().get_user_info())
-            abort(404)
+            #abort(404)
         return f(*args, **kwargs)
     return decorated_function
 

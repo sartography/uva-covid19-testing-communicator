@@ -52,7 +52,7 @@ export class GraphService {
   getRawSearchData(form: SearchForm): Observable<Sample[]> {
 
     return this.http
-      .get<Sample[]>(`${environment.api_url}/graphs/search`, { params: this.createParams(form) }).pipe(
+      .get<Sample[]>(`${environment.api_url}/sample`, { params: this.createParams(form) }).pipe(
         tap(_ => this.log('building search')),
         catchError(this.handleError<Sample[]>('getRawSearchData', <Sample[]>[]))
       );
