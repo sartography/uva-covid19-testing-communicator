@@ -16,57 +16,43 @@ export class GraphService {
   constructor(private http: HttpClient) {
   }
   getDayData(form: SearchForm): Observable<JSON> {
-    let params = new HttpParams()
-      .set("start_date", form.start_date)
-      .set("end_date", form.end_date)
-      .set("student_id", form.student_id)
-      .set("compute_id", form.compute_id)
-      .set("location", form.location)
     return this.http
-      .get<JSON>(`${environment.api_url}/graphs/day`, { params: params }).pipe(
+      .get<JSON>(`${environment.api_url}/graphs/day`, { params: this.createParams(form) }).pipe(
         tap(_ => this.log('building day graph')),
         catchError(this.handleError<JSON>('getDayData', <JSON>{}))
       );
   }
   
   getWeekdayData(form: SearchForm): Observable<JSON> {
-    let params = new HttpParams()
-      .set("start_date", form.start_date)
-      .set("end_date", form.end_date)
-      .set("student_id", form.student_id)
-      .set("compute_id", form.compute_id)
-      .set("location", form.location)
 
     return this.http
-      .get<JSON>(`${environment.api_url}/graphs/weekday`, { params: params }).pipe(
+      .get<JSON>(`${environment.api_url}/graphs/weekday`, { params: this.createParams(form) }).pipe(
         tap(_ => this.log('building weekday graph')),
         catchError(this.handleError<JSON>('getWeekdayData', <JSON>{}))
       );
   }
 
   getHourData(form: SearchForm): Observable<JSON> {
-    let params = new HttpParams()
-      .set("start_date", form.start_date)
-      .set("end_date", form.end_date)
-      .set("student_id", form.student_id)
-      .set("compute_id", form.compute_id)
-      .set("location", form.location)
     return this.http
-      .get<JSON>(`${environment.api_url}/graphs/hour`, { params: params }).pipe(
+      .get<JSON>(`${environment.api_url}/graphs/hour`, { params: this.createParams(form) }).pipe(
         tap(_ => this.log('building graphs')),
         catchError(this.handleError<JSON>('getHourData', <JSON>{}))
       );
   }
-  
-  getRawSearchData(form: SearchForm): Observable<Sample[]> {
+    
+  createParams(form: SearchForm): HttpParams {
     let params = new HttpParams()
-      .set("start_date", form.start_date)
-      .set("end_date", form.end_date)
-      .set("student_id", form.student_id)
-      .set("compute_id", form.compute_id)
-      .set("location", form.location)
+    .set("start_date", form.start_date)
+    .set("end_date", form.end_date)
+    .set("student_id", form.student_id)
+    .set("compute_id", form.compute_id)
+    .set("location", form.location)
+    return params;
+  }
+  getRawSearchData(form: SearchForm): Observable<Sample[]> {
+
     return this.http
-      .get<Sample[]>(`${environment.api_url}/graphs/search`, { params: params }).pipe(
+      .get<Sample[]>(`${environment.api_url}/graphs/search`, { params: this.createParams(form) }).pipe(
         tap(_ => this.log('building search')),
         catchError(this.handleError<Sample[]>('getRawSearchData', <Sample[]>[]))
       );
