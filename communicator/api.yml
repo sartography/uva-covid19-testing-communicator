@@ -125,12 +125,12 @@ paths:
             text/plain:
               schema:
                 type: string
-  /graphs/day:
+  /dashboard/day:
     get:
-      operationId: communicator.api.graphs.get_totals_by_day
+      operationId: communicator.api.dashboard.get_totals_by_day
       summary: Creates a new sample
       tags:
-        - Graphs
+        - Dashboard
       parameters:
         - in: query
           name: start_date
@@ -172,12 +172,12 @@ paths:
                 items:
                   type: object
                   additionalProperties: true
-  /graphs/weekday:
+  /dashboard/weekday:
     get:
-      operationId: communicator.api.graphs.get_totals_by_weekday
+      operationId: communicator.api.dashboard.get_totals_by_weekday
       summary: Creates a new sample
       tags:
-        - Graphs
+        - Dashboard
       parameters:
         - in: query
           name: start_date
@@ -219,12 +219,12 @@ paths:
                 items:
                   type: object
                   additionalProperties: true
-  /graphs/hour:
+  /dashboard/hour:
     get:
-      operationId: communicator.api.graphs.get_totals_by_hour
+      operationId: communicator.api.dashboard.get_totals_by_hour
       summary: Creates a new sample
       tags:
-        - Graphs
+        - Dashboard
       parameters:
         - in: query
           name: start_date
@@ -266,6 +266,105 @@ paths:
                 items:
                   type: object
                   additionalProperties: true
+  /dashboard/search:
+    get:
+      operationId: communicator.api.dashboard.get_samples
+      summary: Returns all the samples, can be restricted by sending a barcode for the last sample received.
+      tags:
+        - Dashboard
+      parameters:
+        - in: query
+          name: start_date
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: end_date
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: student_id
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: compute_id
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: location
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: page
+          required: true
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+      responses:
+        '200':
+          description: a list of samples
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sample"
+  /dashboard/tob_bar:
+    get:
+      operationId: communicator.api.dashboard.get_topbar_data
+      summary: Returns all the samples, can be restricted by sending a barcode for the last sample received.
+      tags:
+        - Samples
+      parameters:
+        - in: query
+          name: start_date
+          required: true
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: end_date
+          required: true
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: student_id
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: compute_id
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: location
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+      responses:
+        '200':
+          description: a list of samples
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sample"
+  
   /sample:
     post:
       operationId: communicator.api.admin.add_sample
@@ -299,8 +398,8 @@ paths:
       summary: Returns all the samples, can be restricted by sending a barcode for the last sample received.
       tags:
         - Samples
-      # security:
-      #   - ApiKeyAuth: []
+      security:
+        - ApiKeyAuth: []
       parameters:
         - in: query
           name: start_date
@@ -384,8 +483,13 @@ paths:
       summary: Returns all the inventory deposits 
       tags:
         - Deposits
-      # security:
-      #   - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: page
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
       responses:
         '200':
           description: a list of deposits
@@ -401,6 +505,13 @@ paths:
       summary: Returns all the imported ivy files
       tags:
         - IvyFiles
+      parameters:
+        - in: query
+          name: page
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
       responses:
         '200':
           description: a list of uploaded files
@@ -422,6 +533,23 @@ components:
       properties:
         status:
           type: string
+    SampleSearch:
+      properties:
+        start_date:
+          type: string
+          example: "000000111-202009091449-4321"
+        end_date:
+          type: string
+          example: "000000111"
+        compute_id:
+          type: string
+          example: "abc2d"
+        student_id:
+          type: string
+          example: "2019-12-25T09:12:33.001Z"
+        location:
+          type: string
+          example: "0001"
     Sample:
       properties:
         barcode:

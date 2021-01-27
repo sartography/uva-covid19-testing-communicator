@@ -17,7 +17,7 @@ export class GraphService {
   }
   getDayData(form: SearchForm): Observable<JSON> {
     return this.http
-      .get<JSON>(`${environment.api_url}/graphs/day`, { params: this.createParams(form) }).pipe(
+      .get<JSON>(`${environment.api_url}/dashboard/day`, { params: this.createParams(form) }).pipe(
         tap(_ => this.log('building day graph')),
         catchError(this.handleError<JSON>('getDayData', <JSON>{}))
       );
@@ -26,7 +26,7 @@ export class GraphService {
   getWeekdayData(form: SearchForm): Observable<JSON> {
 
     return this.http
-      .get<JSON>(`${environment.api_url}/graphs/weekday`, { params: this.createParams(form) }).pipe(
+      .get<JSON>(`${environment.api_url}/dashboard/weekday`, { params: this.createParams(form) }).pipe(
         tap(_ => this.log('building weekday graph')),
         catchError(this.handleError<JSON>('getWeekdayData', <JSON>{}))
       );
@@ -34,7 +34,7 @@ export class GraphService {
 
   getHourData(form: SearchForm): Observable<JSON> {
     return this.http
-      .get<JSON>(`${environment.api_url}/graphs/hour`, { params: this.createParams(form) }).pipe(
+      .get<JSON>(`${environment.api_url}/dashboard/hour`, { params: this.createParams(form) }).pipe(
         tap(_ => this.log('building graphs')),
         catchError(this.handleError<JSON>('getHourData', <JSON>{}))
       );
@@ -49,21 +49,23 @@ export class GraphService {
     .set("location", form.location)
     return params;
   }
-  getRawSearchData(form: SearchForm): Observable<Sample[]> {
+  getRawSearchData(form: SearchForm, page: Number): Observable<Sample[]> {
+    var params = this.createParams(form);
+    params = params.set("page", String(page));
 
     return this.http
-      .get<Sample[]>(`${environment.api_url}/sample`, { params: this.createParams(form) }).pipe(
+      .get<Sample[]>(`${environment.api_url}/dashboard/search`, { params:  params}).pipe(
         tap(_ => this.log('building search')),
         catchError(this.handleError<Sample[]>('getRawSearchData', <Sample[]>[]))
       );
   }
 
-  getTopBarStats(form: SearchForm): Observable<JSON> {
+  getTopBarData(form: SearchForm): Observable<Number[]> {
     let params = new HttpParams().set("start_date",form.start_date).set("end_date", form.end_date); 
     return this.http
-      .get<JSON>(`http://0.0.0.0:5000/v1.0/graphs/hour`,{params: params}).pipe(
+      .get<Number[]>(`${environment.api_url}/dashboard/tob_bar`,{params: params}).pipe(
         tap(_ => this.log('building graphs')),
-        catchError(this.handleError<JSON>('getHourData', <JSON>{}))
+        catchError(this.handleError<Number[]>('getTopBarStats', <Number[]>[]))
       );
   }
 

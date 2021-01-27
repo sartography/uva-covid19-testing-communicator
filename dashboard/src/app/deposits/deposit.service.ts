@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpErrorResponse} from '@angular/common/http';
+import {HttpClient, HttpErrorResponse, HttpParams} from '@angular/common/http';
 
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
@@ -25,9 +25,10 @@ export class DepositService {
   }
 
   // GET list of public, future events
-  getDeposits(): Observable<Deposit[]> {
+  getDeposits(page: Number): Observable<Deposit[]> {
+    let param = new HttpParams().set("page",String(page));
     return this.http
-      .get<Deposit[]>(`http://0.0.0.0:5000/v1.0/deposit`).pipe(
+      .get<Deposit[]>(`${environment.api_url}/deposit`,{params: param}).pipe(
         tap(_ => this.log('fetched deposits')),
         catchError(this.handleError<Deposit[]>('getDeposits', []))
       );
@@ -35,7 +36,7 @@ export class DepositService {
 
     /** POST: add a new hero to the database */
     addDeposit(deposit: Deposit): Observable<Deposit> {
-      return this.http.post<Deposit>(`http://0.0.0.0:5000/v1.0/deposit`, deposit, httpOptions)
+      return this.http.post<Deposit>(`${environment.api_url}/v1.0/deposit`, deposit, httpOptions)
         .pipe(
           catchError(this.handleError('addDeposit', deposit))
         );

@@ -46,29 +46,6 @@ class GraphService(object):
             dt.timedelta(1)
         self.end_date = dt.date.today() + dt.timedelta(1)
 
-    def get_totals_last_week(self):
-        location_stats_data = dict()
-        # Count by range
-        cases = [func.count(case([(and_(Sample.date >= self.start_date - dt.timedelta(14), Sample.date <= self.end_date - dt.timedelta(14)), 1)])),
-                 func.count(case([(and_(Sample.date >= self.start_date - dt.timedelta(
-                     7), Sample.date <= self.end_date - dt.timedelta(7)), 1)])),
-                 func.count(case([(and_(Sample.date >= self.start_date, Sample.date <= self.end_date), 1)]))]
-
-        q = db.session.query(Sample.location,
-                             *cases
-                             ).group_by(Sample.location)
-
-        q = add_sample_search_filters(q, self.filters, ignore_dates=True)
-
-        for result in q:
-            location = result[0]
-            if location not in location_stats_data:
-                location_stats_data[location] = dict()
-            location_stats_data[location]["two_week_ago"] = result[1]
-            location_stats_data[location]["one_week_ago"] = result[2]
-            location_stats_data[location]["search"] = result[3]
-        return location_stats_data
-
     def get_totals_by_hour(self):
         hourly_charts_data = dict()
         days_in_search = (self.end_date - self.start_date).days

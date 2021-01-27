@@ -7,7 +7,7 @@ import { ImportedFilesComponent} from './imported-files/imported-files.component
 const routes: Routes = [
   { path: 'deposits', component: DepositsComponent },
   { path: 'imports', component: ImportedFilesComponent },
-  { path: 'graphs', component: GraphsComponent }
+  { path: 'dashboard', component: GraphsComponent }
 ];
 
 @NgModule({

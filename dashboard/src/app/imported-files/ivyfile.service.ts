@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpErrorResponse} from '@angular/common/http';
+import {HttpClient, HttpErrorResponse, HttpParams} from '@angular/common/http';
 
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
@@ -18,9 +18,10 @@ export class IvyFileService {
   }
 
   // GET list of public, future events
-  getFiles(): Observable<IvyFile[]> {
+  getFiles(page: Number): Observable<IvyFile[]> {
+    let params = new HttpParams().set("page",String(page));
     return this.http
-      .get<IvyFile[]>(`http://0.0.0.0:5000/v1.0/ivy_file`).pipe(
+      .get<IvyFile[]>(`${environment.api_url}/ivy_file`,{params: params}).pipe(
         tap(_ => this.log('fetched files')),
         catchError(this.handleError<IvyFile[]>('getFiles', []))
       );

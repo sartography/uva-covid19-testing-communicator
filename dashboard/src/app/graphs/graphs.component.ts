@@ -16,17 +16,18 @@ import * as pluginDataLabels from 'chartjs-plugin-datalabels';
 export class GraphsComponent implements OnInit {
 
   constructor(private graphService: GraphService) { }
-  
-  public ChartName: String = "Location Activity";
-  public dailyChartLabels: Label[] = [];
-  public weekdayChartLabels: Label[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  public hourlyChartLabels: Label[] = ["1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 AM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM", "12 PM"];
-  public dailyChartsData: ChartDataSets[] = [];
-  public hourlyChartsData: ChartDataSets[] = [];
-  public weekdayChartsData: ChartDataSets[] = [];
 
-  public barChartPlugins = [pluginDataLabels];
-  public barChartOptions: ChartOptions = {
+  topBarData: Array<Number> = [0, 0, 0, 0, 0, 0, 0];
+  ChartName: String = "Location Activity";
+  dailyChartLabels: Label[] = [];
+  weekdayChartLabels: Label[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  hourlyChartLabels: Label[] = ["1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 AM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM", "12 PM"];
+  dailyChartsData: ChartDataSets[] = [];
+  hourlyChartsData: ChartDataSets[] = [];
+  weekdayChartsData: ChartDataSets[] = [];
+
+  barChartPlugins = [pluginDataLabels];
+  barChartOptions: ChartOptions = {
     responsive: true,
     // We use these empty structures as placeholders for dynamic theming.
     scales: {
@@ -79,14 +80,39 @@ export class GraphsComponent implements OnInit {
     }
   };
 
-  public tempData: JSON = <JSON>{};
+  arrayOne(n: number): any[] {
+    return Array(n);
+
+  }
+
+  tempData: JSON = <JSON>{};
 
   searchResult: Sample[] = [];
 
-  public start_date: Date = new Date();
-  public end_date: Date = new Date();
+  start_date: Date = new Date();
+  end_date: Date = new Date();
 
-  public form: SearchForm = {
+  start_date_1: string = "";
+  end_date_1: string = "";
+  start_date_2: string = "";
+  end_date_2: string = "";
+
+  current_page: number = 0;
+  item_per_page: Number = 10;
+  available_pages: Number[] = [];
+  
+  paginateSearch(i: number): void {
+    this.current_page = i;
+    this.available_pages = [];
+    for (let i = this.current_page - 10; i < this.current_page + 10; i++){
+      if (i > 0){
+      this.available_pages.push(i);
+      }
+    }
+    this.graphService.getRawSearchData(this.form, this.current_page).subscribe(searchResult => this.searchResult = searchResult);
+  }
+
+  form: SearchForm = {
     start_date: "",
     end_date: "",
     student_id: "",
@@ -95,18 +121,52 @@ export class GraphsComponent implements OnInit {
     include_tests: false
   };
 
+  
+  searchToday(): void {
+    this.start_date = new Date();
+    this.end_date = new Date();
+    this.updateGraphData();
+  }
+  searchAll(): void {
+    this.start_date = new Date(2020,9,5);
+    this.end_date = new Date();
+    this.updateGraphData();
+  }
+
   updateGraphData(): void {
 
-    this.ChartName = "Total Activity @ " + this.form.location;
+    if (this.form.location.trim().split(" ").length == 1) {
+      this.ChartName = "Total Samples per Station @ Location " + this.form.location;
+    } else {
+      this.ChartName = "Total Samples per Location";
+    }
+    if (this.form.location.trim() == "") {
+      this.ChartName = "Total Samples per Location";
+    }
 
     this.form.start_date = this.start_date.toLocaleDateString();
     this.form.end_date = this.end_date.toLocaleDateString();
 
+    var date = new Date();
+    var date_2 = new Date();
+
+    date.setDate(this.start_date.getDate() - 7);
+    this.start_date_1 = date.toLocaleDateString();
+
+    date_2.setDate(this.end_date.getDate() - 7);
+    this.end_date_1 = date_2.toLocaleDateString();
+
+    date.setDate(date.getDate() - 7);
+    this.start_date_2 = date.toLocaleDateString();
+
+    date_2.setDate(date_2.getDate() - 7);
+    this.end_date_2 = date_2.toLocaleDateString();
+
     var temp = new Date(this.start_date.getTime());
     this.dailyChartLabels = [];
-    while (true){
+    while (true) {
       this.dailyChartLabels.push(temp.toLocaleDateString());
-      if (temp.toLocaleDateString() == this.end_date.toLocaleDateString()){
+      if (temp.toLocaleDateString() == this.end_date.toLocaleDateString()) {
         break;
       } else {
         temp.setDate(temp.getDate() + 1);
@@ -137,28 +197,22 @@ export class GraphsComponent implements OnInit {
       });
     });
 
-    this.graphService.getRawSearchData(this.form).subscribe(searchResult => this.searchResult = searchResult);
+    this.graphService.getTopBarData(this.form).subscribe(tempData => {
+      this.topBarData = tempData;
+    });
 
-    // overall_totals_data = overall_totals_data,
-    // this.graphService.getHourData(this.form).subscribe( tempData => {
-    //   this.tempData = tempData
-    //   this.hourlyChartsData = [];
-    //   Object.entries(this.tempData).forEach(([loc_or_stat_name, totals]) => {
-    //     this.hourlyChartsData.push({ data: totals, label: loc_or_stat_name, stack: 'a'} )
-    //   });
-    // });
+    this.paginateSearch(0);
   }
 
   ngOnInit(): void {
     var end_date = new Date();
     var start_date = new Date();
-    // start_date.setDate(end_date.getDate() - 1);
     this.form.start_date = start_date.toLocaleDateString();
     this.form.end_date = end_date.toLocaleDateString();
     this.updateGraphData();
   }
 
-  public chartClicked(e: any): void {
+  chartClicked(e: any): void {
     if (e.active.length > 0) {
       const chart = e.active[0]._chart;
       const activePoints = chart.getElementAtEvent(e.event);

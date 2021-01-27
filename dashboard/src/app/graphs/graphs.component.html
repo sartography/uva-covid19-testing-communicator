@@ -1,61 +1,79 @@
 <div class="container-fluid mt--7">
   <div class="row mb-4">
-    <div class="col-xl-3 col-lg-6">
+    <div class="col-xl-2">
       <div class="card card-stats  mb-xl-0">
         <div class="card-body">
           <div class="row">
             <div class="col">
-              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within<br> {{form.start_date | date}} -
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within<br> {{form.start_date | date}}
+                -
                 {{form.end_date | date}}</h5>
-              <span id="card_1" class="h2 font-weight-bold">{{searchResult?.length}}</span>
+              <span id="card_1" class="h2 font-weight-bold">{{topBarData[0]}}</span>
 
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-xl-3 col-lg-6">
+    <div class="col-xl-2">
       <div class="card card-stats  mb-xl-0">
         <div class="card-body">
           <div class="row">
             <div class="col">
-              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within <br> {{form.start_date | date}} -
-                {{form.end_date | date}}</h5>
-              <span id="card_1" class="h2 font-weight-bold mb-0">Coming</span>
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within <br> {{start_date_1 | date}}
+                -
+                {{end_date_1 | date}}</h5>
+              <span id="card_1" class="h2 font-weight-bold mb-0">{{topBarData[1]}}</span>
 
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-xl-3 col-lg-6">
+    <div class="col-xl-2">
       <div class="card card-stats  mb-xl-0">
         <div class="card-body">
           <div class="row">
             <div class="col">
-              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within <br> {{form.start_date | date}} -
-                {{form.end_date | date}}</h5>
-              <span id="card_1" class="h2 font-weight-bold mb-0">Along</span>
+              <h5 class="card-title text-uppercase text-muted mb-0">Total Samples within <br> {{start_date_2 | date}}
+                -
+                {{end_date_2 | date}}</h5>
+              <span id="card_1" class="h2 font-weight-bold mb-0">{{topBarData[2]}}</span>
 
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-xl-3 col-lg-6">
+    <div class="col-xl-3">
       <div class="card card-stats  mb-xl-0">
         <div class="card-body">
           <div class="row">
             <div class="col">
-              <h5 class="card-title text-uppercase text-muted mb-0">Total Notifications within <br> {{form.start_date |
+              <h5 class="card-title text-uppercase text-muted mb-0">Email Notifications within <br> {{form.start_date |
                 date}} - {{form.end_date | date}}</h5>
-              <span id="card_1" class="h2 font-weight-bold mb-0">Nicely</span>
+              <span id="card_1" class="h2 font-weight-bold mb-0" ><span style="color:green">{{topBarData[3]}}</span>/<span style="color:red">{{topBarData[4]}}</span></span>
 
             </div>
           </div>
         </div>
       </div>
     </div>
+    <div class="col-xl-3 ">
+      <div class="card card-stats  mb-xl-0">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Text Notifications within <br> {{form.start_date |
+                date}} - {{form.end_date | date}}</h5>
+                <span id="card_1" class="h2 font-weight-bold mb-0" ><span style="color:green">{{topBarData[5]}}</span>/<span style="color:red">{{topBarData[6]}}</span></span>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
   </div>
   <div class="row">
     <div class="col mb-3">
@@ -77,8 +95,8 @@
 
           <div class=row>
             <h3 class="mb-3 col ">Search</h3>
-            <button (click)="updateGraphData()" class="btn btn-sm btn-primary col mr-3">Today</button>
-            <button (click)="updateGraphData()" class="btn btn-sm btn-primary col mr-3">All 10/05/2020</button>
+            <button (click)="searchToday()" class="btn btn-sm btn-primary col mr-3">Today</button>
+            <button (click)="searchAll()" class="btn btn-sm btn-primary col mr-3">All</button>
             <button (click)="updateGraphData()" class="btn btn-sm btn-primary col ">Run</button>
           </div>
 
@@ -152,7 +170,7 @@
     </div>
   </div>
 
-  <div class="card row">
+  <div class="card row ">
     <div class="card-header">
       <h3 class="mb-0">Records to be processed </h3>
     </div>
@@ -163,9 +181,9 @@
             <th>Barcode </th>
             <th>Date</th>
             <th>Location</th>
-            <th>Contacts</th>
             <th>IDs</th>
-            <!-- <th>Notifications</th> -->
+            <th>Contacts</th>
+            <th>Notifications</th>
           </tr>
         </thead>
         <tbody>
@@ -175,11 +193,20 @@
             <td>Location: {{sample.location}}<br>Station: {{sample.station}}</td>
             <td>Compute ID: {{sample.compute_id}}<br>Student ID: {{sample.student_id}}</td>
             <td>Phone: {{sample.phone}}<br>Email: {{sample.email}}</td>
-            <!-- <td>Phone: {{sample.phone}}<br>Email: {{sample.email}}</td> -->
+            <td>{{sample.notification}}</td>
           </tr>
         </tbody>
       </table>
     </div>
-
+      <ul class="pagination">
+        <li class="page-item">
+          <a class="page-link" (click)="paginateSearch(1)"><<</a>
+        </li>
+        <span *ngFor="let page_num of available_pages" >
+        <li  [ngClass]="(page_num === currentPage)?'page-item':'page-item active'">
+          <a class="page-link" (click)="paginateSearch(page_num)">{{page_num}}</a>
+        </li>
+      </span>
+      </ul>
   </div>
 </div>
