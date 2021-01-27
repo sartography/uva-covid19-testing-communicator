@@ -93,12 +93,11 @@ export class GraphsComponent implements OnInit {
     location: "",
     compute_id: "",
     include_tests: false
-    
   };
 
   updateGraphData(): void {
 
-    this.ChartName = "Location Activity @ " + this.form.location;
+    this.ChartName = "Total Activity @ " + this.form.location;
 
     this.form.start_date = this.start_date.toLocaleDateString();
     this.form.end_date = this.end_date.toLocaleDateString();
