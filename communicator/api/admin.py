@@ -1,5 +1,6 @@
 import smtplib
-from datetime import datetime
+from datetime import datetime, timedelta
+from sqlalchemy import and_, or_
 
 from communicator import db, app, executor
 from communicator.models import Sample
@@ -34,10 +35,10 @@ def add_sample_search_filters(query, filters, ignore_dates=False):
         if "end_date" in filters:
             q_filters["end_date"] = Sample.date <= (filters["end_date"] + timedelta(1))
        
-    # if not "include_tests" in filters:
-        #     q_filters["include_tests"] = Sample.student_id != 0
-        # else:
-        #     del q_filters["include_tests"]
+    if not "include_tests" in filters:
+            q_filters["include_tests"] = Sample.student_id != 0
+    else:
+        del q_filters["include_tests"]
     query = query.filter(and_(*[q_filters[key] for key in q_filters]))
     return query
 

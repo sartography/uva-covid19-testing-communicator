@@ -101,7 +101,7 @@ def get_samples(last_modified = None, start_date = None, end_date = None, studen
     if last_modified:
         lm_date = datetime.fromisoformat(last_modified)
         query = query.filter(Sample.last_modified > lm_date)
-    samples = query.order_by(Sample.last_modified)[(int(page) - 1) * 10:((int(page) - 1) * 10) + 10]
+    samples = query.order_by(Sample.last_modified)[int(page) * 10:(int(page) * 10) + 10]
     response = SampleSchema(many=True).dump(samples)
     return response
     
