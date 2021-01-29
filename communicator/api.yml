@@ -519,8 +519,7 @@ paths:
             text/plain:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/IvyFile"
+           
 components:
   securitySchemes:
     ApiKeyAuth:

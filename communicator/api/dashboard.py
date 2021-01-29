@@ -138,22 +138,5 @@ def get_topbar_data(last_modified = None, start_date = None, end_date = None, st
     response[6] = notifications.filter(Notification.successful == "f").filter(Notification.type == "text").count()
     return response
 
-def get_notes_per_file():
-    from sqlalchemy import func, case
-    cases = [func.count(case([(Sample.email_notified == "t" , 1)])),
-            func.count(case([(Sample.email_notified == "f" , 1)])),
-            func.count(case([(Sample.text_notified == "t" , 1)])),
-            func.count(case([(Sample.text_notified == "f" , 1)]))]
-    
-    query = db.session.query(IvyFile.file_name,
-                *cases).join(Sample, Sample.ivy_file == '/ivy_data/outgoing/' + IvyFile.file_name)\
-                .group_by(IvyFile.file_name)
-    
 
-# SELECT  ivy_file.file_name, 
-#         COUNT(case when sample.email_notified = 't' THEN 1 END) as "A",
-#         COUNT(case when sample.email_notified = 'f' THEN 1 END) as "B",
-#         COUNT(case when sample.text_notified = 't' THEN 1 END) as "C",
-#         COUNT(case when sample.text_notified = 'f' THEN 1 END) as "D"
-#         from ivy_file inner join sample on sample.ivy_file = concat('/ivy_data/outgoing/',ivy_file.file_name) 
-#         group by ivy_file.file_name;
+

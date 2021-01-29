@@ -8,6 +8,7 @@ from communicator.models.invitation import Invitation
 from communicator.models.notification import Notification, EMAIL_TYPE, TEXT_TYPE
 from communicator.models import Sample, SampleSchema
 from communicator.models import IvyFile, IvyFileSchema
+from communicator.models import Deposit, DepositSchema
 from communicator.services.ivy_service import IvyService
 from communicator.services.notification_service import NotificationService
 from communicator.services.sample_service import SampleService
@@ -118,9 +119,17 @@ def add_deposit(body):
     return DepositSchema().dumps(new_deposit)   
 
 def get_imported_files(page = "0"):
-    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())[int(page) * 10:(int(page) * 10) + 10]
-    return IvyFileSchema(many=True).dump(files)
-
+    from sqlalchemy import func, case
+    cases = [func.count(case([(Sample.email_notified == "t" , 1)])).label("successful_emails"),
+            func.count(case([(Sample.email_notified == "f" , 1)])).label("failed_emails"),
+            func.count(case([(Sample.text_notified == "t" , 1)])).label("successful_texts"),
+            func.count(case([(Sample.text_notified == "f" , 1)])).label("failed_texts")]
+    
+    query = db.session.query(IvyFile.date_added,IvyFile.file_name,IvyFile.sample_count,
+                *cases).order_by(IvyFile.date_added.desc()).join(Sample, Sample.ivy_file == '/ivy_data/outgoing/' + IvyFile.file_name)\
+                .group_by(IvyFile.file_name)[int(page) * 10:(int(page) * 10) + 10]
+    return query
+    
 
 def update_and_notify():
     # These can take a very long time to execute.
