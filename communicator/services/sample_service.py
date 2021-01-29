@@ -26,6 +26,7 @@ class SampleService(object):
             sample.station = random.randint(1,6) * 10 
             sample.location = random.randint(1,6) * 10
         db.session.commit()
+
     def split_all_location_columns(self):
         # Only fix records where the station isn't already set.
         # All stations prior to december 15th should be set to 1.
