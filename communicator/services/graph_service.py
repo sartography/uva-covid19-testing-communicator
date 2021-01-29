@@ -10,11 +10,11 @@ import datetime as dt
 from sqlalchemy import func, and_, case
 
 def dow_count(start, end):
-    # Sunday, Monday, ...
+    # Monday : 0, Tuesday: 1 ...
     counts = [0 for _ in range(7)]
     curr = start
     while curr <= end:
-        counts[(1 + curr.weekday()) % 7] += 1
+        counts[curr.weekday()] += 1
         curr += dt.timedelta(1)
     return counts
 
@@ -128,9 +128,10 @@ class GraphService(object):
         dow_counts = dow_count(
             self.start_date, self.end_date - dt.timedelta(1))
         cases = []
+        # isodow: Monday(1) to Sunday(7)
         for i in range(7):
             cases.append(func.count(
-                case([(func.extract('dow', Sample.date) == i, 1)])))
+                case([(func.extract('isodow', Sample.date) == i + 1, 1)])))
 
         q = db.session.query(Sample.location, Sample.station,
                              *cases
@@ -143,6 +144,7 @@ class GraphService(object):
             weekday_charts_data[location][station] = []
             for dow, total in zip(range(7), result[2:]):
                 if dow_counts[dow] > 0:
+                    # Round Up 
                     weekday_charts_data[location][station].append(
                         round(total/dow_counts[dow] + .4))
                 else:
