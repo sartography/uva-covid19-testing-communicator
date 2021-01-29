@@ -1,4 +1,0 @@
-You have a new notification from UVA Prevalence Testing
-
-Please follow this link, and log in with Netbadge, to securely view your notification:
-{{link}}

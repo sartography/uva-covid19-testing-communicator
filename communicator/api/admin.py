@@ -5,12 +5,41 @@ from communicator import db, app, executor
 from communicator.models import Sample
 from communicator.models.invitation import Invitation
 from communicator.models.notification import Notification, EMAIL_TYPE, TEXT_TYPE
-from communicator.models.sample import SampleSchema
+from communicator.models import Sample, SampleSchema
+from communicator.models import IvyFile, IvyFileSchema
 from communicator.services.ivy_service import IvyService
 from communicator.services.notification_service import NotificationService
 from communicator.services.sample_service import SampleService
 from time import sleep
 
+def add_sample_search_filters(query, filters, ignore_dates=False):
+    q_filters = dict()
+    if "student_id" in filters:
+        if (type(filters["student_id"]) == list):
+            q_filters["student_id"] = or_(*[Sample.student_id == ID for ID in filters["student_id"]])
+
+    if "location" in filters:
+        if filters["location"] != None:
+            q_filters["location"] = or_(*[Sample.location == ID for ID in filters["location"]])
+
+    if "compute_id" in filters:
+        if filters["compute_id"] != None:
+            # Search Email and Compute ID column to account for typos 
+            q_filters["compute_id"] = or_(*([Sample.computing_id.ilike(ID) for ID in filters["compute_id"]] + 
+                                            [Sample.email.contains(ID.lower()) for ID in filters["compute_id"]]))
+    if not ignore_dates:
+        if "start_date" in filters:
+            q_filters["start_date"] = Sample.date >= filters["start_date"]
+
+        if "end_date" in filters:
+            q_filters["end_date"] = Sample.date <= (filters["end_date"] + timedelta(1))
+       
+    # if not "include_tests" in filters:
+        #     q_filters["include_tests"] = Sample.student_id != 0
+        # else:
+        #     del q_filters["include_tests"]
+    query = query.filter(and_(*[q_filters[key] for key in q_filters]))
+    return query
 
 def verify_token(token, required_scopes):
     if token == app.config['API_TOKEN']:
@@ -36,18 +65,26 @@ def add_sample(body):
     SampleService().add_or_update_records([sample])
 
 
-def get_samples(last_modified=None, created_on=None):
+def get_samples(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = "", page = 0):
     query = db.session.query(Sample)
+    
+    filters = dict()
+    if start_date != None:
+        filters["start_date"] = datetime.strptime(start_date, "%m/%d/%Y").date()
+    if end_date != None:
+        filters["end_date"] = datetime.strptime(end_date, "%m/%d/%Y").date()
+    if len(student_id.strip()) > 0:
+        filters["student_id"] = student_id.split()
+    if len(compute_id.strip()) > 0:
+        filters["compute_id"] = compute_id.split() 
+    if len(location.strip()) > 0:
+        filters["location"] = [int(i) for i in location.split()]
+    
+    query = add_sample_search_filters(query, filters)
     if last_modified:
         lm_date = datetime.fromisoformat(last_modified)
-        query = query.filter(Sample.last_modified > lm_date).order_by(Sample.last_modified)
-    if created_on:
-        co_date = datetime.fromisoformat(created_on)
-        query = query.filter(Sample.created_on > co_date).order_by(Sample.created_on)
-    else:
-        query = query.order_by(Sample.created_on)
-
-    samples = query.limit(200).all()
+        query = query.filter(Sample.last_modified > lm_date)
+    samples = query.order_by(Sample.last_modified).limit(200).all()
     response = SampleSchema(many=True).dump(samples)
     return response
 
@@ -57,6 +94,31 @@ def clear_samples():
     db.session.query(Sample).delete()
     db.session.query(Invitation).delete()
     db.session.commit()
+
+def get_deposits(page = "0"):
+    query = db.session.query(Deposit)
+    deposits = query.order_by(Deposit.date_added.desc())[int(page) * 10:(int(page) * 10) + 10]
+    response = DepositSchema(many=True).dump(deposits)
+    return response
+
+def clear_deposits():
+    db.session.query(Deposit).delete()
+    db.session.commit()
+
+def add_deposit(body):
+    from communicator.models.deposit import Deposit, DepositSchema
+    
+    new_deposit = Deposit(date_added=datetime.strptime(body['date_added'], "%m/%d/%Y").date(),
+                      amount=int(body['amount']),
+                      notes=body['notes'])
+
+    db.session.add(new_deposit)
+    db.session.commit()  
+    return DepositSchema().dumps(new_deposit)   
+
+def get_imported_files(page = "0"):
+    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())[int(page) * 10:(int(page) * 10) + 10]
+    return IvyFileSchema(many=True).dump(files)
 
 
 def update_and_notify():

@@ -7,10 +7,11 @@ from communicator.models.sample import Sample
 import random
 import logging
 import datetime as dt
-from sqlalchemy import func, and_, case
+from sqlalchemy import func, and_, case, or_
+from communicator.api.admin import add_sample_search_filters
 
 def dow_count(start, end):
-    # Monday : 0, Tuesday: 1 ...
+    # Sunday, Monday, ...
     counts = [0 for _ in range(7)]
     curr = start
     while curr <= end:
@@ -45,36 +46,6 @@ class GraphService(object):
             dt.timedelta(1)
         self.end_date = dt.date.today() + dt.timedelta(1)
 
-    def apply_filters(self, query, ignore_dates=False):
-        for key in self.filters:
-            if ignore_dates and "date" in key:
-                continue
-            query = query.filter(self.filters[key])
-        return query
-
-    def get_totals_last_week(self):
-        location_stats_data = dict()
-        # Count by range
-        cases = [func.count(case([(and_(Sample.date >= self.start_date - dt.timedelta(14), Sample.date <= self.end_date - dt.timedelta(14)), 1)])),
-                 func.count(case([(and_(Sample.date >= self.start_date - dt.timedelta(
-                     7), Sample.date <= self.end_date - dt.timedelta(7)), 1)])),
-                 func.count(case([(and_(Sample.date >= self.start_date, Sample.date <= self.end_date), 1)]))]
-
-        q = db.session.query(Sample.location,
-                             *cases
-                             ).group_by(Sample.location)
-
-        q = self.apply_filters(q, ignore_dates=True)
-
-        for result in q:
-            location = result[0]
-            if location not in location_stats_data:
-                location_stats_data[location] = dict()
-            location_stats_data[location]["two_week_ago"] = result[1]
-            location_stats_data[location]["one_week_ago"] = result[2]
-            location_stats_data[location]["search"] = result[3]
-        return location_stats_data
-
     def get_totals_by_hour(self):
         hourly_charts_data = dict()
         days_in_search = (self.end_date - self.start_date).days
@@ -88,7 +59,7 @@ class GraphService(object):
                              *cases
                              ).group_by(Sample.location, Sample.station)
 
-        q = self.apply_filters(q)
+        q = add_sample_search_filters(q, self.filters)
         for result in q:
             location, station = result[0], result[1]
             if location not in hourly_charts_data:
@@ -113,7 +84,8 @@ class GraphService(object):
         q = db.session.query(Sample.location, Sample.station,
                              *cases
                              ).group_by(Sample.location, Sample.station)
-        q = self.apply_filters(q)
+        
+        q = add_sample_search_filters(q, self.filters)
 
         for result in q:
             location, station = result[0], result[1]
@@ -128,7 +100,6 @@ class GraphService(object):
         dow_counts = dow_count(
             self.start_date, self.end_date - dt.timedelta(1))
         cases = []
-        # isodow: Monday(1) to Sunday(7)
         for i in range(7):
             cases.append(func.count(
                 case([(func.extract('isodow', Sample.date) == i + 1, 1)])))
@@ -136,7 +107,7 @@ class GraphService(object):
         q = db.session.query(Sample.location, Sample.station,
                              *cases
                              ).group_by(Sample.location, Sample.station)
-        q = self.apply_filters(q)
+        q = add_sample_search_filters(q, self.filters)
         for result in q:
             location, station = result[0], result[1]
             if location not in weekday_charts_data:
@@ -144,7 +115,6 @@ class GraphService(object):
             weekday_charts_data[location][station] = []
             for dow, total in zip(range(7), result[2:]):
                 if dow_counts[dow] > 0:
-                    # Round Up 
                     weekday_charts_data[location][station].append(
                         round(total/dow_counts[dow] + .4))
                 else:
@@ -152,30 +122,10 @@ class GraphService(object):
         return weekday_charts_data
 
     def update_search_filters(self, filters):
-        try:
-            if "student_id" in filters:
-                self.filters["student_id"] = Sample.student_id.in_(
-                    filters["student_id"].split())
-            if "location" in filters:
-                self.filters["location"] = Sample.location.in_(
-                    filters["location"].split())
-            if "station" in filters:
-                self.filters["station"] = Sample.station.in_(
-                    filters["station"].split())
-            if "compute_id" in filters:
-                self.filters["compute_id"] = func.lower(Sample.computing_id).in_(
-                    filters["compute_id"].split())
-            if "start_date" in filters:
-                self.filters["start_date"] = Sample.date >= filters["start_date"]
-                self.start_date = filters["start_date"]
-            if "end_date" in filters:
-                self.filters["end_date"] = Sample.date <= filters["end_date"]
-                self.end_date = filters["end_date"]
-            if not "include_tests" in filters:
-                self.filters["include_tests"] = Sample.student_id != 0
-            else:
-                del self.filters["include_tests"]
+        self.filters = filters
+        if "start_date" in filters:
+            self.start_date = filters["start_date"]
+        if "end_date" in filters:
+            self.end_date = filters["end_date"] + dt.timedelta(1)
 
-        except Exception as e:
-            logging.error(
-                "Encountered an error building filters, so clearing. " + str(e))
+ 
