@@ -28,7 +28,7 @@ def form_graph_response(data):
         data = data[locations[0]]
     return jsonify(data)
 
-def get_totals_by_day(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = ""):
+def get_totals_by_day(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = "", include_tests=""):
   
     filters = dict()
     if start_date != None:
@@ -41,12 +41,14 @@ def get_totals_by_day(last_modified = None, start_date = None, end_date = None, 
         filters["compute_id"] = compute_id.split() 
     if len(location.strip()) > 0:
         filters["location"] = [int(i) for i in location.split()]
+    if include_tests == "true":
+        filters["include_tests"] = include_tests
     graph = GraphService()
     
     graph.update_search_filters(filters)
     return form_graph_response(graph.get_totals_by_day())
     
-def get_totals_by_weekday(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = ""):
+def get_totals_by_weekday(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = "", include_tests =""):
 
     filters = dict()
     if start_date != None:
@@ -59,13 +61,14 @@ def get_totals_by_weekday(last_modified = None, start_date = None, end_date = No
         filters["compute_id"] = compute_id.split() 
     if len(location) > 0:
         filters["location"] = [int(i) for i in location.split()]
-    
+    if include_tests == "true":
+        filters["include_tests"] = include_tests    
     graph = GraphService()
    
     graph.update_search_filters(filters)
     return form_graph_response(graph.get_totals_by_weekday())
     
-def get_totals_by_hour(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = ""):
+def get_totals_by_hour(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = "",include_tests="") :
     filters = dict()
     if start_date != None:
         filters["start_date"] = datetime.strptime(start_date, "%m/%d/%Y").date()
@@ -77,12 +80,14 @@ def get_totals_by_hour(last_modified = None, start_date = None, end_date = None,
         filters["compute_id"] = compute_id.split() 
     if len(location) > 0:
         filters["location"] = [int(i) for i in location.split()]
+    if include_tests == "true":
+        filters["include_tests"] = include_tests
     graph = GraphService()
 
     graph.update_search_filters(filters)
     return form_graph_response(graph.get_totals_by_hour())
     
-def get_samples(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = "", page = 0):
+def get_samples(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = "", include_tests= "", page = 0):
     query = db.session.query(Sample)
 
     filters = dict()
@@ -96,6 +101,9 @@ def get_samples(last_modified = None, start_date = None, end_date = None, studen
         filters["compute_id"] = compute_id.split() 
     if len(location.strip()) > 0:
         filters["location"] = [int(i) for i in location.split()]
+    if include_tests == "true":
+        filters["include_tests"] = include_tests
+
 
     query = add_sample_search_filters(query, filters)
     if last_modified:
@@ -105,7 +113,7 @@ def get_samples(last_modified = None, start_date = None, end_date = None, studen
     response = SampleSchema(many=True).dump(samples)
     return response
     
-def get_topbar_data(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = ""):        
+def get_topbar_data(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = "", include_tests = ""):        
     filters = dict()
     if start_date != None:
         filters["start_date"] = datetime.strptime(start_date, "%m/%d/%Y").date()
@@ -117,7 +125,8 @@ def get_topbar_data(last_modified = None, start_date = None, end_date = None, st
         filters["compute_id"] = compute_id.split() 
     if len(location.strip()) > 0:
         filters["location"] = [int(i) for i in location.split()]
-   
+    if include_tests == "true":
+        filters["include_tests"] = include_tests   
     cases = [func.count(case([(and_(Sample.date >= filters["start_date"], Sample.date <= filters["end_date"]), 1)])),
              func.count(case([(and_(Sample.date >= filters["start_date"] - timedelta(7), Sample.date <= filters["end_date"] - timedelta(7)), 1)])),
              func.count(case([(and_(Sample.date >= filters["start_date"] - timedelta(14), Sample.date <= filters["end_date"] - timedelta(14)), 1)]))]

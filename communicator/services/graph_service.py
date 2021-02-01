@@ -69,8 +69,7 @@ class GraphService(object):
             offset = 6
             counts = result[2:]
             counts = counts[offset:] + counts[:offset]
-            hourly_charts_data[location][station] = [
-                round(i/days_in_search + .4) for i in counts]
+            hourly_charts_data[location][station] = [round(i/days_in_search + .4) for i in counts]
         return hourly_charts_data
 
     def get_totals_by_day(self):

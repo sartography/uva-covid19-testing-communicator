@@ -38,8 +38,7 @@ def add_sample_search_filters(query, filters, ignore_dates=False):
        
     if not "include_tests" in filters:
             q_filters["include_tests"] = Sample.student_id != 0
-    else:
-        del q_filters["include_tests"]
+
     query = query.filter(and_(*[q_filters[key] for key in q_filters]))
     return query
 

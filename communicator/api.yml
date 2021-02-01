@@ -162,6 +162,13 @@ paths:
           description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
           schema:
             type: string
+        - in: query
+          name: include_tests
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string   
+            
       responses:
         '200':
           description: Sample created successfully
@@ -209,6 +216,12 @@ paths:
           description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
           schema:
             type: string
+        - in: query
+          name: include_tests
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
       responses:
         '200':
           description: Sample created successfully
@@ -252,6 +265,12 @@ paths:
             type: string
         - in: query
           name: location
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: include_tests
           required: false
           description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
           schema:
@@ -304,6 +323,12 @@ paths:
           schema:
             type: string
         - in: query
+          name: include_tests
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
           name: page
           required: true
           description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
@@ -351,6 +376,12 @@ paths:
             type: string
         - in: query
           name: location
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: include_tests
           required: false
           description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
           schema:
@@ -427,6 +458,12 @@ paths:
             type: string
         - in: query
           name: location
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: include_tests
           required: false
           description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
           schema:
