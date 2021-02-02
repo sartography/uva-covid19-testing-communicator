@@ -25,7 +25,7 @@
                 </div>
                 
                 <div class="justify-content-center">
-                    <form action="/inventory" method="post">
+                    <form action={{url_for('inventory_page')}} method="post">
                         {{ form.csrf_token() }}
                         <div class="table-responsive">
                             <!-- Projects table -->
