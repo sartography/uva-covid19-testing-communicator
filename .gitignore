@@ -1,5 +1,6 @@
 test.*
 launch.json
+dashboard/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -132,3 +133,7 @@ dmypy.json
 
 # Intellij
 .idea/
+.idea
+
+# Node
+node_modules/

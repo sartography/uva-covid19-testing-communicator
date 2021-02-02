@@ -58,6 +58,31 @@ def clear_samples():
     db.session.query(Invitation).delete()
     db.session.commit()
 
+def clear_deposits():
+    db.session.query(Deposit).delete()
+    db.session.commit()
+
+def get_deposits():
+    query = db.session.query(Deposit)
+    deposits = query.order_by(Deposit.date_added.desc()).all()
+    response = DepositSchema(many=True).dump(deposits)
+    return response
+
+def add_deposit(body):
+    from communicator.models.deposit import Deposit, DepositSchema
+    
+    new_deposit = Deposit(date_added=datetime.strptime(body['date_added'], "%m/%d/%Y").date(),
+                      amount=int(body['amount']),
+                      notes=body['notes'])
+
+    db.session.add(new_deposit)
+    db.session.commit()  
+    return DepositSchema().dumps(new_deposit)   
+
+def get_imported_files():
+    from communicator.models.ivy_file import IvyFile, IvyFileSchema
+    files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
+    return IvyFileSchema(many=True).dumps(files)
 
 def update_and_notify():
     # These can take a very long time to execute.
