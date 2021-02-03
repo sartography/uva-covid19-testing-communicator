@@ -119,7 +119,7 @@ def superuser(f):
 
 @app.route('/')
 def new_site():
-    return redirect("localhost:4200/dashboard") #TODO Put in the prod dashboard url
+    return redirect(request.host_url[:-5] + "4200/dashboard") #TODO Put in the actual prod dashboard url
 
 
 def __make_csv(sample_query):
