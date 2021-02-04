@@ -193,10 +193,14 @@ def _notify_by_email(file_name=None, retry=False):
             if last_failure and not retry:
                 continue
             try:
+                assert (sample.email != None)
                 notifier.send_result_email(sample)
                 count += 1
                 sample.email_notified = True
                 db.session.add(Notification(type=EMAIL_TYPE, sample=sample, successful=True))
+            except AssertionError as e:
+                app.logger.error(f'Email not provided for Sample: {sample.barcode} ', exc_info=True)
+                continue
             except smtplib.SMTPServerDisconnected as de:
                 app.logger.error("Database connection terminated, stopping for now.", exc_info=True)
                 break

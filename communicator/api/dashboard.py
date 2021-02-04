@@ -145,6 +145,8 @@ def get_topbar_data(last_modified = None, start_date = None, end_date = None, st
     response[4] = notifications.filter(Notification.successful == "f").filter(Notification.type == "email").count()
     response[5] = notifications.filter(Notification.successful == "t").filter(Notification.type == "text").count()
     response[6] = notifications.filter(Notification.successful == "f").filter(Notification.type == "text").count()
+
+    response[7] = 9
     return response
 
 
