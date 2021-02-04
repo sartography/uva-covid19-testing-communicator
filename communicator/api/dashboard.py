@@ -11,7 +11,8 @@ from flask import jsonify
 from marshmallow import EXCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from datetime import timedelta
-from communicator.models.notification import Notification
+from communicator.models import Notification, Deposit, Sample
+
 from sqlalchemy import func, case, and_
 from communicator.models import SampleSchema, Sample, IvyFile, IvyFileSchema
 from communicator.models.notification import Notification
@@ -135,7 +136,7 @@ def get_topbar_data(last_modified = None, start_date = None, end_date = None, st
                              *cases).group_by(Sample.location)
     query = add_sample_search_filters(query, filters, ignore_dates=True)
     
-    response = [0,0,0,0,0,0,0]
+    response = [0,0,0,0,0,0,0,0]
     for result in query: # Add up totats 
         response[0] += result[1]
         response[1] += result[2]
@@ -145,8 +146,14 @@ def get_topbar_data(last_modified = None, start_date = None, end_date = None, st
     response[4] = notifications.filter(Notification.successful == "f").filter(Notification.type == "email").count()
     response[5] = notifications.filter(Notification.successful == "t").filter(Notification.type == "text").count()
     response[6] = notifications.filter(Notification.successful == "f").filter(Notification.type == "text").count()
-
-    response[7] = 9
+    
+    deposits = db.session.query(Deposit).order_by(Deposit.date_added.desc())
+    total_deposits = sum([i.amount for i in deposits])
+    if deposits.count() > 0:
+        sample_count = db.session.query(Sample).filter(Sample.date >= filters["start_date"]).count()
+    else:
+        sample_count = 0
+    response[7] = total_deposits - sample_count
     return response
 
 
