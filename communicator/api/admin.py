@@ -49,10 +49,6 @@ def verify_token(token, required_scopes):
         raise Exception("permission_denied", "API Token information is not correct")
 
 
-def status():
-    return {"status": "good"}
-
-
 def add_sample(body):
     sample = Sample(barcode=body['barcode'],
                     student_id=body['student_id'],
@@ -135,12 +131,12 @@ def update_and_notify():
     executor.submit(_update_data)
     executor.submit(_notify_by_email)
     executor.submit(_notify_by_text)
-    return "Task scheduled and running the background"
+    return "Task scheduled and running in the background"
 
 
 def update_data():
     executor.submit(_update_data)
-    return "Task scheduled and running the background"
+    return "Task scheduled and running in the background"
 
 
 def _update_data():
@@ -167,11 +163,6 @@ def split_location_column():
 def correct_computing_id():
     sample_service = SampleService()
     sample_service.correct_computing_id()
-    
-def merge_similar_records():
-    sample_service = SampleService()
-    sample_service.merge_similar_records()
-
 
 def notify_by_email(file_name=None, retry=False):
     executor.submit(_notify_by_email, file_name, retry)

@@ -7,18 +7,6 @@ info:
 servers:
   - url: http://localhost:5000/v1.0
 paths:
-  /status:
-    get:
-      operationId: communicator.api.admin.status
-      summary: provides a basic status endpoint, just get things off the ground.
-      security: []  # Disable security for this endpoint only.
-      responses:
-        '200':
-          description: Status indicator that the app is up and alive.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Status"
   /update_data:
     get:
       operationId: communicator.api.admin.update_data
@@ -31,18 +19,7 @@ paths:
             text/plain:
               schema:
                 type: string
-  /merge_similar_records:
-    get:
-      operationId: communicator.api.admin.merge_similar_records
-      summary: Checks the local file system and firecloud for data and loads it into the db.
-      security: []  # Disable security for this endpoint only.
-      responses:
-        '200':
-          description: Status indicator that the app is up and alive.
-          content:
-            text/plain:
-              schema:
-                type: string
+
   /split_location_column:
     get:
       operationId: communicator.api.admin.split_location_column
