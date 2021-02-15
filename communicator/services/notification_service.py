@@ -81,13 +81,13 @@ class NotificationService(object):
         link = self.get_link(sample)
         subject = "UVA: BE SAFE Notification"
         tracking_code = self._tracking_code()
-        text_body = render_template("pages/result_email.txt",
+        text_body = render_template("emails/result_email.txt",
                                     link=link,
                                     base_url=self.URL_ROOT,
                                     sample=sample,
                                     tracking_code=tracking_code)
 
-        html_body = render_template("pages/result_email.html",
+        html_body = render_template("emails/result_email.html",
                                     link=link,
                                     base_url=self.URL_ROOT,
                                     sample=sample,
