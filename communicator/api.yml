@@ -6,12 +6,31 @@ info:
     name: MIT
 servers:
   - url: http://localhost:5000/v1.0
+security:
+  - AdminAuth: ['secret']
 paths:
+
+  /user:
+    get:
+      operationId: communicator.api.admin.get_user
+      summary: Returns a modicum of information about the current user.
+      tags:
+        - User
+      responses:
+        '200':
+          description: a single user
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/User"
+
+
   /update_data:
     get:
       operationId: communicator.api.admin.update_data
       summary: Checks the local file system and firecloud for data and loads it into the db.
-      security: []  # Disable security for this endpoint only.
+      tags:
+        - Notifications
       responses:
         '200':
           description: Status indicator that the app is up and alive.
@@ -23,7 +42,8 @@ paths:
     get:
       operationId: communicator.api.admin.update_and_notify
       summary: Does everything, updates data from IVY, and sends out all notifications.
-      security: []  # Disable security for this endpoint only.
+      tags:
+        - Notifications
       responses:
         '200':
           description: Just returns a 200 if it was successful.
@@ -46,7 +66,8 @@ paths:
           description: If set to true, will attept to resend previous failures.
       operationId: communicator.api.admin.notify_by_email
       summary: when called, reviews all samples, and sends out any pending email notifications.
-      security: []  # Disable security for this endpoint only.
+      tags:
+        - Notifications
       responses:
         '200':
           description: Just returns a 200 if it was successful.
@@ -69,7 +90,8 @@ paths:
           description: If set to true, will attept to resend previous failures.
       operationId: communicator.api.admin.notify_by_text
       summary: when called, reviews all samples, and sends out any pending SMS notifications.
-      security: []  # Disable security for this endpoint only.
+      tags:
+        - Notifications
       responses:
         '200':
           description: Just returns a 200 if it was successful.
@@ -352,6 +374,7 @@ paths:
     post:
       operationId: communicator.api.admin.add_sample
       summary: Creates a new sample
+      security: []  # Disable security allow any user to create a sample record.
       tags:
         - Samples
       requestBody:
@@ -480,6 +503,11 @@ components:
       in: header
       name: X-CR-API-KEY
       x-apikeyInfoFunc: communicator.api.admin.verify_token
+    AdminAuth:
+      type: apiKey
+      in: header
+      name: X-Remote-Uid
+      x-apikeyInfoFunc: communicator.api.admin.verify_admin
   schemas:
     Status:
       properties:
@@ -551,4 +579,12 @@ components:
           type: string
           format: date_time
           example: "2019-12-25T09:12:33.001Z"
+    User:
+      properties:
+        uid:
+          type: string
+          example: "dhf8r"
+        display_name:
+          type: string
+          example: "Daniel Harold Funk"
 

@@ -9,10 +9,14 @@ from communicator.models.notification import Notification, EMAIL_TYPE, TEXT_TYPE
 from communicator.models import Sample, SampleSchema
 from communicator.models import IvyFile, IvyFileSchema
 from communicator.models import Deposit, DepositSchema
+from communicator.models.user import UserSchema
 from communicator.services.ivy_service import IvyService
 from communicator.services.notification_service import NotificationService
 from communicator.services.sample_service import SampleService
 from time import sleep
+
+from communicator.services.user_service import UserService
+
 
 def add_sample_search_filters(query, filters, ignore_dates=False):
     q_filters = dict()
@@ -42,11 +46,25 @@ def add_sample_search_filters(query, filters, ignore_dates=False):
     query = query.filter(and_(*[q_filters[key] for key in q_filters]))
     return query
 
+
 def verify_token(token, required_scopes):
     if token == app.config['API_TOKEN']:
         return {'scope':['any']}
     else:
         raise Exception("permission_denied", "API Token information is not correct")
+
+
+def verify_admin(token, required_scopes):
+    user_service = UserService()
+    if user_service.is_valid_user():
+        return {'scope':['any']}
+    else:
+        raise Exception("permission_denied", "You must be an admin user to call this endpoint.")
+
+
+def get_user():
+    user_service = UserService()
+    return UserSchema().dump(user_service.get_user_info())
 
 
 def add_sample(body):
