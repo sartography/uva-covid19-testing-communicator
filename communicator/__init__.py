@@ -117,10 +117,10 @@ def superuser(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
 @app.route('/')
 def new_site():
-    return redirect(request.host_url[:-5] + "4200/dashboard") #TODO Put in the actual prod dashboard url
-
+    return redirect(app.config.get('FRONT_END_URL') + "/dashboard")
 
 def __make_csv(sample_query):
     csvfile = io.StringIO()

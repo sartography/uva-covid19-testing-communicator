@@ -25,6 +25,8 @@ APPLICATION_ROOT = re.sub(r'//', '/', '/%s/' % environ.get('APPLICATION_ROOT', d
 # have access to that in scheduled tasks run outside a request, this should include and match the APPLICATION_ROOT
 # with no trailing backslask
 URL_ROOT = environ.get('URL_ROOT', default="http://localhost:5000")
+FRONT_END_URL = environ.get('FRONT_END_URL', default="http://localhost:4200")
+
 
 DB_HOST = environ.get('DB_HOST', default="localhost")
 DB_PORT = environ.get('DB_PORT', default="5433")
