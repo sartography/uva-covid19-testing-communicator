@@ -24,6 +24,13 @@ class IvyServiceTest(BaseTest):
             ivy_incorrect_file = os.path.join(app.root_path, '..', 'tests', 'data', 'incorrect.csv')
             IvyService.samples_from_ivy_file(ivy_incorrect_file)
 
+    def test_invalid_date(self):
+        """If a record with an unparssable date comes through, use today's date in the date field."""
+        ivy_incorrect_file = os.path.join(app.root_path, '..', 'tests', 'data', 'incorrect_date.csv')
+        records = IvyService.samples_from_ivy_file(ivy_incorrect_file)
+        self.assertEquals(4, len(records))
+        self.assertEquals('987655321-TN-20212719-4321', records[2].barcode)
+
     def test_load_directory(self):
         self.assertEqual(0, db.session.query(IvyFile).count())
         app.config['IVY_IMPORT_DIR'] = os.path.join(app.root_path, '..', 'tests', 'data', 'import_directory')

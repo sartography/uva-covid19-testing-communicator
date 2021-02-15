@@ -1,7 +1,9 @@
 import csv
 from datetime import datetime
+from parser import ParserError
 
 import globus_sdk
+import sentry_sdk
 from dateutil import parser
 
 from communicator import app, db
@@ -66,11 +68,16 @@ class IvyService(object):
         """Creates a Test Result from a record read in from the IVY CSV File"""
         sample = Sample()
         try:
+            try:
+                sample.date = parser.parse(dictionary["Test Date Time"])
+            except Exception as pe:
+                sentry_sdk.capture_message(f"Failed to parse date for barcode '{dictionary['Test Bar Code']}', '{pe}'")
+                sample.date = datetime.now()
+
             sample.barcode = dictionary['Test Bar Code']
             sample.student_id = dictionary["Student ID"]
             sample.phone = dictionary["Student Cellphone"]
             sample.email = dictionary["Student Email"]
-            sample.date = parser.parse(dictionary["Test Date Time"])
             sample.location = dictionary["Test Kiosk Loc"]
             sample.result_code = dictionary["Test Result Code"]
             sample.ivy_file = file_name
