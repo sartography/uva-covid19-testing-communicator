@@ -62,26 +62,18 @@ def add_sample(body):
     SampleService().add_or_update_records([sample])
 
 
-def get_samples(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = "", page = 0):
+def get_samples(last_modified=None, created_on=None):
     query = db.session.query(Sample)
-    
-    filters = dict()
-    if start_date != None:
-        filters["start_date"] = datetime.strptime(start_date, "%m/%d/%Y").date()
-    if end_date != None:
-        filters["end_date"] = datetime.strptime(end_date, "%m/%d/%Y").date()
-    if len(student_id.strip()) > 0:
-        filters["student_id"] = student_id.split()
-    if len(compute_id.strip()) > 0:
-        filters["compute_id"] = compute_id.split() 
-    if len(location.strip()) > 0:
-        filters["location"] = [int(i) for i in location.split()]
-    
-    query = add_sample_search_filters(query, filters)
     if last_modified:
         lm_date = datetime.fromisoformat(last_modified)
-        query = query.filter(Sample.last_modified > lm_date)
-    samples = query.order_by(Sample.last_modified).limit(200).all()
+        query = query.filter(Sample.last_modified > lm_date).order_by(Sample.last_modified)
+    if created_on:
+        co_date = datetime.fromisoformat(created_on)
+        query = query.filter(Sample.created_on > co_date).order_by(Sample.created_on)
+    else:
+        query = query.order_by(Sample.created_on)
+
+    samples = query.limit(200).all()
     response = SampleSchema(many=True).dump(samples)
     return response
 
@@ -92,15 +84,18 @@ def clear_samples():
     db.session.query(Invitation).delete()
     db.session.commit()
 
+
 def get_deposits(page = "0"):
     query = db.session.query(Deposit)
     deposits = query.order_by(Deposit.date_added.desc())[int(page) * 10:(int(page) * 10) + 10]
     response = DepositSchema(many=True).dump(deposits)
     return response
 
+
 def clear_deposits():
     db.session.query(Deposit).delete()
     db.session.commit()
+
 
 def add_deposit(body):
     from communicator.models.deposit import Deposit, DepositSchema
@@ -112,6 +107,7 @@ def add_deposit(body):
     db.session.add(new_deposit)
     db.session.commit()  
     return DepositSchema().dumps(new_deposit)   
+
 
 def get_imported_files(page = "0"):
     from sqlalchemy import func, case

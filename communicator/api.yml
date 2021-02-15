@@ -80,7 +80,7 @@ paths:
   /dashboard/day:
     get:
       operationId: communicator.api.dashboard.get_totals_by_day
-      summary: Creates a new sample
+      summary: Returns sample statistics based on day.
       tags:
         - Dashboard
       parameters:
