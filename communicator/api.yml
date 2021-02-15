@@ -385,51 +385,15 @@ paths:
         - ApiKeyAuth: []
       parameters:
         - in: query
-          name: start_date
-          required: false
-          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
-          schema:
-            type: string
-        - in: query
-          name: end_date
-          required: false
-          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
-          schema:
-            type: string
-        - in: query
-          name: student_id
-          required: false
-          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
-          schema:
-            type: string
-        - in: query
-          name: compute_id
-          required: false
-          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
-          schema:
-            type: string
-        - in: query
-          name: location
-          required: false
-          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
-          schema:
-            type: string
-        - in: query
-          name: include_tests
-          required: false
-          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
-          schema:
-            type: string
-        - in: query
-          name: page
-          required: false
-          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
-          schema:
-            type: int
-        - in: query
           name: last_modified
           required: false
           description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: created_on
+          required: false
+          description: Return all samples added to the database AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
           schema:
             type: string
       responses:
