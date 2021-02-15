@@ -20,17 +20,3 @@ class SampleService(object):
             else:
                 db.session.add(sample)
         db.session.commit()
-
-
-    def correct_computing_id(self):
-        samples = db.session.query(Sample).\
-            filter(func.coalesce(Sample.computing_id, '') == '').\
-            filter(func.coalesce(Sample.email, '') != '').\
-            all()
-        email_match = re.compile('(.*).virginia.edu',  flags=re.IGNORECASE)
-        for sample in samples:
-            match = email_match.match(sample.email)
-            if match:
-                sample.computing_id = match.group(1).strip().lower()
-        db.session.commit()
-

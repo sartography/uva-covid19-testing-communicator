@@ -19,19 +19,6 @@ paths:
             text/plain:
               schema:
                 type: string
-
-  /correct_computing_id:
-    get:
-      operationId: communicator.api.admin.correct_computing_id
-      summary: Correct the computing ids if they are missing by trying to pull it from emails.
-      security: []  # Disable security for this endpoint only.
-      responses:
-        '200':
-          description: Task completed successfully.
-          content:
-            text/plain:
-              schema:
-                type: string 
   /update_and_notify:
     get:
       operationId: communicator.api.admin.update_and_notify

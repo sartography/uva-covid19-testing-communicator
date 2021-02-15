@@ -157,11 +157,6 @@ def _update_data():
     db.session.commit()
 
 
-def correct_computing_id():
-    sample_service = SampleService()
-    sample_service.correct_computing_id()
-
-
 def notify_by_email(file_name=None, retry=False):
     executor.submit(_notify_by_email, file_name, retry)
     return "Task scheduled and running the background"
