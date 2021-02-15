@@ -3,6 +3,7 @@ from datetime import datetime
 from parser import ParserError
 
 import globus_sdk
+import pytz
 import sentry_sdk
 from dateutil import parser
 
@@ -70,6 +71,8 @@ class IvyService(object):
         try:
             try:
                 sample.date = parser.parse(dictionary["Test Date Time"])
+                tz = pytz.timezone("America/New_York")
+                sample.date = tz.localize(sample.date)
             except Exception as pe:
                 sentry_sdk.capture_message(f"Failed to parse date for barcode '{dictionary['Test Bar Code']}', '{pe}'")
                 sample.date = datetime.now()

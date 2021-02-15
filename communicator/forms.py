@@ -27,7 +27,7 @@ class SearchForm(FlaskForm):
     studentId = TextAreaField('Student Id')
     location = TextAreaField('Location')
     compute_id = TextAreaField('Compute ID')
-    include_tests = BooleanField("Include Test Strips", default=False)
+    include_tests = BooleanField("Include Test Labels", default=False)
 
 class InventoryDepositForm(FlaskForm):
     date_added = TextAreaField('Date')

@@ -1,10 +1,5 @@
-import re
-
-from sqlalchemy import func
-
-from communicator import db, app
+from communicator import db
 from communicator.models.sample import Sample
-import random
 import logging
 import datetime as dt
 from sqlalchemy import func, and_, case, or_
@@ -126,5 +121,3 @@ class GraphService(object):
             self.start_date = filters["start_date"]
         if "end_date" in filters:
             self.end_date = filters["end_date"] + dt.timedelta(1)
-
- 

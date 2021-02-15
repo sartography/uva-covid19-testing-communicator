@@ -1,3 +1,7 @@
+import datetime
+
+import pytz
+
 from tests.base_test import BaseTest
 import os
 import unittest
@@ -30,6 +34,22 @@ class IvyServiceTest(BaseTest):
         records = IvyService.samples_from_ivy_file(ivy_incorrect_file)
         self.assertEquals(4, len(records))
         self.assertEquals('987655321-TN-20212719-4321', records[2].barcode)
+
+    def test_timezone_offset(self):
+        """The date and time returned from the lab / Globus is in EST, be sure to save it as such to
+        avoid a 5 hour offset, when it is assumed to be in GMT."""
+        records = IvyService.samples_from_ivy_file(self.ivy_file)
+        self.assertEqual("987654321", records[0].student_id)
+        self.assertIsNotNone(records[0].date.tzinfo, "on ingestion, the date should be in EST")
+
+        # original date "202009030809"
+        date_string = '202009031209' # UTC is 4 hours head for this date
+        date = datetime.datetime.strptime(date_string, '%Y%m%d%H%M')
+
+        db.session.add(records[0])
+        db.session.commit()
+        self.assertEqual(date, records[0].date)
+
 
     def test_load_directory(self):
         self.assertEqual(0, db.session.query(IvyFile).count())
