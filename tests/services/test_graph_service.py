@@ -15,8 +15,6 @@ import json
 class TestGraphService(BaseTest):
     def populate_test_db(self):
         days = 50
-
-
         for day in daterange(date.today() - timedelta(days), date.today()):
             day_string = day.strftime('%Y%m%d%H%M')
             bar_code = '000000111-' + day_string + '-5030'
@@ -27,19 +25,6 @@ class TestGraphService(BaseTest):
         db.session.commit()
         samples = db.session.query(Sample).all()
         self.assertNotEqual(0, len(samples))
-
-    @unittest.skip("Nile, not sure what should be happening here.")
-    def test_get_totals_last_week(self):
-        graph = GraphService() 
-        self.populate_test_db()
-        graph.update_search_filters({
-            "start_date": datetime.date(2020,11,1),
-            "end_date": datetime.date(2020,11,1),
-        })
-        result = graph.get_totals_last_week()
-        for location in result:
-            for station in location:
-                self.assertEqual(result[location][station], 0)
 
     def test_get_totals_by_hour(self):
         graph = GraphService() 
@@ -76,10 +61,3 @@ class TestGraphService(BaseTest):
         result = graph.get_totals_by_weekday()
         print(result)
         self.assertTrue(20 not in result)
-        # fixme: Add some valid test data manually so you can something you can test against.
-        #self.assertEqual(result[50][0][1],17)
-        #self.assertEqual(result[50][10][1],16)
-        #self.assertEqual(result[50][20][1],14)
-        #self.assertEqual(result[50][30][1],17)
-        #self.assertEqual(result[50][40][1],20)
-        # self.assertEqual(result[50][50][1],14)
