@@ -1,4 +1,5 @@
 import csv
+import json
 from datetime import datetime
 from parser import ParserError
 
@@ -99,21 +100,29 @@ class IvyService(object):
 
         self.client = globus_sdk.NativeAppAuthClient(self.GLOBUS_CLIENT_ID)
         self.client.oauth2_start_flow(refresh_tokens=True)
-        authorizer = globus_sdk.RefreshTokenAuthorizer(
-            self.GLOBUS_TRANSFER_RT, self.client, access_token=self.GLOBUS_TRANSFER_AT, expires_at=self.EXPIRES_AT)
-        tc = globus_sdk.TransferClient(authorizer=authorizer)
-        r = tc.endpoint_autoactivate(self.GLOBUS_DTN_ENDPOINT, if_expires_in=3600)
-        print(str(r))
-        if r['code'] == 'AutoActivationFailed':
+
+        # Refresh the token - so we don't get logged out.
+        oauth_data = self.client.oauth2_refresh_token(self.GLOBUS_TRANSFER_RT)
+        new_at = oauth_data.data['access_token']
+        transfer_authorizer = globus_sdk.RefreshTokenAuthorizer(self.GLOBUS_TRANSFER_RT, self.client,
+                                                                access_token=new_at,
+                                                                expires_at=self.EXPIRES_AT)
+        transfer_client = globus_sdk.TransferClient(authorizer=transfer_authorizer)
+
+        # Be sure to activate both endpoints
+        r = transfer_client.endpoint_autoactivate(self.GLOBUS_DTN_ENDPOINT, if_expires_in=3600)
+        r2 = transfer_client.endpoint_autoactivate(self.GLOBUS_IVY_ENDPOINT, if_expires_in=3600)
+
+        if r['code'] == 'AutoActivationFailed' or r2['code'] == 'AutoActivationFailed':
             app.logger.error('Endpoint({}) Not Active! Error! Source message: {}'.format(self.GLOBUS_CLIENT_ID, r['message']))
-        elif r['code'] == 'AutoActivated.CachedCredential':
+        elif r['code'] == 'AutoActivated.CachedCredential' or r2['code'] == 'AutoActivated.CachedCredential':
             app.logger.error('Endpoint({}) autoactivated using a cached credential.'.format(self.GLOBUS_CLIENT_ID))
-        elif r['code'] == 'AutoActivated.GlobusOnlineCredential':
+        elif r['code'] == 'AutoActivated.GlobusOnlineCredential' or r2['code'] == 'AutoActivated.GlobusOnlineCredential':
             app.logger.error(('Endpoint({}) autoactivated using a built-in Globus credential.').format(self.GLOBUS_CLIENT_ID))
-        elif r['code'] == 'AlreadyActivated':
+        elif r['code'] == 'AlreadyActivated' or r2['code'] == 'AlreadyActivated':
             app.logger.info('Endpoint({}) already active until at least {}'.format(self.GLOBUS_CLIENT_ID, 3600))
 
-        self.transfer_client = tc
+        self.transfer_client = transfer_client
         self.transfer_client_date = datetime.now()
         return self.transfer_client
 
