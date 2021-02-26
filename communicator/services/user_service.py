@@ -35,9 +35,9 @@ class UserService(object):
                 uid = request.headers.get("X-Remote-Uid")
             if not uid:
                 raise CommError(1100, "invalid_sso_credentials", r"'Uid' nor 'X-Remote-Uid' were present in the headers: %s"% str(request.headers))
-            return User(uid, cn)
+            return User(uid, cn, self.is_valid_user())
         else:
-            return User('testUser', "Test User")
+            return User('testUser', "Test User", True)
 
     def is_valid_user(self):
         user = self.get_user_info()

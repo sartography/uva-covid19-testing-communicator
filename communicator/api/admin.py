@@ -1,15 +1,50 @@
 import smtplib
-from datetime import datetime
+from datetime import datetime, timedelta
+from sqlalchemy import and_, or_
 
 from communicator import db, app, executor
 from communicator.models import Sample
 from communicator.models.invitation import Invitation
 from communicator.models.notification import Notification, EMAIL_TYPE, TEXT_TYPE
-from communicator.models.sample import SampleSchema
+from communicator.models import Sample, SampleSchema
+from communicator.models import IvyFile, IvyFileSchema
+from communicator.models import Deposit, DepositSchema
+from communicator.models.user import UserSchema
 from communicator.services.ivy_service import IvyService
 from communicator.services.notification_service import NotificationService
 from communicator.services.sample_service import SampleService
 from time import sleep
+
+from communicator.services.user_service import UserService
+
+
+def add_sample_search_filters(query, filters, ignore_dates=False):
+    q_filters = dict()
+    if "student_id" in filters:
+        if (type(filters["student_id"]) == list):
+            q_filters["student_id"] = or_(*[Sample.student_id == ID for ID in filters["student_id"]])
+
+    if "location" in filters:
+        if filters["location"] != None:
+            q_filters["location"] = or_(*[Sample.location == ID for ID in filters["location"]])
+
+    if "compute_id" in filters:
+        if filters["compute_id"] != None:
+            # Search Email and Compute ID column to account for typos 
+            q_filters["compute_id"] = or_(*([Sample.computing_id.ilike(ID) for ID in filters["compute_id"]] + 
+                                            [Sample.email.contains(ID.lower()) for ID in filters["compute_id"]]))
+    if not ignore_dates:
+        if "start_date" in filters:
+            q_filters["start_date"] = Sample.date >= filters["start_date"]
+
+        if "end_date" in filters:
+            q_filters["end_date"] = Sample.date <= (filters["end_date"] + timedelta(1))
+       
+    if not "include_tests" in filters:
+            q_filters["include_tests"] = Sample.student_id != 0
+
+    query = query.filter(and_(*[q_filters[key] for key in q_filters]))
+    return query
 
 
 def verify_token(token, required_scopes):
@@ -19,8 +54,17 @@ def verify_token(token, required_scopes):
         raise Exception("permission_denied", "API Token information is not correct")
 
 
-def status():
-    return {"status": "good"}
+def verify_admin(token, required_scopes):
+    user_service = UserService()
+    if user_service.is_valid_user():
+        return {'scope':['any']}
+    else:
+        raise Exception("permission_denied", "You must be an admin user to call this endpoint.")
+
+
+def get_user():
+    user_service = UserService()
+    return UserSchema().dump(user_service.get_user_info())
 
 
 def add_sample(body):
@@ -84,17 +128,54 @@ def get_imported_files():
     files = db.session.query(IvyFile).order_by(IvyFile.date_added.desc())
     return IvyFileSchema(many=True).dumps(files)
 
+def get_deposits(page = "0"):
+    query = db.session.query(Deposit)
+    deposits = query.order_by(Deposit.date_added.desc())[int(page) * 10:(int(page) * 10) + 10]
+    response = DepositSchema(many=True).dump(deposits)
+    return response
+
+
+def clear_deposits():
+    db.session.query(Deposit).delete()
+    db.session.commit()
+
+
+def add_deposit(body):
+    from communicator.models.deposit import Deposit, DepositSchema
+    
+    new_deposit = Deposit(date_added=datetime.strptime(body['date_added'], "%m/%d/%Y").date(),
+                      amount=int(body['amount']),
+                      notes=body['notes'])
+
+    db.session.add(new_deposit)
+    db.session.commit()  
+    return DepositSchema().dumps(new_deposit)   
+
+
+def get_imported_files(page = "0"):
+    from sqlalchemy import func, case
+    cases = [func.count(case([(Sample.email_notified == "t" , 1)])).label("successful_emails"),
+            func.count(case([(Sample.email_notified == "f" , 1)])).label("failed_emails"),
+            func.count(case([(Sample.text_notified == "t" , 1)])).label("successful_texts"),
+            func.count(case([(Sample.text_notified == "f" , 1)])).label("failed_texts")]
+    
+    query = db.session.query(IvyFile.date_added,IvyFile.file_name,IvyFile.sample_count,
+                *cases).order_by(IvyFile.date_added.desc()).join(Sample, Sample.ivy_file == '/ivy_data/outgoing/' + IvyFile.file_name)\
+                .group_by(IvyFile.file_name)[int(page) * 10:(int(page) * 10) + 10]
+    return query
+    
+
 def update_and_notify():
     # These can take a very long time to execute.
     executor.submit(_update_data)
     executor.submit(_notify_by_email)
     executor.submit(_notify_by_text)
-    return "Task scheduled and running the background"
+    return "Task scheduled and running in the background"
 
 
 def update_data():
     executor.submit(_update_data)
-    return "Task scheduled and running the background"
+    return "Task scheduled and running in the background"
 
 
 def _update_data():
@@ -113,18 +194,6 @@ def _update_data():
         else:
             app.logger.info("Not Deleting Files, per DELETE_IVY_FILES flag")
     db.session.commit()
-
-def split_location_column():
-    sample_service = SampleService()
-    sample_service.split_all_location_columns()
-
-def correct_computing_id():
-    sample_service = SampleService()
-    sample_service.correct_computing_id()
-    
-def merge_similar_records():
-    sample_service = SampleService()
-    sample_service.merge_similar_records()
 
 
 def notify_by_email(file_name=None, retry=False):
@@ -147,10 +216,14 @@ def _notify_by_email(file_name=None, retry=False):
             if last_failure and not retry:
                 continue
             try:
+                assert (sample.email != None)
                 notifier.send_result_email(sample)
                 count += 1
                 sample.email_notified = True
                 db.session.add(Notification(type=EMAIL_TYPE, sample=sample, successful=True))
+            except AssertionError as e:
+                app.logger.error(f'Email not provided for Sample: {sample.barcode} ', exc_info=True)
+                continue
             except smtplib.SMTPServerDisconnected as de:
                 app.logger.error("Database connection terminated, stopping for now.", exc_info=True)
                 break
