@@ -99,6 +99,56 @@ paths:
             text/plain:
               schema:
                 type: string
+  /dashboard/download:
+    get:
+      operationId: communicator.api.dashboard.download_search
+      summary: Returns sample statistics based on day.
+      tags:
+        - Dashboard
+      parameters:
+        - in: query
+          name: start_date
+          required: true
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: end_date
+          required: true
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: student_id
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: compute_id
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: location
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
+        - in: query
+          name: include_tests
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string     
+      responses:
+        '200':
+          description: Download file sent
+          content:
+            text/csv:
+              schema:
+                type: string
   /dashboard/day:
     get:
       operationId: communicator.api.dashboard.get_totals_by_day
