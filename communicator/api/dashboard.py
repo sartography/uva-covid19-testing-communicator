@@ -161,7 +161,7 @@ def get_totals_by_hour(last_modified = None, start_date = None, end_date = None,
     graph.update_search_filters(filters)
     return form_graph_response(graph.get_totals_by_hour())
     
-def get_samples(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = "", include_tests= "", page = 0):
+def get_samples(last_modified = None, start_date = None, end_date = None, student_id = "", compute_id = "", location = "", include_tests= "", page = 0, items_per_page = 10):
     query = db.session.query(Sample)
 
     filters = dict()
@@ -183,7 +183,7 @@ def get_samples(last_modified = None, start_date = None, end_date = None, studen
     if last_modified:
         lm_date = datetime.fromisoformat(last_modified)
         query = query.filter(Sample.last_modified > lm_date)
-    samples = query.order_by(Sample.last_modified)[int(page) * 10:(int(page) * 10) + 10]
+    samples = query.order_by(Sample.last_modified)[int(page) * int(items_per_page):(int(page) * int(items_per_page)) + int(items_per_page)]
     response = SampleSchema(many=True).dump(samples)
     return response
     
