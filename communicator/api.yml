@@ -38,6 +38,21 @@ paths:
             text/plain:
               schema:
                 type: string
+
+  /process_local_files:
+    get:
+      operationId: communicator.api.admin.load_local_files
+      summary: Like Update Data, but doesn't request a file transfer from IVY.
+      tags:
+        - Notifications
+      responses:
+        '200':
+          description: Status indicator that the app is up and alive.
+          content:
+            text/plain:
+              schema:
+                type: string
+
   /update_and_notify:
     get:
       operationId: communicator.api.admin.update_and_notify
