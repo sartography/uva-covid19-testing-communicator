@@ -1,6 +1,3 @@
-import csv
-import csv
-import io
 import json
 import logging
 import os
@@ -8,7 +5,6 @@ from functools import wraps
 
 import connexion
 import sentry_sdk
-from babel.dates import format_datetime, get_timezone
 from flask import redirect, flash, abort, Response
 from flask_assets import Environment
 from flask_cors import CORS
@@ -119,46 +115,6 @@ def superuser(f):
 def new_site():
     return redirect(app.config.get('FRONT_END_URL') + "/dashboard")
 
-def __make_csv(sample_query):
-    csvfile = io.StringIO()
-    headers = [
-        'barcode',
-        'student_id',
-        'date',
-        'time',
-        'location',
-        'phone',
-        'email',
-        'result_code',
-        'ivy_file',
-        'email_notified',
-        'text_notified'
-    ]
-    writer = csv.DictWriter(csvfile, headers)
-    writer.writeheader()
-    for sample in sample_query.all():
-        writer.writerow(
-            {
-                'barcode': sample.barcode,
-                'student_id': sample.student_id,
-                'date':  format_datetime(sample.date, 'YYYY-MM-dd hh:mm:ss a', get_timezone('US/Eastern'), 'en'),
-                'location': sample.location,
-                'phone': sample.phone,
-                'email': sample.email,
-                'result_code': sample.result_code,
-                'ivy_file': sample.ivy_file,
-                'email_notified': sample.email_notified,
-                'text_notified': sample.text_notified,
-            }
-        )
-
-    # Creating the byteIO object from the StringIO Object
-    mem = io.BytesIO()
-    mem.write(csvfile.getvalue().encode('utf-8'))
-    # seeking was necessary. Python 3.5.2, Flask 0.12.2
-    mem.seek(0)
-    csvfile.close()
-    return mem
 
 @app.route('/sso')
 def sso():
