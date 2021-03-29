@@ -373,6 +373,12 @@ paths:
           description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
           schema:
             type: string
+        - in: query
+          name: items_per_page
+          required: false
+          description: Return all samples modified AFTER the given date, provided as an ISO string (ex '2021-01-01T01:01:00')
+          schema:
+            type: string
       responses:
         '200':
           description: a list of samples

@@ -104,12 +104,10 @@ def __get_samples_query(last_modified = None, start_date = None, end_date = None
     if include_tests == "true":
         filters["include_tests"] = include_tests
 
-
     query = add_sample_search_filters(query, filters)
     if last_modified:
         lm_date = datetime.fromisoformat(last_modified)
         query = query.filter(Sample.last_modified > lm_date)
-
     query = query.order_by(Sample.last_modified)
     return query
 
