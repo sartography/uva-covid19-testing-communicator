@@ -267,6 +267,7 @@ def _notify_by_text(file_name=None, retry=False):
     """Sends out notifications via SMS Message, but only at reasonable times of day,
        Can be resticted to a specific file name, and will attempt to retry on previous
        failures if requested to do so. """
+
     with NotificationService(app) as notifier:
         if not notifier.is_reasonable_hour_for_text_messages:
             print("Skipping text messages, it's not a good time to get one.")
