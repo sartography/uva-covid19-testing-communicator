@@ -167,6 +167,7 @@ class IvyService(object):
     def get_access_token(self):
         """Purely for the command line, in the event we need to create a new access token,
         but this should be exceedingly rare, a good token can last a very very long time."""
+
         client = globus_sdk.NativeAppAuthClient(self.GLOBUS_CLIENT_ID)
         client.oauth2_start_flow(refresh_tokens=True)
 

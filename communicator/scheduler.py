@@ -21,22 +21,10 @@ def within_notification_window():
 
 def update():
     with app.app_context():
-        # Always run the updates, do not wait for the window anymore.
-        admin._update_data()
-#        if within_notification_window():
-#            app.logger.info("Do not load new files during the notification window.")
-#        else:
-#            admin._update_data()
-
-def notify():
-    with app.app_context():
-        # Just immediately notify by email, do not wait.  Never notify by text.
+        # Do not request IVY transfers, they happen automatically, just load the local files if they exist,
+        # and send any emails that need sending.
+        admin.load_local_files()
         admin._notify_by_email()
-        # if within_notification_window():
-        #     app.logger.info("Within Notification Window, sending messages.")
-        #     admin._notify_by_text()
-        # else:
-        #     app.logger.info("Not within the notification window, not sending messages.")
 
 
 if app.config['RUN_SCHEDULED_TASKS']:
@@ -44,11 +32,7 @@ if app.config['RUN_SCHEDULED_TASKS']:
     scheduler.add_jobstore('sqlalchemy', url=db.engine.url)
     scheduler.add_job(
         update, 'interval', minutes=app.config['SCHEDULED_TASK_MINUTES'],
-        id='update_data', replace_existing=True
-    )
-    scheduler.add_job(
-        notify, 'interval', minutes=app.config['SCHEDULED_TASK_MINUTES'],
-        id='notify', replace_existing=True
+        id='update', replace_existing=True
     )
     scheduler.start()
 
