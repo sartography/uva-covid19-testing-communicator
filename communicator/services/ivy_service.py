@@ -12,7 +12,7 @@ from communicator import app, db
 from communicator.errors import CommError
 from communicator.models.ivy_file import IvyFile
 from communicator.models.sample import Sample
-from os import listdir
+from os import listdir, remove
 from os.path import isfile, join
 
 
@@ -148,20 +148,25 @@ class IvyService(object):
         return count
 
     def delete_file(self, file_name):
-        tc = self.get_transfer_client()
-        ddata = globus_sdk.DeleteData(tc, self.GLOBUS_DTN_ENDPOINT, recursive=True)
-        file_path = f"{self.GLOBUS_DTN_PATH}/{file_name}"
-        ddata.add_item(file_path)
-        delete_result = tc.submit_delete(ddata)
-        app.logger.info("Requested deleting file: " + file_path)
-        app.logger.info("Deleted Covid-vpr file:" + str(delete_result))
+        try:
+            remove(file_name)
+        except OSError as e:  ## if failed, report it back to the user ##
+            print("Error Deleting File: %s - %s." % (e.filename, e.strerror))
 
-        ddata = globus_sdk.DeleteData(tc, self.GLOBUS_IVY_ENDPOINT, recursive=True)
-        file_path = f"{self.GLOBUS_IVY_PATH}/{file_name}"
-        ddata.add_item(file_path)
-        delete_result = tc.submit_delete(ddata)
-        app.logger.info("Requested deleting file: " + file_path)
-        app.logger.info("Deleted ics file:" + str(delete_result))
+        # tc = self.get_transfer_client()
+        # ddata = globus_sdk.DeleteData(tc, self.GLOBUS_DTN_ENDPOINT, recursive=True)
+        # file_path = f"{self.GLOBUS_DTN_PATH}/{file_name}"
+        # ddata.add_item(file_path)
+        # delete_result = tc.submit_delete(ddata)
+        # app.logger.info("Requested deleting file: " + file_path)
+        # app.logger.info("Deleted Covid-vpr file:" + str(delete_result))
+        #
+        # ddata = globus_sdk.DeleteData(tc, self.GLOBUS_IVY_ENDPOINT, recursive=True)
+        # file_path = f"{self.GLOBUS_IVY_PATH}/{file_name}"
+        # ddata.add_item(file_path)
+        # delete_result = tc.submit_delete(ddata)
+        # app.logger.info("Requested deleting file: " + file_path)
+        # app.logger.info("Deleted ics file:" + str(delete_result))
 
 
     def get_access_token(self):
