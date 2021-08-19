@@ -151,7 +151,7 @@ class IvyService(object):
         try:
             remove(file_name)
         except OSError as e:  ## if failed, report it back to the user ##
-            print("Error Deleting File: %s - %s." % (e.filename, e.strerror))
+            app.logger.error("Error Deleting File: %s - %s." % (e.filename, e.strerror))
 
         # tc = self.get_transfer_client()
         # ddata = globus_sdk.DeleteData(tc, self.GLOBUS_DTN_ENDPOINT, recursive=True)
