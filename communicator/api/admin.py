@@ -158,9 +158,9 @@ def get_imported_files(page = "0"):
             func.count(case([(Sample.email_notified == "f" , 1)])).label("failed_emails"),
             func.count(case([(Sample.text_notified == "t" , 1)])).label("successful_texts"),
             func.count(case([(Sample.text_notified == "f" , 1)])).label("failed_texts")]
-    
+
     query = db.session.query(IvyFile.date_added,IvyFile.file_name,IvyFile.sample_count,
-                *cases).order_by(IvyFile.date_added.desc()).join(Sample, Sample.ivy_file.like("%" + IvyFile.file_name))\
+                *cases).order_by(IvyFile.date_added.desc()).join(Sample, Sample.ivy_file == IvyFile.file_name)\
                 .group_by(IvyFile.file_name)[int(page) * 10:(int(page) * 10) + 10]
     return query
     

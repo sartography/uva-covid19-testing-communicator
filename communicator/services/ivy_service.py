@@ -42,7 +42,7 @@ class IvyService(object):
         samples = []
         files = []
         for file_name in onlyfiles:
-            file_samples = IvyService.samples_from_ivy_file(join(self.path, file_name))
+            file_samples = IvyService.samples_from_ivy_file(self.path, file_name)
             ivy_file = db.session.query(IvyFile).filter(IvyFile.file_name == file_name).first()
             if not ivy_file:
                 ivy_file = IvyFile(file_name=file_name, sample_count=len(file_samples))
@@ -56,9 +56,9 @@ class IvyService(object):
         return files, samples
 
     @staticmethod
-    def samples_from_ivy_file(file_name):
+    def samples_from_ivy_file(path, file_name):
         rows = []
-        with open(file_name, 'r') as csv_file:
+        with open(join(path, file_name), 'r') as csv_file:
             reader = csv.DictReader(csv_file, delimiter='|')
             for row in reader:
                 sample = IvyService.record_to_sample(row, file_name)
