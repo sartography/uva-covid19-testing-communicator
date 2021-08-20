@@ -26,8 +26,8 @@ class BaseTest(unittest.TestCase):
     """
 
     firebase_file = os.path.join(app.root_path, '..', 'tests', 'data', 'firebase_data.json')
-    ivy_file = os.path.join(app.root_path, '..', 'tests', 'data', 'results.csv')
-
+    ivy_path = os.path.join(app.root_path, '..', 'tests', 'data')
+    ivy_file = 'results.csv'
 
     if not app.config['TESTING']:
         raise (Exception("INVALID TEST CONFIGURATION. This is almost always in import order issue."

@@ -18,27 +18,27 @@ from communicator.services.ivy_service import IvyService
 class IvyServiceTest(BaseTest):
 
     def test_read_file_and_build_records(self):
-        records = IvyService.samples_from_ivy_file(self.ivy_file)
+        records = IvyService.samples_from_ivy_file(self.ivy_path, self.ivy_file)
         self.assertEqual("987654321", records[0].student_id)
         self.assertEqual("testpositive@virginia.edu", records[1].email)
         self.assertEqual("1142270225", records[2].result_code)
 
     def test_invalid_file(self):
         with self.assertRaises(CommError):
-            ivy_incorrect_file = os.path.join(app.root_path, '..', 'tests', 'data', 'incorrect.csv')
-            IvyService.samples_from_ivy_file(ivy_incorrect_file)
+            ivy_incorrect_path = os.path.join(app.root_path, '..', 'tests', 'data')
+            IvyService.samples_from_ivy_file(ivy_incorrect_path, 'incorrect.csv')
 
     def test_invalid_date(self):
         """If a record with an unparssable date comes through, use today's date in the date field."""
-        ivy_incorrect_file = os.path.join(app.root_path, '..', 'tests', 'data', 'incorrect_date.csv')
-        records = IvyService.samples_from_ivy_file(ivy_incorrect_file)
+        ivy_incorrect_path = os.path.join(app.root_path, '..', 'tests', 'data')
+        records = IvyService.samples_from_ivy_file(ivy_incorrect_path,  'incorrect_date.csv')
         self.assertEquals(4, len(records))
         self.assertEquals('987655321-TN-20212719-4321', records[2].barcode)
 
     def test_timezone_offset(self):
         """The date and time returned from the lab / Globus is in EST, be sure to save it as such to
         avoid a 5 hour offset, when it is assumed to be in GMT."""
-        records = IvyService.samples_from_ivy_file(self.ivy_file)
+        records = IvyService.samples_from_ivy_file(self.ivy_path, self.ivy_file)
         self.assertEqual("987654321", records[0].student_id)
         self.assertIsNotNone(records[0].date.tzinfo, "on ingestion, the date should be in EST")
 

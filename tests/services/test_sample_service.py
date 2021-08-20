@@ -37,7 +37,7 @@ class IvyServiceTest(BaseTest):
 
         self.assertEqual(4, len(db.session.query(Sample).all()))
 
-        ivy_samples = IvyService.samples_from_ivy_file(self.ivy_file)
+        ivy_samples = IvyService.samples_from_ivy_file(self.ivy_path, self.ivy_file)
         service.add_or_update_records(ivy_samples)
 
         # There are 6 records in ivy, but three records that should match up, giving seven total
@@ -53,7 +53,7 @@ class IvyServiceTest(BaseTest):
 
         self.assertEqual(0, len(db.session.query(Sample).all()))
 
-        ivy_samples = IvyService.samples_from_ivy_file(self.ivy_file)
+        ivy_samples = IvyService.samples_from_ivy_file(self.ivy_path, self.ivy_file)
         service.add_or_update_records(ivy_samples)
         self.assertEqual(6, len(db.session.query(Sample).all()))
 
