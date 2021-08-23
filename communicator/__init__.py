@@ -152,9 +152,3 @@ def transfer():
     ivy_service = IvyService()
     ivy_service.request_transfer()
 
-
-@app.cli.command()
-def delete():
-    from communicator.services.ivy_service import IvyService
-    ivy_service = IvyService()
-    ivy_service.delete_file()

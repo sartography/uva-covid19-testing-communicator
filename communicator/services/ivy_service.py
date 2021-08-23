@@ -149,7 +149,7 @@ class IvyService(object):
 
     def delete_file(self, file_name):
         try:
-            remove(file_name)
+            remove(join(self.path, file_name))
         except OSError as e:  ## if failed, report it back to the user ##
             app.logger.error("Error Deleting File: %s - %s." % (e.filename, e.strerror))
 
