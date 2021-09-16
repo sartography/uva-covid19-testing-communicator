@@ -62,22 +62,23 @@ MAIL_TIMEOUT = 10
 IVY_IMPORT_DIR = environ.get('IVY_IMPORT_DIR', default='')
 DELETE_IVY_FILES = environ.get('DELETE_IVY_FILES', default="false") == "true"
 
-# Globus endpoint connections
-GLOBUS_CLIENT_ID = environ.get('GLOBUS_CLIENT_ID')
-GLOBUS_TRANSFER_RT = environ.get('GLOBUS_TRANSFER_RT')
-GLOBUS_TRANSFER_AT = environ.get('GLOBUS_TRANSFER_AT')
-GLOBUS_IVY_ENDPOINT = environ.get('GLOBUS_IVY_ENDPOINT')
-GLOBUS_DTN_ENDPOINT = environ.get('GLOBUS_DTN_ENDPOINT')
-GLOBUS_IVY_PATH = environ.get('GLOBUS_IVY_PATH')
-GLOBUS_DTN_PATH = environ.get('GLOBUS_DTN_PATH')
+# NOT IN USE -- Globus endpoint connections - These are not currently used, setting defaults so we don't need to include them
+# in our Docker container.
+GLOBUS_CLIENT_ID = environ.get('GLOBUS_CLIENT_ID', default="NA")
+GLOBUS_TRANSFER_RT = environ.get('GLOBUS_TRANSFER_RT', default="NA")
+GLOBUS_TRANSFER_AT = environ.get('GLOBUS_TRANSFER_AT', default="NA")
+GLOBUS_IVY_ENDPOINT = environ.get('GLOBUS_IVY_ENDPOINT', default="NA")
+GLOBUS_DTN_ENDPOINT = environ.get('GLOBUS_DTN_ENDPOINT', default="NA")
+GLOBUS_IVY_PATH = environ.get('GLOBUS_IVY_PATH', default="NA")
+GLOBUS_DTN_PATH = environ.get('GLOBUS_DTN_PATH', default="NA")
 
-# Twilio SMS Messages
-TWILIO_SID = environ.get('TWILIO_SID')
-TWILIO_TOKEN = environ.get('TWILIO_TOKEN')
-TWILIO_NUMBER =  environ.get('TWILIO_NUMBER')
+# NOT IN USE --  Twilio SMS Messages
+TWILIO_SID = environ.get('TWILIO_SID', default="NA")
+TWILIO_TOKEN = environ.get('TWILIO_TOKEN', default="NA")
+TWILIO_NUMBER =  environ.get('TWILIO_NUMBER', default="NA")
 
-# Firestore configuration
-FIRESTORE_JSON = environ.get('FIRESTORE_JSON')
+# NOT IN USE --  Firestore configuration
+FIRESTORE_JSON = environ.get('FIRESTORE_JSON', default="NA")
 
 # Scheduled tasks
 SCHEDULED_TASK_MINUTES = float(environ.get('SCHEDULED_TASK_MINUTES', default=1))
